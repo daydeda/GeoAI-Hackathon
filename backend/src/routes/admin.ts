@@ -1,4 +1,5 @@
 import { FastifyInstance } from 'fastify'
+import { createReadStream, unlink } from 'fs'
 import '@fastify/static'
 
 import { z } from 'zod'
@@ -6,6 +7,8 @@ import { prisma } from '../plugins/prisma.js'
 import { requireRole, JwtPayload } from '../middleware/auth.js'
 import { writeAuditLog } from '../services/auditLog.js'
 import { exportData } from '../services/exporter.js'
+import { generatePermissionLetter } from '../services/pdfGenerator.js'
+import { minioClient, BUCKET } from '../services/storage.js'
 import { TeamStatus, ExportType } from '@prisma/client'
 
 const AssignRoleSchema = z.object({ role: z.enum(['COMPETITOR', 'MODERATOR', 'JUDGE', 'ADMIN']) })
@@ -108,6 +111,24 @@ export async function adminRoutes(app: FastifyInstance) {
       }),
     ])
 
+    if (body.data.status === 'FINALIST' && oldStatus !== 'FINALIST') {
+      try {
+        const fullTeam = await prisma.team.findUnique({
+          where: { id: teamId },
+          include: { members: { include: { user: true } }, leader: true },
+        })
+        if (fullTeam) {
+          const pdfBytes = await generatePermissionLetter({ team: fullTeam })
+          const version = await prisma.document.count({ where: { teamId, type: 'PERMISSION_LETTER' } }) + 1
+          const fileKey = `documents/${teamId}/permission-letter-v${version}.pdf`
+          await minioClient.putObject(BUCKET, fileKey, Buffer.from(pdfBytes), pdfBytes.length, { 'Content-Type': 'application/pdf' })
+          await prisma.document.create({ data: { teamId, type: 'PERMISSION_LETTER', fileKey, version } })
+        }
+      } catch (err) {
+        console.error('Failed to auto-generate permission letter:', err)
+      }
+    }
+
     await writeAuditLog({
       actorId: actor.userId,
       action: body.data.status === 'FINALIST' ? 'FINALIST_PROMOTED' : 'TEAM_STATUS_CHANGED',
@@ -156,7 +177,15 @@ export async function adminRoutes(app: FastifyInstance) {
 
     await writeAuditLog({ actorId: actor.userId, action: 'EXPORT_TRIGGERED', entityType: 'export', entityId: exportRecord.id, newValue: { type: body.data.type } })
 
-    const stream = require('fs').createReadStream(filePath)
+    const stream = createReadStream(filePath)
+    
+    // Cleanup temp file after response
+    stream.on('close', () => {
+      unlink(filePath, (err) => {
+        if (err) console.error(`Failed to delete temp export file: ${filePath}`, err)
+      })
+    })
+
     return reply
       .header('Content-Disposition', `attachment; filename="${fileKey}"`)
       .header('Content-Type', mimeType)

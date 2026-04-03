@@ -2,7 +2,8 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react'
 
-const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
+const API = process.env.NEXT_PUBLIC_API_URL || '/geoai-2026'
+const APP_BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH || '/geoai-2026'
 
 export interface TeamInfo {
   id: string
@@ -55,7 +56,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = async () => {
     await fetch(`${API}/api/v1/auth/logout`, { method: 'POST', credentials: 'include' })
     setUser(null)
-    window.location.href = '/'
+    window.location.href = APP_BASE_PATH
   }
 
   const hasRole = (role: string) => user?.roles?.includes(role) ?? false

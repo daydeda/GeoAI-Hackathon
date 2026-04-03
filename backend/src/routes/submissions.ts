@@ -2,7 +2,7 @@ import { FastifyInstance } from 'fastify'
 import { prisma } from '../plugins/prisma.js'
 import { authenticate, JwtPayload } from '../middleware/auth.js'
 import { writeAuditLog } from '../services/auditLog.js'
-import { minioClient, BUCKET, getPublicUrl } from '../services/storage.js'
+import { minioClient, BUCKET } from '../services/storage.js'
 
 function isDeadlinePassed(): boolean {
   const deadline = process.env.SUBMISSION_DEADLINE_ISO

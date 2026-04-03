@@ -22,9 +22,32 @@ import os from 'os'
 
 const PORT = Number(process.env.PORT) || 4000
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000'
+const DB_CONNECT_RETRIES = Number(process.env.DB_CONNECT_RETRIES) || 30
+const DB_CONNECT_DELAY_MS = Number(process.env.DB_CONNECT_DELAY_MS) || 2000
+
+async function connectPrismaWithRetry() {
+  let lastError: unknown
+
+  for (let attempt = 1; attempt <= DB_CONNECT_RETRIES; attempt++) {
+    try {
+      await prisma.$connect()
+      return
+    } catch (err) {
+      lastError = err
+      console.error(`[DB] Connection attempt ${attempt}/${DB_CONNECT_RETRIES} failed`)
+
+      if (attempt < DB_CONNECT_RETRIES) {
+        await new Promise((resolve) => setTimeout(resolve, DB_CONNECT_DELAY_MS))
+      }
+    }
+  }
+
+  throw lastError
+}
 
 export async function buildServer() {
   const app = Fastify({
+    trustProxy: true,
     logger: {
       level: process.env.LOG_LEVEL || 'info',
       transport: process.env.NODE_ENV === 'development'
@@ -105,7 +128,7 @@ export async function buildServer() {
 
 async function start() {
   try {
-    await prisma.$connect()
+    await connectPrismaWithRetry()
     await ensureBucket()
     const app = await buildServer()
     await app.listen({ port: PORT, host: '0.0.0.0' })

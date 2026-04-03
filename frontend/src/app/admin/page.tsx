@@ -2,9 +2,10 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import { AuthProvider } from '@/contexts/AuthContext'
+import { useAlert } from '@/contexts/AlertContext'
 import Link from 'next/link'
 
-const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
+const API = process.env.NEXT_PUBLIC_API_URL || '/geoai-2026'
 
 interface UserRow { id: string; email: string; fullName: string; roles: string[] }
 interface TeamRow { id: string; name: string; institution: string; track: string; currentStatus: string; members: unknown[]; score?: number; submissions?: unknown[] }
@@ -25,12 +26,14 @@ export default function AdminPage() {
 }
 
 function AdminContent() {
+  const { showAlert } = useAlert()
   const [users, setUsers] = useState<UserRow[]>([])
   const [totalUsers, setTotalUsers] = useState(0)
   const [teams, setTeams] = useState<TeamRow[]>([])
   const [logs, setLogs] = useState<LogRow[]>([])
   const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(true)
+  const [confirmAction, setConfirmAction] = useState<{ type: 'PROMOTE' | 'DISQUALIFY' | 'REVOKE' | 'RESTORE', teamId: string, teamName: string } | null>(null)
 
   const fetchAll = useCallback(async () => {
     setLoading(true)
@@ -48,7 +51,14 @@ function AdminContent() {
       clearTimeout(timeoutId)
       
       if (usersRes.ok) { const d = await usersRes.json(); setUsers(d.data || []); setTotalUsers(d.total || 0); }
-      if (teamsRes.ok) { const d = await teamsRes.json(); setTeams(d || []); }
+      if (teamsRes.ok) { 
+        const d = await teamsRes.json(); 
+        const formattedTeams = (d || []).map((t: any) => {
+          const activeSub = t.submissions?.find((s: any) => s.isActive);
+          return { ...t, score: activeSub?.scoreAggregate?.totalWeighted ?? undefined };
+        });
+        setTeams(formattedTeams); 
+      }
       if (logsRes.ok) { const d = await logsRes.json(); setLogs(d.data || []); }
     } catch (err) {
       if ((err as Error).name === 'AbortError') {
@@ -78,16 +88,13 @@ function AdminContent() {
     } catch { }
   }
 
-  const promoteFinalist = async (teamId: string) => {
+  const executeConfirmAction = async () => {
+    if (!confirmAction) return;
+    const { type, teamId } = confirmAction;
+    setConfirmAction(null);
     try {
-      await fetch(`${API}/api/v1/admin/teams/${teamId}/status`, { method: 'PATCH', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: 'FINALIST' }) })
-      fetchAll()
-    } catch { }
-  }
-
-  const disqualify = async (teamId: string) => {
-    try {
-      await fetch(`${API}/api/v1/admin/teams/${teamId}/status`, { method: 'PATCH', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: 'REJECTED' }) })
+      const status = (type === 'PROMOTE' || type === 'RESTORE') ? 'FINALIST' : 'REJECTED';
+      await fetch(`${API}/api/v1/admin/teams/${teamId}/status`, { method: 'PATCH', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status }) })
       fetchAll()
     } catch { }
   }
@@ -104,7 +111,7 @@ function AdminContent() {
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({}));
         console.error('Export failed:', errorData);
-        alert(`Export failed: ${errorData.message || 'Unknown error'}`);
+        showAlert(`Export failed: ${errorData.message || 'Unknown error'}`, 'error');
         return;
       }
 
@@ -130,7 +137,7 @@ function AdminContent() {
       URL.revokeObjectURL(url)
     } catch (err) {
       console.error('Export exception:', err)
-      alert('An unexpected error occurred during export.')
+      showAlert('An unexpected error occurred during export.', 'error')
     }
   }
 
@@ -138,6 +145,41 @@ function AdminContent() {
 
   return (
     <div style={{ padding: '40px 60px', maxWidth: 1440, margin: '0 auto', background: 'var(--bg-base)', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+      
+      {/* Confirmation Modal */}
+      {confirmAction && (
+        <div style={{ 
+          position: 'fixed', inset: 0, background: 'rgba(5, 13, 26, 0.85)', zIndex: 99999, display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(12px)', transition: 'all 0.3s ease'
+        }}>
+           <div style={{ 
+             background: 'var(--bg-surface)', border: `1px solid rgba(255, 255, 255, 0.1)`, padding: '32px 40px', borderRadius: 8, display: 'flex', flexDirection: 'column', gap: 24, boxShadow: `0 24px 64px rgba(0,0,0,0.4)`, animation: 'appear 0.3s cubic-bezier(0.16, 1, 0.3, 1)', maxWidth: 400
+           }}>
+              <div>
+                 <h2 className="font-display" style={{ fontSize: 20, color: 'white', marginBottom: 8, fontWeight: 700, letterSpacing: '0.05em' }}>
+                   CONFIRM ACTION
+                 </h2>
+                 <p style={{ color: 'var(--text-secondary)', fontSize: 13, lineHeight: 1.6, margin: 0 }}>
+                   Are you sure you want to <strong>{confirmAction.type}</strong> team <strong>{confirmAction.teamName}</strong>?
+                 </p>
+              </div>
+              <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', marginTop: 8 }}>
+                <button 
+                  onClick={() => setConfirmAction(null)}
+                  style={{ background: 'transparent', color: 'var(--text-muted)', border: '1px solid var(--border-subtle)', padding: '8px 24px', fontSize: 11, fontWeight: 600, letterSpacing: '0.05em', cursor: 'pointer', borderRadius: 2 }}
+                >
+                  CANCEL
+                </button>
+                <button 
+                  onClick={executeConfirmAction}
+                  style={{ background: confirmAction.type === 'PROMOTE' || confirmAction.type === 'RESTORE' ? 'var(--accent-cyan)' : 'var(--accent-red)', color: 'black', border: 'none', padding: '8px 24px', fontSize: 11, fontWeight: 700, letterSpacing: '0.05em', cursor: 'pointer', borderRadius: 2 }}
+                >
+                  CONFIRM
+                </button>
+              </div>
+           </div>
+        </div>
+      )}
+
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 32 }}>
         <div>
@@ -257,23 +299,23 @@ function AdminContent() {
                       {t.currentStatus === 'FINALIST' ? (
                         <div style={{ display: 'inline-flex', alignItems: 'center', gap: 12 }}>
                           <span style={{ color: 'var(--accent-green)', padding: '6px 12px', background: 'rgba(0,230,118,0.1)', border: '1px solid var(--accent-green)', borderRadius: 2, fontSize: 11, fontWeight: 700, letterSpacing: '0.05em' }}>✓ FINALIST</span>
-                          <button onClick={() => disqualify(t.id)} style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', fontSize: 10, cursor: 'pointer', textDecoration: 'underline' }}>REVOKE</button>
+                          <button onClick={() => setConfirmAction({ type: 'REVOKE', teamId: t.id, teamName: t.name })} style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', fontSize: 10, cursor: 'pointer', textDecoration: 'underline' }}>REVOKE</button>
                         </div>
                       ) : t.currentStatus === 'REJECTED' ? (
                         <div style={{ display: 'inline-flex', alignItems: 'center', gap: 12 }}>
                           <span style={{ color: 'var(--accent-red)', padding: '6px 12px', background: 'rgba(255,23,68,0.1)', border: '1px solid var(--accent-red)', borderRadius: 2, fontSize: 11, fontWeight: 700, letterSpacing: '0.05em' }}>⨯ DISQUALIFIED</span>
-                          <button onClick={() => promoteFinalist(t.id)} style={{ background: 'transparent', border: '1px solid var(--accent-cyan)', color: 'var(--accent-cyan)', padding: '6px 12px', fontSize: 10, cursor: 'pointer', borderRadius: 2 }}>RESTORE TO FINALIST</button>
+                          <button onClick={() => setConfirmAction({ type: 'RESTORE', teamId: t.id, teamName: t.name })} style={{ background: 'transparent', border: '1px solid var(--accent-cyan)', color: 'var(--accent-cyan)', padding: '6px 12px', fontSize: 10, cursor: 'pointer', borderRadius: 2 }}>RESTORE TO FINALIST</button>
                         </div>
                       ) : (
                         <div style={{ display: 'inline-flex', gap: 12 }}>
                           <button 
-                            onClick={() => promoteFinalist(t.id)}
+                            onClick={() => setConfirmAction({ type: 'PROMOTE', teamId: t.id, teamName: t.name })}
                             style={{ background: 'var(--accent-cyan)', border: '1px solid var(--accent-cyan)', color: 'black', padding: '8px 16px', fontSize: 10, letterSpacing: '0.05em', fontWeight: 600, cursor: 'pointer' }}
                           >
                             PROMOTE
                           </button>
                           <button 
-                            onClick={() => disqualify(t.id)}
+                            onClick={() => setConfirmAction({ type: 'DISQUALIFY', teamId: t.id, teamName: t.name })}
                             style={{ background: 'transparent', border: '1px solid rgba(255, 23, 68, 0.4)', color: 'var(--text-muted)', padding: '8px 16px', fontSize: 10, letterSpacing: '0.05em', fontWeight: 600, cursor: 'pointer' }}
                           >
                             DISQUALIFY

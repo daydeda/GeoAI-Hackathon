@@ -54,6 +54,7 @@ services:
       MINIO_PORT: "9000"
     ports:
       - "4000:4000"
+      - "5566:5555"
     depends_on:
       db:
         condition: service_healthy

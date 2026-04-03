@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { AuthProvider, useAuth } from '@/contexts/AuthContext'
 import Link from 'next/link'
 
-const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
+const API = process.env.NEXT_PUBLIC_API_URL || '/geoai-2026'
 
 function InviteContent({ code }: { code: string }) {
   const { user, loading: authLoading, refetch } = useAuth()

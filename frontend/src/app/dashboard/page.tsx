@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
+import { useAlert } from '@/contexts/AlertContext'
 
-const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
+const API = process.env.NEXT_PUBLIC_API_URL || '/geoai-2026'
 const DEADLINE = process.env.NEXT_PUBLIC_SUBMISSION_DEADLINE || '2026-05-01T23:59:59+07:00'
 
 function useCountdown(target: string) {
@@ -25,6 +26,7 @@ function DashboardContent() {
   const { user, loading } = useAuth()
   const [teamData, setTeamData] = useState<Record<string, unknown> | null>(null)
   const [copied, setCopied] = useState(false)
+  const { showAlert } = useAlert()
   const { h, m, s } = useCountdown(DEADLINE)
 
   const fetchTeam = () => {
@@ -45,7 +47,25 @@ function DashboardContent() {
     if (res.ok) fetchTeam()
     else {
       const d = await res.json()
-      alert(d.error || 'Failed to generate invite code')
+      showAlert(d.error || 'Failed to generate invite code', 'error')
+    }
+  }
+
+  const downloadPermissionLetter = async () => {
+    if (!teamData?.id) return
+    const res = await fetch(`${API}/api/v1/teams/${teamData.id}/documents/permission-letter`, { credentials: 'include' })
+    if (res.ok) {
+      const blob = await res.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `PermissionLetter_${teamData.name || 'Team'}.pdf`
+      document.body.appendChild(a)
+      a.click()
+      window.URL.revokeObjectURL(url)
+    } else {
+      const d = await res.json().catch(() => ({ error: 'Permission letter not yet available or failed to generate.' }))
+      showAlert(d.error || 'Permission letter service currently unavailable.', 'warning')
     }
   }
 
@@ -55,7 +75,7 @@ function DashboardContent() {
     </div>
   )
 
-  const team = teamData as { name?: string; institution?: string; track?: string; members?: unknown[]; inviteCode?: string; memberCount?: number; maxMembers?: number } | null
+  const team = teamData as { id?: string; name?: string; institution?: string; track?: string; members?: unknown[]; inviteCode?: string; memberCount?: number; maxMembers?: number; status?: string } | null
   const members = (team?.members as Array<{ fullName?: string; isLeader?: boolean; email?: string }>) ?? []
   const submissionStatus = (teamData as { activeSubmission?: unknown } | null)?.activeSubmission
   const hasTeam = !!team
@@ -128,6 +148,22 @@ function DashboardContent() {
                     {team?.memberCount ?? members.length} / {team?.maxMembers ?? 4}
                   </div>
                 </div>
+
+                {team?.status === 'FINALIST' && (
+                  <div style={{ padding: '16px', background: 'rgba(0, 230, 118, 0.05)', border: '1px solid var(--accent-green)', borderRadius: 8, marginBottom: 16 }}>
+                    <div className="font-mono" style={{ fontSize: 10, color: 'var(--accent-green)', marginBottom: 8, letterSpacing: '0.05em' }}>ONSITE ROUND QUALIFIED</div>
+                    <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 12, lineHeight: 1.5 }}>
+                      Congratulations! Your team has advanced to the Finalist round. Please download the auto-generated Permission/Leave letter below.
+                    </p>
+                    <button 
+                      onClick={downloadPermissionLetter}
+                      className="btn btn-primary" 
+                      style={{ width: '100%', background: 'var(--accent-green)', color: 'black', fontSize: 12, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 8 }}
+                    >
+                      <span style={{ fontSize: 16 }}>⤓</span> DOWNLOAD THE PERMISSION LETTER
+                    </button>
+                  </div>
+                )}
               </>
             ) : (
               <a href="/team" className="btn btn-primary" style={{ display: 'block', textAlign: 'center', textDecoration: 'none', marginBottom: 12 }}>

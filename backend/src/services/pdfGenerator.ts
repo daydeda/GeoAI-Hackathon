@@ -1,4 +1,7 @@
-import { PDFDocument, rgb, StandardFonts, PageSizes } from 'pdf-lib'
+import { PDFDocument, rgb, PageSizes } from 'pdf-lib'
+import fontkit from '@pdf-lib/fontkit'
+import { readFileSync } from 'fs'
+import { join } from 'path'
 import { Team, User, TeamMember } from '@prisma/client'
 
 type TeamWithMembers = Team & {
@@ -16,11 +19,19 @@ const ORGANIZER_ORG = process.env.PDF_ORGANIZER_ORG || 'GEOAI Organizing Committ
 
 export async function generatePermissionLetter({ team }: { team: TeamWithMembers }): Promise<Uint8Array> {
   const pdfDoc = await PDFDocument.create()
+  pdfDoc.registerFontkit(fontkit)
+
+  // Load custom fonts for Thai support
+  // In Docker, fonts are in /app/fonts. In local dev, they are in backend/fonts.
+  const fontPath = join(process.cwd(), 'fonts')
+  const regularFontBytes = readFileSync(join(fontPath, 'Sarabun-Regular.ttf'))
+  const boldFontBytes = readFileSync(join(fontPath, 'Sarabun-Bold.ttf'))
+
+  const regularFont = await pdfDoc.embedFont(regularFontBytes)
+  const boldFont = await pdfDoc.embedFont(boldFontBytes)
+
   const page = pdfDoc.addPage(PageSizes.A4)
   const { width, height } = page.getSize()
-
-  const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold)
-  const regularFont = await pdfDoc.embedFont(StandardFonts.Helvetica)
 
   const CYAN = rgb(0, 0.898, 1)     // #00e5ff
   const NAVY = rgb(0.02, 0.078, 0.102)  // #050d1a

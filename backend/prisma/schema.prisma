@@ -135,6 +135,7 @@ model Submission {
   version         Int       @default(1)
   isActive        Boolean   @default(true)
   gistdaDeclared  Boolean   @default(false)
+  abstract        String?   // Summarized content of the proposal PDF
   submittedAt     DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 
@@ -207,7 +208,7 @@ model JudgeScore {
 model ScoreAggregate {
   id             String   @id @default(uuid())
   submissionId   String   @unique
-  teamId         String   @unique
+  teamId         String
   totalWeighted  Float
   judgeCount     Int
   calculatedAt   DateTime @default(now())

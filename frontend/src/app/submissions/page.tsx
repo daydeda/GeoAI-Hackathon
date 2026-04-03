@@ -5,12 +5,12 @@ import { AuthProvider, useAuth } from '@/contexts/AuthContext'
 import AppShell from '@/components/AppShell'
 import { useDropzone } from 'react-dropzone'
 
-const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
+const API = process.env.NEXT_PUBLIC_API_URL || '/geoai-2026'
 
 interface Submission { id: string; version: number; gistdaDeclared: boolean; submittedAt: string; moderatorReview?: { status: string; note?: string } }
 
 function SubmissionsContent() {
-  const { user } = useAuth()
+  const { user, loading: authLoading } = useAuth()
   const [history, setHistory] = useState<Submission[]>([])
   const [hasTeam, setHasTeam] = useState(true)
   const [loading, setLoading] = useState(true)
@@ -21,15 +21,20 @@ function SubmissionsContent() {
   const [error, setError] = useState('')
 
   const fetchHistory = useCallback(async () => {
+    if (authLoading) return
     try {
-      if (!user?.team) { setHasTeam(false); return }
+      if (!user?.team) { 
+        setHasTeam(false)
+        setLoading(false)
+        return 
+      }
       setHasTeam(true)
       const res = await fetch(`${API}/api/v1/submissions`, { credentials: 'include' })
       if (res.ok) { const d = await res.json(); setHistory(d.data ?? []) }
     } finally {
       setLoading(false)
     }
-  }, [user])
+  }, [user, authLoading])
 
   useEffect(() => { fetchHistory() }, [fetchHistory])
 
@@ -74,7 +79,7 @@ function SubmissionsContent() {
     }
   }
 
-  if (loading) return <div style={{ padding: 40, color: 'var(--text-muted)' }}>Synching…</div>
+  if (loading || authLoading) return <div style={{ padding: 40, color: 'var(--text-muted)' }}>Synching…</div>
 
   if (!hasTeam) return (
     <div style={{ padding: '60px 32px', textAlign: 'center' }}>

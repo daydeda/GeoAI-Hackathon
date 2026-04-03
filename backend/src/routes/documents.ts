@@ -50,7 +50,7 @@ export async function documentRoutes(app: FastifyInstance) {
 
     const team = await prisma.team.findUnique({
       where: { id: teamId },
-      include: { members: true },
+      include: { members: { include: { user: true } }, leader: true },
     })
 
     if (!team) return reply.status(404).send({ error: 'Team not found' })
@@ -64,15 +64,31 @@ export async function documentRoutes(app: FastifyInstance) {
       return reply.status(403).send({ error: 'Only finalist team members can download permission letters' })
     }
 
-    const doc = await prisma.document.findFirst({
+    let doc = await prisma.document.findFirst({
       where: { teamId, type: 'PERMISSION_LETTER' },
       orderBy: { version: 'desc' },
     })
 
+    // Fail-safe: Auto-generate if missing for a Finalist
+    if (!doc && team.currentStatus === 'FINALIST') {
+      try {
+        const pdfBytes = await generatePermissionLetter({ team })
+        const fileKey = `documents/${teamId}/permission-letter-v1.pdf`
+        await minioClient.putObject(BUCKET, fileKey, Buffer.from(pdfBytes), pdfBytes.length, { 'Content-Type': 'application/pdf' })
+        doc = await prisma.document.create({ data: { teamId, type: 'PERMISSION_LETTER', fileKey, version: 1 } })
+      } catch (err) {
+        console.error('[DocumentService] Failsafe generation failed:', err)
+        return reply.status(500).send({ error: 'Failed to generate document record' })
+      }
+    }
+
     if (!doc) return reply.status(404).send({ error: 'Document not yet generated' })
 
-    const signedUrl = await minioClient.presignedGetObject(BUCKET, doc.fileKey, 60 * 60) // 1 hour
-
-    return { id: doc.id, version: doc.version, generatedAt: doc.generatedAt, downloadUrl: signedUrl }
+    const stream = await minioClient.getObject(BUCKET, doc.fileKey)
+    
+    reply.header('Content-Type', 'application/pdf')
+    reply.header('Content-Disposition', `inline; filename="permission-letter-${team.name}.pdf"`)
+    
+    return reply.send(stream)
   })
 }

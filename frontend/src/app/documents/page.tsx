@@ -5,7 +5,7 @@ import { AuthProvider } from '@/contexts/AuthContext'
 import NavRail from '@/components/NavRail'
 import { useAuth } from '@/contexts/AuthContext'
 
-const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
+const API = process.env.NEXT_PUBLIC_API_URL || '/geoai-2026'
 
 function DocumentVaultContent() {
   const { user } = useAuth()

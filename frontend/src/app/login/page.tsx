@@ -1,10 +1,33 @@
 'use client'
 
 import Link from 'next/link'
+import { useEffect, useState } from 'react'
 
-const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
+const API = process.env.NEXT_PUBLIC_API_URL || '/geoai-2026'
+
+function getLoginErrorMessage(code: string | null) {
+  if (!code) return null
+
+  switch (code) {
+    case 'oauth_denied':
+      return 'Google sign-in was cancelled or denied. Please try again.'
+    case 'profile_missing':
+      return 'Google profile data is incomplete. Please use a different Google account.'
+    case 'auth_failed':
+      return 'Sign-in could not be completed on the server. Please try again in a few seconds.'
+    default:
+      return 'Sign-in failed. Please try again.'
+  }
+}
 
 export default function LoginPage() {
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    setErrorMessage(getLoginErrorMessage(params.get('error')))
+  }, [])
+
   const handleGoogleLogin = () => {
     window.location.href = `${API}/api/v1/auth/google/start`
   }
@@ -55,6 +78,14 @@ export default function LoginPage() {
         <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 32, lineHeight: 1.6 }}>
           Sign in with your Google account to access the competition platform. Only Google OAuth is supported.
         </p>
+
+        {errorMessage && (
+          <div style={{ marginBottom: 20, padding: 12, background: 'rgba(255, 82, 82, 0.08)', border: '1px solid rgba(255, 82, 82, 0.35)', borderRadius: 8 }}>
+            <p style={{ margin: 0, fontSize: 12, color: '#ff9f9f', lineHeight: 1.5 }}>
+              {errorMessage}
+            </p>
+          </div>
+        )}
 
         <button
           onClick={handleGoogleLogin}

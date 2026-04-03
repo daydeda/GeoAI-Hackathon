@@ -5,13 +5,13 @@ import { AuthProvider } from '@/contexts/AuthContext'
 import AppShell from '@/components/AppShell'
 import { useAuth, TeamInfo } from '@/contexts/AuthContext'
 
-const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
+const API = process.env.NEXT_PUBLIC_API_URL || '/geoai-2026'
 
 interface Member { fullName: string; email: string; isLeader: boolean; userId: string }
-interface TeamData extends TeamInfo { institution: string; _count: { members: number }; members: Member[]; inviteCode: string }
+interface TeamData extends TeamInfo { institution: string; memberCount: number; members: Member[]; inviteCode: string }
 
 function TeamContent() {
-  const { user, refetch: refetchUser } = useAuth()
+  const { user, loading: authLoading, refetch: refetchUser } = useAuth()
   const [team, setTeam] = useState<TeamData | null>(null)
   const [loading, setLoading] = useState(true)
   const [copied, setCopied] = useState(false)
@@ -42,8 +42,13 @@ function TeamContent() {
       method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name, institution, track })
     })
-    if (res.ok) { await fetchTeam(); await refetchUser() }
-    else { const d = await res.json(); setError(d.message || 'Failed to create team') }
+    if (res.ok) { 
+      await fetchTeam()
+      await refetchUser() 
+    } else { 
+      const d = await res.json()
+      setError(d.error || d.message || 'Failed to create team') 
+    }
   }
 
   const joinTeam = async (e: React.FormEvent) => {
@@ -53,8 +58,13 @@ function TeamContent() {
       method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ inviteCode })
     })
-    if (res.ok) { await fetchTeam(); await refetchUser() }
-    else { const d = await res.json(); setError(d.message || 'Failed to join team. Check code or team limit.') }
+    if (res.ok) { 
+      await fetchTeam()
+      await refetchUser() 
+    } else { 
+      const d = await res.json()
+      setError(d.error || d.message || 'Failed to join team. Check code or team limit.') 
+    }
   }
 
   const removeMember = async (userId: string) => {
@@ -78,7 +88,7 @@ function TeamContent() {
     }
   }
 
-  if (loading) return <div style={{ padding: 40, color: 'var(--text-muted)' }}>Synching with command…</div>
+  if (loading || authLoading) return <div style={{ padding: 40, color: 'var(--text-muted)' }}>Synching with command…</div>
 
   return (
     <div style={{ padding: 32, maxWidth: 960 }}>
@@ -134,7 +144,7 @@ function TeamContent() {
           <div className="card" style={{ padding: 24 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
               <h2 className="font-display" style={{ fontSize: 24 }}>{team.name}</h2>
-              <span className="badge badge-pass">{team._count?.members || team.members.length} / 4 DEPLOYED</span>
+              <span className="badge badge-pass">{team.memberCount || team.members.length} / 4 DEPLOYED</span>
             </div>
 
             <div style={{ padding: 16, background: 'var(--bg-elevated)', borderRadius: 8, marginBottom: 24 }}>

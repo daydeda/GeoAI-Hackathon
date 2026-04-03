@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import './globals.css'
+import { AlertProvider } from '@/contexts/AlertContext'
 
 export const metadata: Metadata = {
   title: 'GEOAI Hackathon — AGRI-DISASTER AI',
@@ -15,7 +16,11 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <AlertProvider>
+          {children}
+        </AlertProvider>
+      </body>
     </html>
   )
 }

@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { AuthProvider } from '@/contexts/AuthContext'
 import AppShell from '@/components/AppShell'
 
-const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
+const API = process.env.NEXT_PUBLIC_API_URL || '/geoai-2026'
 
 interface Team { name: string; track: string }
 interface File { fileKey: string; originalName: string }
