@@ -1,0 +1,33 @@
+# ─── Stage 1: Dependencies ──────────────────────────────────
+FROM node:22-alpine AS deps
+WORKDIR /app
+COPY package.json package-lock.json* ./
+RUN npm install --prefer-offline
+
+# ─── Stage 2: Builder ────────────────────────────────────────
+FROM node:22-alpine AS builder
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+RUN npx prisma generate
+RUN npm run build
+
+# ─── Stage 3: Runner ─────────────────────────────────────────
+FROM node:22-alpine AS runner
+WORKDIR /app
+
+# Security: non-root user
+RUN addgroup --system --gid 1001 geoai && \
+    adduser --system --uid 1001 geoai
+
+# Only production artifacts
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/package.json ./
+COPY --from=builder /app/prisma ./prisma
+
+USER geoai
+
+EXPOSE 4000
+
+CMD ["node", "dist/server.js"]
