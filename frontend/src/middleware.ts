@@ -2,19 +2,27 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
 // Add paths that require authentication here
-const protectedPaths = ['/admin', '/mod', '/judge', '/team', '/submissions', '/resources', '/dashboard', '/documents', '/invite']
+const protectedPaths = ['/admin', '/moderator', '/mod', '/judge', '/team', '/submissions', '/resources', '/dashboard', '/documents', '/invite']
+
+function withBasePath(basePath: string, path: string) {
+  if (!basePath) return path
+  return `${basePath}${path}`
+}
 
 export function middleware(request: NextRequest) {
   const token = request.cookies.get('geoai_token')
-  const { pathname } = request.nextUrl
+  const { pathname, basePath } = request.nextUrl
+  const normalizedPath = basePath && pathname.startsWith(basePath)
+    ? pathname.slice(basePath.length) || '/'
+    : pathname
   
   // Check if the current path requires authentication
-  const isProtectedPath = protectedPaths.some(path => pathname.startsWith(path))
+  const isProtectedPath = protectedPaths.some(path => normalizedPath.startsWith(path))
 
   if (isProtectedPath) {
     if (!token) {
       // Not logged in -> redirect to login
-      return NextResponse.redirect(new URL('/login', request.url))
+      return NextResponse.redirect(new URL(withBasePath(basePath, '/login'), request.url))
     }
 
     // Optional: We can decode the JWT to do basic Role-Based routing here
@@ -35,14 +43,14 @@ export function middleware(request: NextRequest) {
         const roles: string[] = payload.roles || []
 
         // Basic RBAC routing based on decoded roles
-        if (pathname.startsWith('/admin') && !(roles.includes('ADMIN') || roles.includes('MODERATOR'))) {
-          return NextResponse.redirect(new URL('/team', request.url))
+        if (normalizedPath.startsWith('/admin') && !(roles.includes('ADMIN') || roles.includes('MODERATOR'))) {
+          return NextResponse.redirect(new URL(withBasePath(basePath, '/team'), request.url))
         }
-        if (pathname.startsWith('/judge') && !(roles.includes('JUDGE') || roles.includes('ADMIN') || roles.includes('MODERATOR'))) {
-          return NextResponse.redirect(new URL('/team', request.url))
+        if (normalizedPath.startsWith('/judge') && !(roles.includes('JUDGE') || roles.includes('ADMIN') || roles.includes('MODERATOR'))) {
+          return NextResponse.redirect(new URL(withBasePath(basePath, '/team'), request.url))
         }
-        if (pathname.startsWith('/mod') && !(roles.includes('MODERATOR') || roles.includes('ADMIN'))) {
-          return NextResponse.redirect(new URL('/team', request.url))
+        if ((normalizedPath.startsWith('/mod') || normalizedPath.startsWith('/moderator')) && !(roles.includes('MODERATOR') || roles.includes('ADMIN'))) {
+          return NextResponse.redirect(new URL(withBasePath(basePath, '/team'), request.url))
         }
       }
     } catch (err) {
