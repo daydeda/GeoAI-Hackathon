@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { AuthProvider } from '@/contexts/AuthContext'
 import AppShell from '@/components/AppShell'
+import { Check, X, ChevronDown, RefreshCw } from 'lucide-react'
 
 const API = process.env.NEXT_PUBLIC_API_URL || '/geoai-2026'
 
@@ -15,8 +16,6 @@ function ModeratorContent() {
   const [submissions, setSubmissions] = useState<Submission[]>([])
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
-
-  // Filters
   const [trackFilter, setTrackFilter] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
   const [search, setSearch] = useState('')
@@ -48,127 +47,102 @@ function ModeratorContent() {
         body: JSON.stringify({ status, note: '' })
       })
       if (res.ok) fetchSubmissions()
-    } catch { }
+    } catch (e) { console.error('Review error:', e) }
   }
 
-  const passed = submissions.filter(s => s.moderatorReview?.status === 'PASS').length
-  const failed = submissions.filter(s => s.moderatorReview?.status === 'FAIL').length
-  const pending = submissions.length - passed - failed
-  
-  const filtered = submissions.filter(s => search === '' || s.team.name.toLowerCase().includes(search.toLowerCase()))
-
   return (
-    <div style={{ padding: '40px 60px', maxWidth: 1440, margin: '0 auto', background: 'var(--bg-base)', minHeight: '100vh' }}>
-      <div className="font-mono" style={{ fontSize: 11, color: 'var(--accent-green)', marginBottom: 8, letterSpacing: '0.1em' }}>INTERNAL OPERATIONS</div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 40 }}>
-        <h1 className="font-display" style={{ fontSize: 44, color: 'white' }}>Moderator Dashboard</h1>
-        <div style={{ textAlign: 'right' }}>
-          <div className="font-mono" style={{ fontSize: 10, color: 'var(--text-muted)', marginBottom: 4 }}>SYSTEM_STATUS: NOMINAL</div>
-          <div style={{ fontSize: 12, color: 'var(--accent-green)', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 6 }}>
-            <span style={{ width: 8, height: 8, background: 'var(--accent-green)', borderRadius: '50%' }} /> OPERATIONAL
+    <div className="flex flex-col min-h-screen bg-[var(--bg-base)]">
+      {/* Header */}
+      <div className="border-b border-[var(--border-subtle)] bg-[var(--bg-surface)] px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+          <div>
+            <h1 className="font-display text-xl sm:text-2xl lg:text-3xl text-white font-bold">Content Moderation</h1>
+            <p className="text-xs sm:text-sm text-[var(--text-secondary)] mt-1 sm:mt-2">Review and approve submissions</p>
+          </div>
+          <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm">
+            <span className="text-[var(--text-muted)]">Submissions: <span className="text-[var(--accent-cyan)] font-semibold">{total}</span></span>
           </div>
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 0, border: '1px solid rgba(255,255,255,0.05)', marginBottom: 32 }}>
-        {[
-          { label: 'TOTAL PROPOSALS', value: total, span: '+12%', color: 'white' },
-          { label: 'PENDING REVIEWS', value: pending, span: 'Critical', color: 'var(--accent-amber)' },
-          { label: 'TOTAL PASSED', value: passed, span: '89.5%', color: 'var(--accent-green)' },
-          { label: 'TOTAL FAILED', value: failed, span: '27.2%', color: 'var(--accent-red)' }
-        ].map((stat, i) => (
-          <div key={i} style={{ padding: '24px 32px', borderRight: i < 3 ? '1px solid rgba(255,255,255,0.05)' : 'none', background: 'var(--bg-surface)' }}>
-            <div className="font-mono" style={{ fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.1em', marginBottom: 12 }}>{stat.label}</div>
-            <div className="font-display" style={{ fontSize: 40, color: stat.color, display: 'flex', alignItems: 'baseline', gap: 12 }}>
-              {loading ? '...' : stat.value}
-              <span style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 400 }}>{stat.span}</span>
+      {/* Stats Grid */}
+      <div className="border-b border-[var(--border-subtle)] bg-[rgba(255,255,255,0.01)] px-4 sm:px-6 lg:px-8 py-3 sm:py-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3">
+          {[
+            { label: 'PENDING', value: submissions.filter(s => !s.moderatorReview).length, color: 'text-[var(--accent-amber)]' },
+            { label: 'APPROVED', value: submissions.filter(s => s.moderatorReview?.status === 'PASS').length, color: 'text-[var(--accent-green)]' },
+            { label: 'REJECTED', value: submissions.filter(s => s.moderatorReview?.status === 'FAIL').length, color: 'text-[#ff6275]' },
+            { label: 'TOTAL', value: total, color: 'text-white' },
+          ].map((stat, i) => (
+            <div key={i} className="bg-[var(--bg-base)] p-2 sm:p-3 lg:p-4 rounded border border-[var(--border-subtle)]">
+              <div className="text-[7px] sm:text-[8px] lg:text-xs text-[var(--text-muted)] tracking-widest uppercase mb-1">{stat.label}</div>
+              <div className={`text-lg sm:text-2xl lg:text-3xl font-bold ${stat.color}`}>{stat.value}</div>
             </div>
-          </div>
-        ))}
-      </div>
-
-      <div style={{ background: 'var(--bg-surface)', padding: '20px 32px', display: 'flex', gap: 24, alignItems: 'center', marginBottom: 24 }}>
-        <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.1em', color: 'white' }}>≡ FILTERS</div>
-        <select style={{ background: 'transparent', border: 'none', borderBottom: '1px solid rgba(255,255,255,0.1)', color: 'white', padding: '8px 24px 8px 0', outline: 'none' }} value={trackFilter} onChange={e => setTrackFilter(e.target.value)}>
-          <option value="">ALL TRACKS</option>
-          <option value="SMART_AGRICULTURE">Smart Agriculture</option>
-          <option value="DISASTER_FLOOD_RESPONSE">Disaster Response</option>
-        </select>
-        <select style={{ background: 'transparent', border: 'none', borderBottom: '1px solid rgba(255,255,255,0.1)', color: 'white', padding: '8px 24px 8px 0', outline: 'none' }} value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
-          <option value="">ALL STATUS</option>
-          <option value="PENDING">Pending</option>
-          <option value="PASS">Passed</option>
-          <option value="FAIL">Failed</option>
-        </select>
-        <div style={{ flex: 1, display: 'flex', justifyContent: 'flex-end' }}>
-          <input 
-            placeholder="Search team names..." 
-            value={search} onChange={e => setSearch(e.target.value)}
-            style={{ background: 'var(--bg-base)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', padding: '10px 16px', width: 280, borderRadius: 2 }} 
-          />
+          ))}
         </div>
       </div>
 
-      <div style={{ background: 'var(--bg-surface)' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+      {/* Filters */}
+      <div className="border-b border-[var(--border-subtle)] bg-[var(--bg-surface)] px-4 sm:px-6 lg:px-8 py-3 sm:py-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 flex-wrap">
+            <select value={trackFilter} onChange={e => setTrackFilter(e.target.value)} className="bg-[var(--bg-base)] border border-[var(--border-subtle)] rounded px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm text-white outline-none">
+              <option value="">ALL TRACKS</option>
+              <option value="track1">Track 1</option>
+              <option value="track2">Track 2</option>
+            </select>
+            <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="bg-[var(--bg-base)] border border-[var(--border-subtle)] rounded px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm text-white outline-none">
+              <option value="">ALL STATUS</option>
+              <option value="PASS">Approved</option>
+              <option value="FAIL">Rejected</option>
+            </select>
+          </div>
+          <div className="flex items-center gap-2">
+            <input placeholder="Search..." value={search} onChange={e => setSearch(e.target.value)} className="bg-[var(--bg-base)] border border-[var(--border-subtle)] rounded px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm text-white placeholder-[var(--text-muted)] outline-none flex-1 sm:flex-initial sm:w-40" />
+            <button onClick={() => fetchSubmissions()} className="p-1.5 sm:p-2 bg-[var(--bg-base)] border border-[var(--border-subtle)] rounded text-white hover:bg-[var(--bg-elevated)] transition">
+              <RefreshCw size={16} />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Submissions Table */}
+      <div className="flex-1 overflow-x-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+        <table className="w-full text-left text-xs sm:text-sm">
           <thead>
-            <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-              <th style={{ padding: '20px 32px', textAlign: 'left', fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.1em' }}>TEAM NAME</th>
-              <th style={{ padding: '20px 32px', textAlign: 'left', fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.1em' }}>TRACK</th>
-              <th style={{ padding: '20px 32px', textAlign: 'left', fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.1em' }}>SUBMISSION DATE</th>
-              <th style={{ padding: '20px 32px', textAlign: 'left', fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.1em' }}>ARTIFACTS</th>
-              <th style={{ padding: '20px 32px', textAlign: 'center', fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.1em' }}>STATUS</th>
-              <th style={{ padding: '20px 32px', textAlign: 'right', fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.1em' }}>QUICK ACTIONS</th>
+            <tr className="border-b border-[rgba(255,255,255,0.05)]">
+              <th className="py-2 sm:py-3 px-2 sm:px-3 text-[8px] sm:text-xs text-[var(--text-muted)] font-semibold tracking-widest">TEAM</th>
+              <th className="py-2 sm:py-3 px-2 sm:px-3 text-[8px] sm:text-xs text-[var(--text-muted)] font-semibold tracking-widest hidden sm:table-cell">TRACK</th>
+              <th className="py-2 sm:py-3 px-2 sm:px-3 text-[8px] sm:text-xs text-[var(--text-muted)] font-semibold tracking-widest hidden md:table-cell">SUBMITTED</th>
+              <th className="py-2 sm:py-3 px-2 sm:px-3 text-[8px] sm:text-xs text-[var(--text-muted)] font-semibold tracking-widest">STATUS</th>
+              <th className="py-2 sm:py-3 px-2 sm:px-3 text-[8px] sm:text-xs text-[var(--text-muted)] font-semibold tracking-widest text-right">ACTION</th>
             </tr>
           </thead>
           <tbody>
-            {filtered.map(s => (
-              <tr key={s.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.02)' }}>
-                <td style={{ padding: '24px 32px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                    <div style={{ width: 24, height: 24, background: 'rgba(0,229,255,0.1)', color: 'var(--accent-cyan)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, borderRadius: 2 }}>
-                      {s.team.name.charAt(0).toUpperCase()}
-                    </div>
-                    <div style={{ fontWeight: 600, fontSize: 14, color: 'white' }}>{s.team.name}</div>
-                  </div>
-                </td>
-                <td style={{ padding: '24px 32px', fontSize: 12, color: 'var(--text-secondary)' }}>
-                  {s.team.track.replace(/_/g, ' ')}
-                </td>
-                <td style={{ padding: '24px 32px' }}>
-                  <div className="font-mono" style={{ fontSize: 11, color: 'var(--text-muted)' }}>{new Date(s.submittedAt).toLocaleDateString()}</div>
-                  <div className="font-mono" style={{ fontSize: 10, color: 'var(--text-secondary)' }}>{new Date(s.submittedAt).toLocaleTimeString()}</div>
-                </td>
-                <td style={{ padding: '24px 32px' }}>
-                  {s.files[0] ? (
-                    <a href={`${API}/api/v1/submissions/${s.id}/view`} target="_blank" rel="noreferrer" style={{ textDecoration: 'none' }}>
-                      <span style={{ fontSize: 11, color: 'var(--accent-cyan)', fontWeight: 600, letterSpacing: '0.05em', cursor: 'pointer' }}>
-                        📄 {s.files[0].originalName.toUpperCase()}
-                      </span>
-                    </a>
-                  ) : (
-                    <span style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600, letterSpacing: '0.05em' }}>
-                      NO ATTACHMENT
+            {submissions.map(sub => (
+              <tr key={sub.id} className="border-b border-[rgba(255,255,255,0.02)] hover:bg-[rgba(255,255,255,0.01)] transition">
+                <td className="py-2 sm:py-3 px-2 sm:px-3 font-semibold text-xs sm:text-sm text-white truncate">{sub.team.name}</td>
+                <td className="py-2 sm:py-3 px-2 sm:px-3 text-[var(--text-secondary)] hidden sm:table-cell truncate text-xs sm:text-sm">{sub.team.track}</td>
+                <td className="py-2 sm:py-3 px-2 sm:px-3 font-mono text-[var(--text-muted)] hidden md:table-cell text-[8px] sm:text-xs">{new Date(sub.submittedAt).toLocaleDateString()}</td>
+                <td className="py-2 sm:py-3 px-2 sm:px-3">
+                  {sub.moderatorReview ? (
+                    <span className={`inline-block text-[8px] sm:text-xs font-bold py-1 px-2 rounded border ${sub.moderatorReview.status === 'PASS' ? 'text-[var(--accent-green)] border-[rgba(0,230,118,0.3)] bg-[rgba(0,230,118,0.1)]' : 'text-[#ff6275] border-[rgba(255,98,117,0.3)] bg-[rgba(255,98,117,0.1)]'}`}>
+                      ■ {sub.moderatorReview.status}
                     </span>
-                  )}
-                </td>
-                <td style={{ padding: '24px 32px', textAlign: 'center' }}>
-                  {!s.moderatorReview ? (
-                    <span style={{ display: 'inline-block', padding: '4px 10px', background: 'rgba(255, 171, 0, 0.1)', color: 'var(--accent-amber)', fontSize: 10, fontWeight: 700, letterSpacing: '0.05em', borderRadius: 2 }}>■ PENDING</span>
-                  ) : s.moderatorReview.status === 'PASS' ? (
-                    <span style={{ display: 'inline-block', padding: '4px 10px', background: 'rgba(0, 230, 118, 0.1)', color: 'var(--accent-green)', fontSize: 10, fontWeight: 700, letterSpacing: '0.05em', borderRadius: 2 }}>■ PASSED</span>
                   ) : (
-                    <span style={{ display: 'inline-block', padding: '4px 10px', background: 'rgba(255, 23, 68, 0.1)', color: 'var(--accent-red)', fontSize: 10, fontWeight: 700, letterSpacing: '0.05em', borderRadius: 2 }}>■ FAILED</span>
+                    <span className="text-[var(--accent-amber)] text-[8px] sm:text-xs font-semibold">PENDING</span>
                   )}
                 </td>
-                <td style={{ padding: '24px 32px', textAlign: 'right' }}>
-                  {!s.moderatorReview ? (
-                    <div style={{ display: 'inline-flex', gap: 8 }}>
-                      <button onClick={() => submitReview(s.id, 'PASS')} style={{ width: 32, height: 32, background: 'rgba(0,230,118,0.1)', color: 'var(--accent-green)', border: '1px solid rgba(0,230,118,0.3)', borderRadius: 2, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✓</button>
-                      <button onClick={() => submitReview(s.id, 'FAIL')} style={{ width: 32, height: 32, background: 'rgba(255,23,68,0.1)', color: 'var(--accent-red)', border: '1px solid rgba(255,23,68,0.3)', borderRadius: 2, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
+                <td className="py-2 sm:py-3 px-2 sm:px-3 text-right">
+                  {!sub.moderatorReview && (
+                    <div className="inline-flex gap-1 sm:gap-2">
+                      <button onClick={() => submitReview(sub.id, 'PASS')} className="p-1 sm:p-1.5 bg-[rgba(0,230,118,0.1)] border border-[var(--accent-green)] text-[var(--accent-green)] rounded hover:bg-[rgba(0,230,118,0.2)] transition">
+                        <Check size={14} />
+                      </button>
+                      <button onClick={() => submitReview(sub.id, 'FAIL')} className="p-1 sm:p-1.5 bg-[rgba(255,98,117,0.1)] border border-[#ff6275] text-[#ff6275] rounded hover:bg-[rgba(255,98,117,0.2)] transition">
+                        <X size={14} />
+                      </button>
                     </div>
-                  ) : (
-                    <button style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', fontSize: 11, cursor: 'pointer', letterSpacing: '0.05em', fontWeight: 600 }}>RE-REVIEW</button>
                   )}
                 </td>
               </tr>

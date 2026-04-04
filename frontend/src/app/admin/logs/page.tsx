@@ -27,50 +27,54 @@ function LogsContent() {
   useEffect(() => { fetchLogs() }, [fetchLogs])
 
   return (
-    <div style={{ padding: '40px 60px', maxWidth: 1440, margin: '0 auto', background: 'var(--bg-base)', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 32 }}>
+    <div className="flex flex-col min-h-screen bg-[var(--bg-base)] px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
+      <div className="flex flex-col sm:flex-row sm:items-end gap-3 sm:gap-4 mb-4 sm:mb-6 lg:mb-8">
         <div>
-          <div className="font-mono" style={{ fontSize: 11, color: 'var(--accent-green)', marginBottom: 8, letterSpacing: '0.1em' }}><span style={{ color: 'var(--accent-green)', marginRight: 6 }}>■</span>  {loading ? 'SYNCHRONIZING...' : 'SECURITY SYSTEM'}</div>
-          <h1 className="font-display" style={{ fontSize: 44, color: 'white' }}>Audit Logs</h1>
+          <div className="font-mono text-[8px] sm:text-xs text-[var(--accent-green)] mb-1 sm:mb-2 tracking-widest">
+            <span className="mr-1 sm:mr-2">■</span>{loading ? 'SYNCHRONIZING...' : 'SECURITY SYSTEM'}
+          </div>
+          <h1 className="font-display text-xl sm:text-2xl lg:text-3xl text-white font-bold">Audit Logs</h1>
         </div>
       </div>
 
-      <div style={{ background: 'var(--bg-surface)', padding: 32, borderTop: '1px solid rgba(255,255,255,0.05)', flex: 1 }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead>
-            <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-              <th style={{ padding: '16px 0', textAlign: 'left', fontSize: 11, color: 'var(--text-muted)', letterSpacing: '0.1em', fontWeight: 600 }}>TIMESTAMP</th>
-              <th style={{ padding: '16px 0', textAlign: 'left', fontSize: 11, color: 'var(--text-muted)', letterSpacing: '0.1em', fontWeight: 600 }}>ACTOR</th>
-              <th style={{ padding: '16px 0', textAlign: 'left', fontSize: 11, color: 'var(--text-muted)', letterSpacing: '0.1em', fontWeight: 600 }}>ACTION</th>
-              <th style={{ padding: '16px 0', textAlign: 'right', fontSize: 11, color: 'var(--text-muted)', letterSpacing: '0.1em', fontWeight: 600 }}>ENTITY (ID)</th>
-            </tr>
-          </thead>
-          <tbody>
-            {logs.map(log => (
-              <tr key={log.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.02)' }}>
-                <td style={{ padding: '20px 0', width: 220 }}>
-                  <div style={{ fontWeight: 600, fontSize: 13, color: 'white' }}>{new Date(log.createdAt).toLocaleDateString()}</div>
-                  <div className="font-mono" style={{ fontSize: 10, color: 'var(--text-muted)' }}>{new Date(log.createdAt).toLocaleTimeString()} UTC</div>
-                </td>
-                <td style={{ padding: '20px 0' }}>
-                  <div style={{ fontSize: 13, color: 'var(--accent-cyan)' }}>{log.actor?.email ?? 'SYSTEM'}</div>
-                  <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>{log.actor?.fullName ?? '-'}</div>
-                </td>
-                <td style={{ padding: '20px 0', fontSize: 13, color: 'white', lineHeight: 1.5, maxWidth: 400 }}>
-                    {log.action.includes('Warning') ? (
-                      <>{log.action.split('Submission Server')[0]} <span style={{ color: 'var(--accent-amber)' }}>Submission Server{log.action.split('Submission Server')[1]}</span></>
-                    ) : (
-                      <span dangerouslySetInnerHTML={{ __html: log.action.replace(/(Orbital Pioneers|Finalist|sarah\.connor|GitHub API|Judge)/g, '<span style="color:var(--accent-green)">$1</span>') }} />
-                    )}
-                </td>
-                <td style={{ padding: '20px 0', textAlign: 'right' }}>
-                  <div className="font-mono" style={{ fontSize: 10, color: 'var(--text-muted)' }}>{log.entityType.toUpperCase()}</div>
-                  <div className="font-mono" style={{ fontSize: 10, color: 'var(--text-secondary)' }}>{log.entityId}</div>
-                </td>
+      <div className="bg-[var(--bg-surface)] rounded border border-[var(--border-subtle)] flex-1 overflow-hidden flex flex-col">
+        <div className="overflow-x-auto flex-1">
+          <table className="w-full border-collapse">
+            <thead>
+              <tr className="border-b border-[rgba(255,255,255,0.05)]">
+                <th className="py-3 sm:py-4 px-2 sm:px-3 text-left text-[8px] sm:text-xs text-[var(--text-muted)] font-semibold tracking-widest whitespace-nowrap">TIMESTAMP</th>
+                <th className="py-3 sm:py-4 px-2 sm:px-3 text-left text-[8px] sm:text-xs text-[var(--text-muted)] font-semibold tracking-widest whitespace-nowrap hidden sm:table-cell">ACTOR</th>
+                <th className="py-3 sm:py-4 px-2 sm:px-3 text-left text-[8px] sm:text-xs text-[var(--text-muted)] font-semibold tracking-widest whitespace-nowrap">ACTION</th>
+                <th className="py-3 sm:py-4 px-2 sm:px-3 text-right text-[8px] sm:text-xs text-[var(--text-muted)] font-semibold tracking-widest whitespace-nowrap hidden md:table-cell">ENTITY</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {logs.map(log => (
+                <tr key={log.id} className="border-b border-[rgba(255,255,255,0.02)] hover:bg-[rgba(255,255,255,0.01)] transition">
+                  <td className="py-3 sm:py-4 px-2 sm:px-3 min-w-max">
+                    <div className="font-semibold text-xs sm:text-sm text-white">{new Date(log.createdAt).toLocaleDateString()}</div>
+                    <div className="font-mono text-[8px] sm:text-xs text-[var(--text-muted)]">{new Date(log.createdAt).toLocaleTimeString()} UTC</div>
+                  </td>
+                  <td className="py-3 sm:py-4 px-2 sm:px-3 min-w-max hidden sm:table-cell">
+                    <div className="text-xs sm:text-sm text-[var(--accent-cyan)] truncate">{log.actor?.email ?? 'SYSTEM'}</div>
+                    <div className="text-[8px] sm:text-xs text-[var(--text-secondary)] truncate">{log.actor?.fullName ?? '-'}</div>
+                  </td>
+                  <td className="py-3 sm:py-4 px-2 sm:px-3 max-w-xs sm:max-w-sm lg:max-w-lg text-xs sm:text-sm text-white leading-relaxed">
+                    {log.action.includes('Warning') ? (
+                      <>{log.action.split('Submission Server')[0]} <span className="text-[var(--accent-amber)]">Submission Server{log.action.split('Submission Server')[1]}</span></>
+                    ) : (
+                      <span dangerouslySetInnerHTML={{ __html: log.action.replace(/(Orbital Pioneers|Finalist|sarah\.connor|GitHub API|Judge)/g, '<span class="text-[var(--accent-green)]">$1</span>') }} />
+                    )}
+                  </td>
+                  <td className="py-3 sm:py-4 px-2 sm:px-3 text-right hidden md:table-cell min-w-max">
+                    <div className="font-mono text-[8px] sm:text-xs text-[var(--text-muted)]">{log.entityType.toUpperCase()}</div>
+                    <div className="font-mono text-[8px] sm:text-xs text-[var(--text-secondary)] truncate">{log.entityId}</div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   )
