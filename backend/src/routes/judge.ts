@@ -42,21 +42,25 @@ export async function judgeRoutes(app: FastifyInstance) {
       },
       include: {
         team: true,
-        files: true,
+        files: { orderBy: { uploadedAt: 'desc' }, take: 1 },
         moderatorReview: true,
         judgeScores: { where: { judgeUserId: actor.userId } },
         scoreAggregate: true,
       },
-      orderBy: { submittedAt: 'asc' },
+      orderBy: { submittedAt: 'desc' },
       skip: (Number(page) - 1) * Number(limit),
       take: Number(limit),
     })
+
+    const latestPerTeam = Array.from(
+      new Map(submissions.map((submission) => [submission.teamId, submission])).values(),
+    )
 
     const total = await prisma.submission.count({
       where: { isActive: true, moderatorReview: { status: 'PASS' } },
     })
 
-    return { data: submissions, total, page: Number(page), limit: Number(limit) }
+    return { data: latestPerTeam, total, page: Number(page), limit: Number(limit) }
   })
 
   // POST /api/v1/judge/submissions/:submissionId/scores

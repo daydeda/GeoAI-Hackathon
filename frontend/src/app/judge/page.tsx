@@ -16,6 +16,7 @@ import {
 import { AuthProvider, useAuth } from '@/contexts/AuthContext'
 import { useAlert } from '@/contexts/AlertContext'
 import AppShell from '@/components/AppShell'
+import { formatPhaseDeadline, getCurrentPhase } from '@/lib/competitionPhase'
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
 
@@ -85,6 +86,8 @@ function JudgeContent() {
   })
   const [comments, setComments] = useState('')
   const [saving, setSaving] = useState(false)
+  const currentPhase = getCurrentPhase()
+  const phaseDeadline = formatPhaseDeadline(currentPhase.date)
 
   const fetchQueue = useCallback(async () => {
     setLoading(true)
@@ -185,7 +188,7 @@ function JudgeContent() {
   const statusCard = [
     { label: 'Pending Reviews', value: unscoredQueue.length, icon: ClipboardList },
     { label: 'Completed Reviews', value: scoredQueue.length, icon: CheckCircle2 },
-    { label: 'Total Queue', value: queue.length, icon: BarChart3 },
+    { label: 'Current Phase', value: currentPhase.title, sub: `Deadline ${phaseDeadline}`, icon: BarChart3 },
   ]
 
   return (
@@ -222,6 +225,7 @@ function JudgeContent() {
                 <span className="text-xs uppercase tracking-[0.08em]">{card.label}</span>
               </div>
               <div className="font-display text-3xl text-(--accent-cyan)">{card.value}</div>
+              {'sub' in card && card.sub && <div className="mt-1 text-[11px] text-(--text-muted)">{card.sub}</div>}
             </div>
           ))}
         </section>

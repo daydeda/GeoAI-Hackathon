@@ -21,6 +21,7 @@ import {
   X,
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
+import { formatPhaseDeadline, getCurrentPhase } from '@/lib/competitionPhase'
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
 
@@ -114,6 +115,9 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
   const hasElevatedRole = Boolean(actor?.roles?.some((role) => role === 'ADMIN' || role === 'MODERATOR' || role === 'JUDGE'))
   const needsProfileSetup = Boolean(actor?.roles?.includes('COMPETITOR') && !hasElevatedRole && !actor?.profileCompleted)
+  const currentPhase = useMemo(() => getCurrentPhase(), [])
+  const phaseDeadline = useMemo(() => formatPhaseDeadline(currentPhase.date), [currentPhase.date])
+  const primaryRole = actor?.roles?.[0] || 'GUEST'
 
   const saveProfile = async (event: FormEvent) => {
     event.preventDefault()
@@ -280,8 +284,15 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           </div>
           <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm min-w-0">
             <span className="hidden md:inline text-(--accent-cyan) font-mono text-[10px] lg:text-xs">
-              {actor?.roles?.[0] || 'GUEST'}
+              {primaryRole}
             </span>
+            {primaryRole !== 'GUEST' && (
+              <div className="hidden xl:flex items-center gap-2 rounded-sm border border-(--border-subtle) bg-(--bg-surface) px-3 py-1.5">
+                <span className="font-mono text-[10px] text-(--text-muted)">CURRENT PHASE</span>
+                <span className="text-xs font-semibold text-(--accent-cyan)">{currentPhase.title}</span>
+                <span className="font-mono text-[10px] text-(--text-muted)">DEADLINE {phaseDeadline}</span>
+              </div>
+            )}
             <div className="flex items-center gap-2 rounded-sm border border-(--border-subtle) bg-(--bg-surface) px-2 sm:px-3 py-1.5 min-w-0">
               <UserCircle2 size={16} className="text-(--text-secondary) flex-shrink-0" aria-hidden="true" />
               <span className="max-w-[6rem] sm:max-w-[10rem] truncate text-(--text-secondary) text-xs sm:text-sm">

@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { AuthProvider } from '@/contexts/AuthContext'
 import AppShell from '@/components/AppShell'
 import { useAuth, TeamInfo } from '@/contexts/AuthContext'
+import CustomDropdown from '@/components/CustomDropdown'
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
 
@@ -139,14 +140,15 @@ function TeamContent() {
                 </div>
                 <div>
                   <label className="label block text-xs sm:text-sm font-mono mb-2 text-(--text-secondary)">Mission Track</label>
-                  <select
-                    className="input w-full px-3 py-2 rounded border border-(--border-subtle) bg-(--bg-base) text-xs sm:text-sm focus:border-(--accent-cyan) focus:outline-none"
+                  <CustomDropdown
                     value={track}
-                    onChange={e => setTrack(e.target.value)}
-                  >
-                    <option value="SMART_AGRICULTURE">Smart Agriculture (Primary)</option>
-                    <option value="DISASTER_FLOOD_RESPONSE">Disaster & Flood Response</option>
-                  </select>
+                    onChange={setTrack}
+                    options={[
+                      { value: 'SMART_AGRICULTURE', label: 'Smart Agriculture (Primary)' },
+                      { value: 'DISASTER_FLOOD_RESPONSE', label: 'Disaster & Flood Response' },
+                    ]}
+                    buttonClassName="text-xs sm:text-sm"
+                  />
                 </div>
                 <button
                   type="submit"

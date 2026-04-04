@@ -5,9 +5,21 @@ import { writeAuditLog } from '../services/auditLog.js'
 import { minioClient, BUCKET } from '../services/storage.js'
 
 function isDeadlinePassed(): boolean {
-  const deadline = process.env.SUBMISSION_DEADLINE_ISO
-  if (!deadline) return false
+  const deadline = process.env.SUBMISSION_DEADLINE_ISO || '2026-04-29T23:59:59+07:00'
   return new Date() > new Date(deadline)
+}
+
+async function isSubmissionLockedByScoring(teamId: string): Promise<boolean> {
+  const activeSubmission = await prisma.submission.findFirst({
+    where: { teamId, isActive: true },
+    select: {
+      scoreAggregate: { select: { id: true } },
+      judgeScores: { select: { id: true }, take: 1 },
+    },
+  })
+
+  if (!activeSubmission) return false
+  return Boolean(activeSubmission.scoreAggregate || activeSubmission.judgeScores.length > 0)
 }
 
 async function ensureCompetitorProfileCompleted(userId: string) {
@@ -59,6 +71,10 @@ export async function submissionRoutes(app: FastifyInstance) {
       return reply.status(423).send({ error: 'Submission deadline has passed' })
     }
 
+    if (await isSubmissionLockedByScoring(membership.teamId)) {
+      return reply.status(423).send({ error: 'Submission is locked because judges have already scored your proposal' })
+    }
+
     // Reuse logic below or implement
     const data = await request.file()
     if (!data) return reply.status(400).send({ error: 'No file uploaded' })
@@ -106,6 +122,10 @@ export async function submissionRoutes(app: FastifyInstance) {
 
     if (isDeadlinePassed()) {
       return reply.status(423).send({ error: 'Submission deadline has passed' })
+    }
+
+    if (await isSubmissionLockedByScoring(teamId)) {
+      return reply.status(423).send({ error: 'Submission is locked because judges have already scored your proposal' })
     }
 
     // Verify leader

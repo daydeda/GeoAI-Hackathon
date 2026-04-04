@@ -9,7 +9,7 @@ import { writeAuditLog } from '../services/auditLog.js'
 import { exportData } from '../services/exporter.js'
 import { generatePermissionLetter } from '../services/pdfGenerator.js'
 import { minioClient, BUCKET } from '../services/storage.js'
-import { TeamStatus, ExportType } from '@prisma/client'
+import { Prisma, TeamStatus, ExportType } from '@prisma/client'
 
 const AssignRoleSchema = z.object({ role: z.enum(['COMPETITOR', 'MODERATOR', 'JUDGE', 'ADMIN']) })
 const TeamStatusSchema = z.object({ status: z.nativeEnum(TeamStatus), note: z.string().optional() })
@@ -50,6 +50,49 @@ export async function adminRoutes(app: FastifyInstance) {
       idCardUploaded: Boolean(u.idCardFileKey),
       roles: u.userRoles.map(ur => ur.role.name), createdAt: u.createdAt,
     })), total }
+  })
+
+  // DELETE /api/v1/admin/users/:userId
+  app.delete('/users/:userId', { preHandler: [requireRole('ADMIN', 'MODERATOR')] }, async (request, reply) => {
+    const actor = request.user as JwtPayload
+    const { userId } = request.params as { userId: string }
+
+    if (actor.userId === userId) return reply.status(400).send({ error: 'You cannot delete your own account' })
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        ledTeams: { select: { id: true, name: true } },
+      },
+    })
+
+    if (!user) return reply.status(404).send({ error: 'User not found' })
+    if (user.ledTeams.length > 0) {
+      return reply.status(409).send({
+        error: 'User is currently a team leader. Delete or reassign their team before deleting this user.',
+      })
+    }
+
+    try {
+      await prisma.user.delete({ where: { id: userId } })
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2003') {
+        return reply.status(409).send({
+          error: 'Cannot delete this user because related scoring/review records still exist.',
+        })
+      }
+      throw error
+    }
+
+    await writeAuditLog({
+      actorId: actor.userId,
+      action: 'USER_DELETED',
+      entityType: 'user',
+      entityId: userId,
+      oldValue: { email: user.email, fullName: user.fullName },
+    })
+
+    return { message: 'User deleted', userId }
   })
 
   // POST /api/v1/admin/users/:userId/roles
@@ -125,6 +168,43 @@ export async function adminRoutes(app: FastifyInstance) {
       page: currentPage,
       limit: take,
     }
+  })
+
+  // DELETE /api/v1/admin/teams/:teamId
+  app.delete('/teams/:teamId', { preHandler: [requireRole('ADMIN', 'MODERATOR')] }, async (request, reply) => {
+    const actor = request.user as JwtPayload
+    const { teamId } = request.params as { teamId: string }
+
+    const team = await prisma.team.findUnique({
+      where: { id: teamId },
+      select: { id: true, name: true, leaderId: true, currentStatus: true },
+    })
+    if (!team) return reply.status(404).send({ error: 'Team not found' })
+
+    try {
+      await prisma.team.delete({ where: { id: teamId } })
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2003') {
+        return reply.status(409).send({
+          error: 'Cannot delete this team because related records still exist.',
+        })
+      }
+      throw error
+    }
+
+    await writeAuditLog({
+      actorId: actor.userId,
+      action: 'TEAM_DELETED',
+      entityType: 'team',
+      entityId: teamId,
+      oldValue: {
+        name: team.name,
+        leaderId: team.leaderId,
+        status: team.currentStatus,
+      },
+    })
+
+    return { message: 'Team deleted', teamId }
   })
 
   // GET /api/v1/admin/users/:userId/uploads/:type/view

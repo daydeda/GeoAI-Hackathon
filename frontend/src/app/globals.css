@@ -42,6 +42,19 @@ body {
   min-height: 100vh;
 }
 
+button:not(:disabled),
+[role='button']:not([aria-disabled='true']) {
+  cursor: pointer;
+}
+
+button {
+  transition: filter 0.2s, opacity 0.2s, transform 0.2s;
+}
+
+button:not(:disabled):hover {
+  filter: brightness(1.06);
+}
+
 /* ─── Typography ─────────────────────────────────────────── */
 .font-display { font-family: 'Rajdhani', sans-serif; }
 .font-mono    { font-family: 'JetBrains Mono', monospace; }

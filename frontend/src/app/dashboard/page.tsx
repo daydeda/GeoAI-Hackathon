@@ -18,6 +18,7 @@ import {
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useAlert } from '@/contexts/AlertContext'
+import { formatPhaseDeadline, getCurrentPhase } from '@/lib/competitionPhase'
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
 const DEADLINE = process.env.NEXT_PUBLIC_SUBMISSION_DEADLINE || '2026-04-29T23:59:59+07:00'
@@ -43,6 +44,8 @@ function DashboardContent() {
   const [copied, setCopied] = useState(false)
   const { showAlert } = useAlert()
   const { h, m, s } = useCountdown(DEADLINE)
+  const currentPhase = getCurrentPhase()
+  const phaseDeadline = formatPhaseDeadline(currentPhase.date)
 
   const fetchTeam = () => {
     fetch(`${API}/api/v1/teams/my`, { credentials: 'include' })
@@ -122,6 +125,11 @@ function DashboardContent() {
           </div>
         </div>
         <div className="text-left lg:text-right">
+          <div className="font-mono mb-1 text-[10px] text-(--text-muted)">CURRENT PHASE</div>
+          <div className="font-display mb-2 text-lg font-bold tracking-[0.05em] text-(--accent-cyan) sm:text-xl">
+            {currentPhase.title}
+          </div>
+          <div className="font-mono mb-1 text-[10px] text-(--text-muted)">PHASE DEADLINE: {phaseDeadline}</div>
           <div className="font-mono mb-1 text-[10px] text-(--text-muted)">TIME TO DEADLINE</div>
           <div className="font-display text-2xl font-bold tracking-[0.05em] text-(--accent-red) sm:text-3xl">
             {String(h).padStart(2,'0')}:{String(m).padStart(2,'0')}:{String(s).padStart(2,'0')}

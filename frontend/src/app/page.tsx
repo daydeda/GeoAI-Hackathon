@@ -3,24 +3,9 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { Menu, X, Zap } from 'lucide-react'
+import { getTimeline } from '@/lib/competitionPhase'
 
 const DEADLINE = process.env.NEXT_PUBLIC_SUBMISSION_DEADLINE || '2026-04-29T23:59:59+07:00'
-const PHASE_01_DATE = '2026-03-31T23:59:59+07:00'
-const PHASE_02_DATE = '2026-04-29T23:59:59+07:00'
-const ANNOUNCEMENT_DATE = '2026-05-08T00:00:00+07:00'
-const DEVELOPMENT_DATE = '2026-05-15T09:00:00+07:00'
-const FINAL_PITCH_DATE = '2026-05-22T09:00:00+07:00'
-
-type TimelineStatus = 'done' | 'active' | 'upcoming'
-
-type TimelineItem = {
-  phase: string
-  dateLabel: string
-  title: string
-  desc: string
-  date: string
-  status: TimelineStatus
-}
 
 function useCountdown(targetDate: string) {
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, mins: 0, secs: 0 })
@@ -71,54 +56,6 @@ const tracks = [
     tags: ['Flood Mapping', 'SAR Imagery', 'Emergency Routing'],
   },
 ]
-
-function getTimeline(now = new Date()): TimelineItem[] {
-  const timelineBase = [
-    {
-      phase: 'PHASE 01',
-      dateLabel: '',
-      title: 'Registration',
-      desc: 'Team registration window closed on 29 April.',
-      date: PHASE_01_DATE,
-    },
-    {
-      phase: 'PHASE 02',
-      dateLabel: '29 APR',
-      title: 'Proposal Submission',
-      desc: 'Proposal submission deadline is April 29 (PDF, max 20 MB).',
-      date: PHASE_02_DATE,
-    },
-    {
-      phase: 'PHASE 03',
-      dateLabel: '08 MAY',
-      title: 'Announcement',
-      desc: 'Announcement will be released on 8 May.',
-      date: ANNOUNCEMENT_DATE,
-    },
-    {
-      phase: 'PHASE 04',
-      dateLabel: '15 MAY',
-      title: 'Development',
-      desc: 'Mockup date: 15 May (adjustable).',
-      date: DEVELOPMENT_DATE,
-    },
-    {
-      phase: 'PHASE 05',
-      dateLabel: '22 MAY',
-      title: 'Final Pitching',
-      desc: 'Mockup date: 22 May (adjustable).',
-      date: FINAL_PITCH_DATE,
-    },
-  ]
-
-  const currentIndex = timelineBase.findIndex((item) => now.getTime() < new Date(item.date).getTime())
-  const activeIndex = currentIndex === -1 ? timelineBase.length - 1 : currentIndex
-
-  return timelineBase.map((item, index) => ({
-    ...item,
-    status: index < activeIndex ? 'done' : index === activeIndex ? 'active' : 'upcoming',
-  }))
-}
 
 const hostedBy = [
   { name: 'KMITL', href: 'https://www.kmitl.ac.th/en' },

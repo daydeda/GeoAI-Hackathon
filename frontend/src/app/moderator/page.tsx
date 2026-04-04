@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { AuthProvider, useAuth } from '@/contexts/AuthContext'
 import AppShell from '@/components/AppShell'
 import { Check, X, RefreshCw } from 'lucide-react'
+import CustomDropdown from '@/components/CustomDropdown'
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
 
@@ -120,16 +121,26 @@ function ModeratorContent() {
       <div className="border-b border-(--border-subtle) bg-(--bg-surface) px-4 sm:px-6 lg:px-8 py-3 sm:py-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 flex-wrap">
-            <select value={trackFilter} onChange={e => setTrackFilter(e.target.value)} className="bg-(--bg-base) border border-(--border-subtle) rounded px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm text-white outline-none">
-              <option value="">ALL TRACKS</option>
-              <option value="SMART_AGRICULTURE">Smart Agriculture</option>
-              <option value="DISASTER_FLOOD_RESPONSE">Disaster & Flood Response</option>
-            </select>
-            <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="bg-(--bg-base) border border-(--border-subtle) rounded px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm text-white outline-none">
-              <option value="">ALL STATUS</option>
-              <option value="PASS">Approved</option>
-              <option value="DISQUALIFIED">Disqualified</option>
-            </select>
+            <CustomDropdown
+              className="min-w-[190px]"
+              value={trackFilter}
+              onChange={setTrackFilter}
+              options={[
+                { value: '', label: 'ALL TRACKS' },
+                { value: 'SMART_AGRICULTURE', label: 'Smart Agriculture' },
+                { value: 'DISASTER_FLOOD_RESPONSE', label: 'Disaster & Flood Response' },
+              ]}
+            />
+            <CustomDropdown
+              className="min-w-[160px]"
+              value={statusFilter}
+              onChange={setStatusFilter}
+              options={[
+                { value: '', label: 'ALL STATUS' },
+                { value: 'PASS', label: 'Approved' },
+                { value: 'DISQUALIFIED', label: 'Disqualified' },
+              ]}
+            />
           </div>
           <div className="flex items-center gap-2">
             <input placeholder="Search..." value={search} onChange={e => setSearch(e.target.value)} className="bg-(--bg-base) border border-(--border-subtle) rounded px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm text-white placeholder-(--text-muted) outline-none flex-1 sm:flex-initial sm:w-40" />

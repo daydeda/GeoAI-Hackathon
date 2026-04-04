@@ -18,6 +18,8 @@ type AuditAction =
   | 'INVITE_USED'
   | 'PROFILE_COMPLETED'
   | 'PROFILE_UPDATED'
+  | 'USER_DELETED'
+  | 'TEAM_DELETED'
   | 'SUBMISSION_ANNOUNCEMENT_SENT'
 
 interface AuditParams {

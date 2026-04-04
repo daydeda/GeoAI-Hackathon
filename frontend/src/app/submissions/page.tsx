@@ -4,9 +4,12 @@ import { useEffect, useState, useCallback } from 'react'
 import { AuthProvider, useAuth } from '@/contexts/AuthContext'
 import AppShell from '@/components/AppShell'
 import { useDropzone } from 'react-dropzone'
+import { COMPETITION_PHASES } from '@/lib/competitionPhase'
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
 const ANNOUNCEMENT_DATE = '2026-05-08T00:00:00+07:00'
+const PROPOSAL_SUBMISSION_DEADLINE =
+  COMPETITION_PHASES.find((phase) => phase.key === 'proposal-submission')?.date || '2026-04-29T23:59:59+07:00'
 
 interface Submission {
   id: string
@@ -60,11 +63,25 @@ function SubmissionsContent() {
     }
   }, [])
 
+  const activeSubmission = history[0]
+  const isProposalPhaseEnded = Date.now() > new Date(PROPOSAL_SUBMISSION_DEADLINE).getTime()
+  const isJudged = Boolean(activeSubmission?.scoreAggregate)
+  const isSubmissionClosed = isProposalPhaseEnded || isJudged
+
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    onDrop, accept: { 'application/pdf': ['.pdf'] }, maxFiles: 1
+    onDrop,
+    accept: { 'application/pdf': ['.pdf'] },
+    maxFiles: 1,
+    disabled: isSubmissionClosed,
   })
 
   const upload = async () => {
+    if (isSubmissionClosed) {
+      setError(isJudged
+        ? 'Submission is locked because judges have already scored your proposal.'
+        : 'Submission is closed because the Proposal Submission phase has ended.')
+      return
+    }
     if (!file || !gistda || uploading) return
     setUploading(true); setError('')
     const formData = new FormData()
@@ -113,7 +130,6 @@ function SubmissionsContent() {
     </div>
   )
 
-  const activeSubmission = history[0]
   const canShowAnnouncement = Date.now() >= new Date(ANNOUNCEMENT_DATE).getTime()
   const reviewStatus = canShowAnnouncement
     ? normalizeReviewStatus(activeSubmission?.moderatorReview?.status)
@@ -136,6 +152,14 @@ function SubmissionsContent() {
           </div>
         )}
 
+        {isSubmissionClosed && (
+          <div className="mb-4 sm:mb-6 rounded-md border border-(--accent-amber) bg-[rgba(255,167,38,0.12)] p-3 sm:p-4 text-xs sm:text-sm text-(--accent-amber)">
+            {isJudged
+              ? 'Submission is locked because judges have already given a score.'
+              : 'Submission is closed because the Proposal Submission phase has ended.'}
+          </div>
+        )}
+
         <div className="grid grid-cols-1 lg:grid-cols-[1.3fr_1fr] gap-4 sm:gap-6">
           {/* Upload Form */}
           <div className="card p-4 sm:p-6 rounded-lg border border-(--border-subtle) bg-(--bg-surface)">
@@ -143,10 +167,12 @@ function SubmissionsContent() {
             
             <div
               {...getRootProps()}
-              className={`p-6 sm:p-8 rounded-lg border-2 border-dashed mb-4 sm:mb-6 cursor-pointer transition-colors text-center ${
+              className={`p-6 sm:p-8 rounded-lg border-2 border-dashed mb-4 sm:mb-6 transition-colors text-center ${
                 isDragActive
                   ? 'border-(--accent-cyan) bg-[rgba(0,229,255,0.05)]'
-                  : 'border-(--border-subtle) bg-(--bg-base) hover:border-(--border-active)'
+                  : isSubmissionClosed
+                    ? 'border-(--border-subtle) bg-(--bg-base) opacity-60 cursor-not-allowed'
+                    : 'border-(--border-subtle) bg-(--bg-base) hover:border-(--border-active) cursor-pointer'
               }`}
             >
               <input {...getInputProps()} />
@@ -165,6 +191,7 @@ function SubmissionsContent() {
                 id="gistda"
                 checked={gistda}
                 onChange={e => setGistda(e.target.checked)}
+                disabled={isSubmissionClosed}
                 className="mt-1 cursor-pointer flex-shrink-0"
               />
               <label htmlFor="gistda" className="text-xs sm:text-sm text-(--text-secondary) leading-relaxed cursor-pointer">
@@ -176,7 +203,7 @@ function SubmissionsContent() {
 
             <button
               onClick={upload}
-              disabled={!file || !gistda || uploading}
+              disabled={isSubmissionClosed || !file || !gistda || uploading}
               className="w-full px-4 py-2.5 sm:py-3 bg-(--accent-cyan) text-(--bg-base) rounded font-semibold text-xs sm:text-sm hover:opacity-90 disabled:opacity-50 transition-opacity"
             >
               {uploading ? 'UPLOADING...' : 'INITIATE TRANSMISSION'}
@@ -213,7 +240,7 @@ function SubmissionsContent() {
                     {reviewStatus}
                   </span>
                 </div>
-                {activeSubmission.scoreAggregate && (
+                {canShowAnnouncement && activeSubmission.scoreAggregate && (
                   <div className="mb-3 rounded border border-(--border-subtle) bg-(--bg-base) px-3 py-2 text-xs text-(--text-secondary)">
                     Final averaged score:{' '}
                     <span className="font-semibold text-white">

@@ -8,12 +8,14 @@ import type { LucideIcon } from 'lucide-react'
 import {
   Activity,
   Check,
-  ChevronDown,
   Download,
   FileSpreadsheet,
   Search,
+  Trash2,
   X,
 } from 'lucide-react'
+import { formatPhaseDeadline, getCurrentPhase } from '@/lib/competitionPhase'
+import CustomDropdown from '@/components/CustomDropdown'
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
 
@@ -85,6 +87,8 @@ function AdminContent() {
   const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(true)
   const [confirmAction, setConfirmAction] = useState<{ type: 'PROMOTE' | 'DISQUALIFY' | 'REVOKE' | 'RESTORE', teamId: string, teamName: string } | null>(null)
+  const currentPhase = getCurrentPhase()
+  const phaseDeadline = formatPhaseDeadline(currentPhase.date)
 
   const totalUserPages = Math.max(1, Math.ceil(totalUsers / userLimit))
   const userFrom = totalUsers === 0 ? 0 : (userPage - 1) * userLimit + 1
@@ -160,6 +164,38 @@ function AdminContent() {
       await fetch(`${API}/api/v1/admin/users/${userId}/roles`, { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ role }) })
       fetchAll()
     } catch { }
+  }
+
+  const deleteUser = async (userId: string, userEmail: string) => {
+    if (!window.confirm(`Delete user ${userEmail}? This action cannot be undone.`)) return
+    try {
+      const res = await fetch(`${API}/api/v1/admin/users/${userId}`, { method: 'DELETE', credentials: 'include' })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        showAlert(data.error || 'Failed to delete user', 'error')
+        return
+      }
+      showAlert('User deleted successfully', 'info')
+      fetchAll()
+    } catch {
+      showAlert('Failed to delete user', 'error')
+    }
+  }
+
+  const deleteTeam = async (teamId: string, teamName: string) => {
+    if (!window.confirm(`Delete team ${teamName}? This action cannot be undone.`)) return
+    try {
+      const res = await fetch(`${API}/api/v1/admin/teams/${teamId}`, { method: 'DELETE', credentials: 'include' })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        showAlert(data.error || 'Failed to delete team', 'error')
+        return
+      }
+      showAlert('Team deleted successfully', 'info')
+      fetchAll()
+    } catch {
+      showAlert('Failed to delete team', 'error')
+    }
   }
 
   const executeConfirmAction = async () => {
@@ -266,9 +302,9 @@ function AdminContent() {
       <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {[
           { label: 'REGISTERED USERS', value: totalUsers.toLocaleString(), change: 'Platform Wide', changeColor: 'var(--accent-green)', color: 'var(--accent-cyan)' },
-          { label: 'ACTIVE TEAMS', value: teams.length.toLocaleString(), change: 'Registered Squads', changeColor: 'var(--accent-green)', color: 'var(--accent-green)' },
+          { label: 'ACTIVE TEAMS', value: totalTeams.toLocaleString(), change: 'Registered Squads', changeColor: 'var(--accent-green)', color: 'var(--accent-green)' },
           { label: 'TOTAL PROPOSALS', value: teams.reduce((acc, t) => acc + (t.submissions?.length || 0), 0).toLocaleString(), change: 'Submitted PDFs', changeColor: 'var(--text-muted)', color: 'var(--accent-amber)' },
-          { label: 'CURRENT PHASE', value: 'Judging', change: 'Live Event', changeColor: 'var(--accent-cyan)', color: 'white' },
+          { label: 'CURRENT PHASE', value: currentPhase.title, change: `Deadline ${phaseDeadline}`, changeColor: 'var(--accent-cyan)', color: 'white' },
         ].map((s, i) => (
           <div key={i} className="flex flex-col gap-3 border-l-2 bg-(--bg-surface) px-6 py-5" style={{ borderLeftColor: s.color }}>
             <div className="font-mono text-[11px] tracking-[0.1em] text-(--text-muted)">{s.label}</div>
@@ -354,18 +390,17 @@ function AdminContent() {
                       </div>
                     </td>
                     <td className="py-5">
-                      <div className="relative w-[150px]">
-                        <select
-                          className="w-full appearance-none rounded border border-white/10 bg-(--bg-base) px-3 py-2 text-xs text-white"
-                          value={u.roles?.[0] ?? 'COMPETITOR'}
-                          onChange={e => assignRole(u.id, e.target.value)}
-                        >
-                          {['COMPETITOR', 'MODERATOR', 'JUDGE', 'ADMIN'].map(r => (
-                            <option key={r} value={r}>{r}</option>
-                          ))}
-                        </select>
-                        <ChevronDown size={12} className="pointer-events-none absolute right-3 top-2.5 text-(--text-muted)" />
-                      </div>
+                      <CustomDropdown
+                        className="w-[150px]"
+                        value={u.roles?.[0] ?? 'COMPETITOR'}
+                        onChange={(nextRole) => assignRole(u.id, nextRole)}
+                        options={[
+                          { value: 'COMPETITOR', label: 'COMPETITOR' },
+                          { value: 'MODERATOR', label: 'MODERATOR' },
+                          { value: 'JUDGE', label: 'JUDGE' },
+                          { value: 'ADMIN', label: 'ADMIN' },
+                        ]}
+                      />
                     </td>
                     <td className="py-5 text-right">
                       <div className="inline-flex items-center gap-2">
@@ -373,6 +408,14 @@ function AdminContent() {
                         <span className="text-[11px] font-semibold tracking-[0.05em]" style={{ color: u.roles?.includes('ADMIN') ? 'var(--accent-amber)' : 'var(--accent-green)' }}>
                           {u.roles?.includes('ADMIN') ? 'RESTRICTED' : u.roles?.includes('COMPETITOR') ? 'ACTIVE' : 'VERIFIED'}
                         </span>
+                        <button
+                          type="button"
+                          onClick={() => deleteUser(u.id, u.email)}
+                          className="ml-2 inline-flex items-center gap-1 rounded border border-[rgba(255,23,68,0.4)] px-2 py-1 text-[10px] text-(--accent-red)"
+                        >
+                          <Trash2 size={10} />
+                          DELETE
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -491,6 +534,14 @@ function AdminContent() {
                             className="border border-[rgba(255,23,68,0.4)] bg-transparent px-4 py-2 text-[10px] font-semibold tracking-[0.05em] text-(--text-muted)"
                           >
                             DISQUALIFY
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => deleteTeam(t.id, t.name)}
+                            className="inline-flex items-center gap-1 border border-[rgba(255,23,68,0.4)] bg-transparent px-4 py-2 text-[10px] font-semibold tracking-[0.05em] text-(--accent-red)"
+                          >
+                            <Trash2 size={10} />
+                            DELETE
                           </button>
                         </div>
                       )}
