@@ -1,10 +1,12 @@
 import type { NextConfig } from "next";
 
+const rawBasePath = process.env.NEXT_PUBLIC_BASE_PATH?.trim() || "";
+const basePath = rawBasePath.startsWith("/") ? rawBasePath : "";
+
 const nextConfig: NextConfig = {
   reactCompiler: true,
   output: 'standalone',
-  // basePath: '/geoai-2026',
-  // assetPrefix: '/geoai-2026',
+  ...(basePath ? { basePath, assetPrefix: basePath } : {}),
 };
 
 export default nextConfig;
