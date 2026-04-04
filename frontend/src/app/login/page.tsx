@@ -99,21 +99,3 @@ export default function LoginPage() {
     </div>
   )
 }
-          Continue with Google
-        </button>
-
-        <div style={{ marginTop: 32, padding: 16, background: 'rgba(0, 229, 255, 0.05)', borderRadius: 8, border: '1px solid var(--border-subtle)' }}>
-          <p style={{ fontSize: 11, color: 'var(--text-muted)', lineHeight: 1.6 }}>
-            🔒 <strong style={{ color: 'var(--text-secondary)' }}>Secure auth only.</strong> No email/password accounts. Your Google profile is used for identity verification.
-          </p>
-        </div>
-
-        <div style={{ marginTop: 24 }}>
-          <Link href="/" style={{ fontSize: 12, color: 'var(--text-muted)', textDecoration: 'none' }}>
-            ← Back to mission briefing
-          </Link>
-        </div>
-      </div>
-    </div>
-  )
-}
