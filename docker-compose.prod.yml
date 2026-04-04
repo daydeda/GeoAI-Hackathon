@@ -10,6 +10,8 @@ services:
       POSTGRES_DB: geoai
     volumes:
       - postgres_data_prod:/var/lib/postgresql/data
+    ports:
+      - "127.0.0.1:5432:5432" # SSH tunnel access only
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
       interval: 10s
@@ -29,7 +31,8 @@ services:
     volumes:
       - minio_data_prod:/data
     ports:
-      - "9000:9000" # Expose for backend API calls
+      - "127.0.0.1:9000:9000" # SSH tunnel access only
+      - "127.0.0.1:9001:9001" # MinIO Console via SSH tunnel
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
       interval: 30s
