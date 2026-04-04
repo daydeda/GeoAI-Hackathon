@@ -133,7 +133,7 @@ export default function LandingPage() {
       <nav className="sticky top-0 z-50 border-b border-[var(--border-subtle)] bg-[rgba(5,13,26,0.95)] backdrop-blur-sm px-4 sm:px-6 lg:px-8 py-3 sm:py-4">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <span className="font-display text-base sm:text-lg md:text-xl font-bold text-[var(--accent-cyan)] tracking-widest">
-            GEOAI
+            GeoAI HACKATHON 2026
           </span>
           
           {/* Desktop Menu */}
