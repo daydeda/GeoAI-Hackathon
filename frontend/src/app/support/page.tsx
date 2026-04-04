@@ -21,12 +21,6 @@ type FaqItem = {
 const CONTACT_BY_DAY: Record<number, ContactPerson[]> = {
   1: [
     {
-        fullName: 'Nattapong Srisawat',
-        nickname: 'Nattapong',
-        email: 'nattapong.support@geoaihack.local',
-        workingHours: '09:00 - 17:00',
-    },
-    {
       fullName: 'Puri Sangnawakit',
       nickname: 'Guy',
       email: 'puri_s@cmu.ac.th',
@@ -35,39 +29,21 @@ const CONTACT_BY_DAY: Record<number, ContactPerson[]> = {
   ],
   2: [
     {
-      fullName: 'Kamonchanok Preecha',
-      nickname: 'Kamonchanok',
-      email: 'kamonchanok.support@geoaihack.local',
-      workingHours: '10:00 - 18:00',
-    },
-    {
       fullName: 'Puri Sangnawakit',
-        nickname: 'Guy',
+      nickname: 'Guy',
       email: 'puri_s@cmu.ac.th',
       workingHours: '10:00 - 18:00',
     },
   ],
   3: [
     {
-        fullName: 'Thanawat Charoen',
-        nickname: 'Thanawat',
-        email: 'thanawat.support@geoaihack.local',
-        workingHours: '08:30 - 16:30',
-    },
-    {
-        fullName: 'Puri Sangnawakit',
-        nickname: 'Guy',
-        email: 'puri_s@cmu.ac.th',
-        workingHours: '10:00 - 18:00',
+      fullName: 'Puri Sangnawakit',
+      nickname: 'Guy',
+      email: 'puri_s@cmu.ac.th',
+      workingHours: '10:00 - 18:00',
     },
   ],
   4: [
-    {
-        fullName: 'Patcharin Intarakul',
-        nickname: 'Patcharin',
-        email: 'patcharin.support@geoaihack.local',
-        workingHours: '11:00 - 19:00',
-    },
     {
       fullName: 'Puri Sangnawakit',
       nickname: 'Guy',
@@ -77,12 +53,6 @@ const CONTACT_BY_DAY: Record<number, ContactPerson[]> = {
   ],
   5: [
     {
-      fullName: 'Sorawit Kittipong',
-      nickname: 'Sorawit',
-      email: 'sorawit.support@geoaihack.local',
-      workingHours: '09:30 - 17:30',
-    },
-    {
       fullName: 'Puri Sangnawakit',
       nickname: 'Guy',
       email: 'puri_s@cmu.ac.th',
@@ -91,16 +61,10 @@ const CONTACT_BY_DAY: Record<number, ContactPerson[]> = {
   ],
   6: [
     {
-      fullName: 'Warisara Somboon',
-      nickname: 'Warisara',
-      email: 'warisara.support@geoaihack.local',
-      workingHours: '10:00 - 16:00',
-    },
-    {
-      fullName: 'Krit Phommarath',
-      nickname: 'Krit',
-      email: 'krit.support@geoaihack.local',
-      workingHours: '10:00 - 16:00',
+      fullName: 'Puri Sangnawakit',
+      nickname: 'Guy',
+      email: 'puri_s@cmu.ac.th',
+      workingHours: '10:00 - 18:00',
     },
   ],
   0: [
@@ -109,12 +73,6 @@ const CONTACT_BY_DAY: Record<number, ContactPerson[]> = {
       nickname: 'Guy',
       email: 'puri_s@cmu.ac.th',
       workingHours: '10:00 - 18:00',
-    },
-    {
-      fullName: 'Krit Phommarath',
-      nickname: 'Krit',
-      email: 'krit.support@geoaihack.local',
-      workingHours: '10:00 - 16:00',
     },
   ],
 }
