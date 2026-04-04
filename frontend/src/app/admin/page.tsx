@@ -21,6 +21,7 @@ interface UserRow {
   id: string
   email: string
   fullName: string
+  avatarUrl?: string | null
   firstName?: string
   lastName?: string
   university?: string
@@ -31,7 +32,27 @@ interface UserRow {
   idCardUploaded?: boolean
   roles: string[]
 }
-interface TeamRow { id: string; name: string; institution: string; track: string; currentStatus: string; members: unknown[]; score?: number; submissions?: unknown[] }
+interface TeamMemberRow {
+  id: string
+  user: {
+    id: string
+    email: string
+    fullName: string
+    avatarUrl?: string | null
+    idCardUploaded?: boolean
+  }
+}
+
+interface TeamRow {
+  id: string
+  name: string
+  institution: string
+  track: string
+  currentStatus: string
+  members: TeamMemberRow[]
+  score?: number
+  submissions?: unknown[]
+}
 interface LogRow { id: string; action: string; entityType: string; entityId: string; oldValue?: string; newValue?: string; createdAt: string; actor?: { email: string } }
 interface TeamSubmissionRow { isActive?: boolean; scoreAggregate?: { totalWeighted?: number } }
 interface TeamApiRow extends TeamRow { submissions?: TeamSubmissionRow[] }
@@ -57,6 +78,9 @@ function AdminContent() {
   const [userPage, setUserPage] = useState(1)
   const [userLimit] = useState(20)
   const [teams, setTeams] = useState<TeamRow[]>([])
+  const [totalTeams, setTotalTeams] = useState(0)
+  const [teamPage, setTeamPage] = useState(1)
+  const [teamLimit] = useState(10)
   const [logs, setLogs] = useState<LogRow[]>([])
   const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(true)
@@ -65,6 +89,13 @@ function AdminContent() {
   const totalUserPages = Math.max(1, Math.ceil(totalUsers / userLimit))
   const userFrom = totalUsers === 0 ? 0 : (userPage - 1) * userLimit + 1
   const userTo = Math.min(userPage * userLimit, totalUsers)
+  const totalTeamPages = Math.max(1, Math.ceil(totalTeams / teamLimit))
+  const teamFrom = totalTeams === 0 ? 0 : (teamPage - 1) * teamLimit + 1
+  const teamTo = Math.min(teamPage * teamLimit, totalTeams)
+
+  const openUserUpload = (userId: string, type: 'avatar' | 'id-card') => {
+    window.open(`${API}/api/v1/admin/users/${userId}/uploads/${type}/view`, '_blank', 'noopener,noreferrer')
+  }
 
   const fetchAll = useCallback(async () => {
     setLoading(true)
@@ -79,10 +110,14 @@ function AdminContent() {
       })
       const trimmedSearch = search.trim()
       if (trimmedSearch) userParams.set('search', trimmedSearch)
+      const teamParams = new URLSearchParams({
+        page: String(teamPage),
+        limit: String(teamLimit),
+      })
 
       const [usersRes, teamsRes, logsRes] = await Promise.all([
         fetch(`${API}/api/v1/admin/users?${userParams.toString()}`, opts),
-        fetch(`${API}/api/v1/admin/teams`, opts),
+        fetch(`${API}/api/v1/admin/teams?${teamParams.toString()}`, opts),
         fetch(`${API}/api/v1/admin/audit-logs?limit=10`, opts),
       ])
       
@@ -91,11 +126,12 @@ function AdminContent() {
       if (usersRes.ok) { const d = await usersRes.json(); setUsers(d.data || []); setTotalUsers(d.total || 0); }
       if (teamsRes.ok) { 
         const d = await teamsRes.json(); 
-        const formattedTeams = (d as TeamApiRow[] || []).map((t) => {
+        const formattedTeams = ((d.data as TeamApiRow[]) || []).map((t) => {
           const activeSub = t.submissions?.find((s) => s.isActive);
           return { ...t, score: activeSub?.scoreAggregate?.totalWeighted ?? undefined };
         });
         setTeams(formattedTeams); 
+        setTotalTeams(d.total || 0);
       }
       if (logsRes.ok) { const d = await logsRes.json(); setLogs(d.data || []); }
     } catch (err) {
@@ -107,7 +143,7 @@ function AdminContent() {
     } finally {
       setLoading(false)
     }
-  }, [search, userLimit, userPage])
+  }, [search, userLimit, userPage, teamLimit, teamPage])
 
   useEffect(() => {
     let active = true;
@@ -296,6 +332,26 @@ function AdminContent() {
                       <div className="text-[10px] text-(--text-muted)">
                         Profile: {u.profileCompleted ? 'Completed' : 'Incomplete'} · ID: {u.idCardUploaded ? 'Uploaded' : 'Missing'}
                       </div>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {u.avatarUrl && (
+                          <button
+                            type="button"
+                            onClick={() => openUserUpload(u.id, 'avatar')}
+                            className="rounded border border-(--accent-cyan) px-2 py-1 text-[10px] text-(--accent-cyan)"
+                          >
+                            View Avatar
+                          </button>
+                        )}
+                        {u.idCardUploaded && (
+                          <button
+                            type="button"
+                            onClick={() => openUserUpload(u.id, 'id-card')}
+                            className="rounded border border-(--accent-green) px-2 py-1 text-[10px] text-(--accent-green)"
+                          >
+                            View ID Card
+                          </button>
+                        )}
+                      </div>
                     </td>
                     <td className="py-5">
                       <div className="relative w-[150px]">
@@ -379,7 +435,33 @@ function AdminContent() {
                     <td className="py-5">
                       <div className="text-[15px] font-semibold text-(--accent-cyan)">{t.name}</div>
                     </td>
-                    <td className="py-5 text-sm text-(--text-secondary)">{(t.members || []).length} Members</td>
+                    <td className="py-5 text-sm text-(--text-secondary)">
+                      <div>{(t.members || []).length} Members</div>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {t.members?.slice(0, 3).map((member) => (
+                          <div key={member.id} className="flex items-center gap-1">
+                            {member.user.avatarUrl && (
+                              <button
+                                type="button"
+                                onClick={() => openUserUpload(member.user.id, 'avatar')}
+                                className="rounded border border-(--accent-cyan) px-2 py-1 text-[10px] text-(--accent-cyan)"
+                              >
+                                {member.user.fullName.split(' ')[0]} avatar
+                              </button>
+                            )}
+                            {member.user.idCardUploaded && (
+                              <button
+                                type="button"
+                                onClick={() => openUserUpload(member.user.id, 'id-card')}
+                                className="rounded border border-(--accent-green) px-2 py-1 text-[10px] text-(--accent-green)"
+                              >
+                                ID
+                              </button>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </td>
                     <td className="py-5 text-sm text-white">{t.score?.toFixed(4) || 'N/A'}</td>
                     <td className="py-5 text-right">
                       {t.currentStatus === 'FINALIST' ? (
@@ -417,6 +499,33 @@ function AdminContent() {
                 ))}
               </tbody>
             </table>
+            </div>
+
+            <div className="mt-4 flex flex-col gap-3 border-t border-white/5 pt-4 text-xs text-(--text-muted) sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                Showing teams {teamFrom}-{teamTo} of {totalTeams}
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setTeamPage((p) => Math.max(1, p - 1))}
+                  disabled={teamPage <= 1 || loading}
+                  className="rounded border border-(--border-subtle) px-3 py-1.5 text-xs text-(--text-secondary) disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  Prev
+                </button>
+                <span className="min-w-[84px] text-center text-(--text-secondary)">
+                  Page {teamPage}/{totalTeamPages}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setTeamPage((p) => Math.min(totalTeamPages, p + 1))}
+                  disabled={teamPage >= totalTeamPages || loading}
+                  className="rounded border border-(--border-subtle) px-3 py-1.5 text-xs text-(--text-secondary) disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  Next
+                </button>
+              </div>
             </div>
           </div>
         </div>

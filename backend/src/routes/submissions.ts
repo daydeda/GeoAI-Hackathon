@@ -36,7 +36,10 @@ export async function submissionRoutes(app: FastifyInstance) {
     const history = await prisma.submission.findMany({
       where: { teamId: membership.teamId },
       orderBy: { version: 'desc' },
-      include: { moderatorReview: { select: { status: true, note: true } } }
+      include: {
+        moderatorReview: { select: { status: true, note: true } },
+        scoreAggregate: { select: { totalWeighted: true, judgeCount: true, calculatedAt: true } },
+      }
     })
 
     return { data: history }

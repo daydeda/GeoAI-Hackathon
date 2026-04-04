@@ -12,6 +12,15 @@ interface File { fileKey: string; originalName: string }
 interface Review { status: 'PASS' | 'DISQUALIFIED' }
 interface Submission { id: string; submittedAt: string; team: Team; files: File[]; moderatorReview: Review | null }
 
+const TRACK_LABELS: Record<string, string> = {
+  SMART_AGRICULTURE: 'Smart Agriculture',
+  DISASTER_FLOOD_RESPONSE: 'Disaster & Flood Response',
+}
+
+function formatTrackLabel(track: string) {
+  return TRACK_LABELS[track] || track.replace(/_/g, ' ')
+}
+
 function ModeratorContent() {
   const { user } = useAuth()
   const [submissions, setSubmissions] = useState<Submission[]>([])
@@ -113,8 +122,8 @@ function ModeratorContent() {
           <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 flex-wrap">
             <select value={trackFilter} onChange={e => setTrackFilter(e.target.value)} className="bg-(--bg-base) border border-(--border-subtle) rounded px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm text-white outline-none">
               <option value="">ALL TRACKS</option>
-              <option value="track1">Track 1</option>
-              <option value="track2">Track 2</option>
+              <option value="SMART_AGRICULTURE">Smart Agriculture</option>
+              <option value="DISASTER_FLOOD_RESPONSE">Disaster & Flood Response</option>
             </select>
             <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="bg-(--bg-base) border border-(--border-subtle) rounded px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm text-white outline-none">
               <option value="">ALL STATUS</option>
@@ -147,7 +156,7 @@ function ModeratorContent() {
             {submissions.map(sub => (
               <tr key={sub.id} className="border-b border-[rgba(255,255,255,0.02)] hover:bg-[rgba(255,255,255,0.01)] transition">
                 <td className="py-2 sm:py-3 px-2 sm:px-3 font-semibold text-xs sm:text-sm text-white truncate">{sub.team.name}</td>
-                <td className="py-2 sm:py-3 px-2 sm:px-3 text-(--text-secondary) hidden sm:table-cell truncate text-xs sm:text-sm">{sub.team.track}</td>
+                <td className="py-2 sm:py-3 px-2 sm:px-3 text-(--text-secondary) hidden sm:table-cell truncate text-xs sm:text-sm">{formatTrackLabel(sub.team.track)}</td>
                 <td className="py-2 sm:py-3 px-2 sm:px-3 font-mono text-(--text-muted) hidden md:table-cell text-[8px] sm:text-xs">{new Date(sub.submittedAt).toLocaleDateString()}</td>
                 <td className="py-2 sm:py-3 px-2 sm:px-3">
                   {sub.moderatorReview ? (
@@ -159,16 +168,17 @@ function ModeratorContent() {
                   )}
                 </td>
                 <td className="py-2 sm:py-3 px-2 sm:px-3 text-right">
-                  {!sub.moderatorReview && (
-                    <div className="inline-flex gap-1 sm:gap-2">
-                      <button onClick={() => submitReview(sub.id, 'PASS')} className="p-1 sm:p-1.5 bg-[rgba(0,230,118,0.1)] border border-(--accent-green) text-(--accent-green) rounded hover:bg-[rgba(0,230,118,0.2)] transition">
-                        <Check size={14} />
-                      </button>
-                      <button onClick={() => submitReview(sub.id, 'DISQUALIFIED')} className="p-1 sm:p-1.5 bg-[rgba(255,98,117,0.1)] border border-[#ff6275] text-[#ff6275] rounded hover:bg-[rgba(255,98,117,0.2)] transition">
-                        <X size={14} />
-                      </button>
-                    </div>
-                  )}
+                  <div className="inline-flex items-center gap-1 sm:gap-2">
+                    <button onClick={() => submitReview(sub.id, 'PASS')} className="p-1 sm:p-1.5 bg-[rgba(0,230,118,0.1)] border border-(--accent-green) text-(--accent-green) rounded hover:bg-[rgba(0,230,118,0.2)] transition" title={sub.moderatorReview ? 'Re-review and approve' : 'Approve'}>
+                      <Check size={14} />
+                    </button>
+                    <button onClick={() => submitReview(sub.id, 'DISQUALIFIED')} className="p-1 sm:p-1.5 bg-[rgba(255,98,117,0.1)] border border-[#ff6275] text-[#ff6275] rounded hover:bg-[rgba(255,98,117,0.2)] transition" title={sub.moderatorReview ? 'Re-review and disqualify' : 'Disqualify'}>
+                      <X size={14} />
+                    </button>
+                    {sub.moderatorReview && (
+                      <span className="ml-1 text-[9px] sm:text-[10px] text-(--text-muted)">Re-review</span>
+                    )}
+                  </div>
                   {sub.moderatorReview && canSendAnnouncements && (
                     <button
                       onClick={() => sendAnnouncement(sub.id)}

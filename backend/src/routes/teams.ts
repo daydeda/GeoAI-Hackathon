@@ -82,7 +82,12 @@ export async function teamRoutes(app: FastifyInstance) {
             members: { include: { user: { select: { id: true, email: true, fullName: true, avatarUrl: true } } } },
             leader: { select: { id: true, email: true, fullName: true } },
             invites: { where: { revoked: false } },
-            submissions: { where: { isActive: true }, orderBy: { version: 'desc' }, take: 1 },
+            submissions: {
+              where: { isActive: true },
+              orderBy: { version: 'desc' },
+              take: 1,
+              include: { scoreAggregate: { select: { totalWeighted: true, judgeCount: true, calculatedAt: true } } },
+            },
           },
         },
       },

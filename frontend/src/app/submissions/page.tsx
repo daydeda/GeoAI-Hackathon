@@ -8,7 +8,14 @@ import { useDropzone } from 'react-dropzone'
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
 const ANNOUNCEMENT_DATE = '2026-05-08T00:00:00+07:00'
 
-interface Submission { id: string; version: number; gistdaDeclared: boolean; submittedAt: string; moderatorReview?: { status: string; note?: string } }
+interface Submission {
+  id: string
+  version: number
+  gistdaDeclared: boolean
+  submittedAt: string
+  moderatorReview?: { status: string; note?: string }
+  scoreAggregate?: { totalWeighted: number; judgeCount: number; calculatedAt?: string }
+}
 
 function normalizeReviewStatus(status?: string) {
   if (status === 'PASS') return 'PASS'
@@ -206,6 +213,16 @@ function SubmissionsContent() {
                     {reviewStatus}
                   </span>
                 </div>
+                {activeSubmission.scoreAggregate && (
+                  <div className="mb-3 rounded border border-(--border-subtle) bg-(--bg-base) px-3 py-2 text-xs text-(--text-secondary)">
+                    Final averaged score:{' '}
+                    <span className="font-semibold text-white">
+                      {activeSubmission.scoreAggregate.totalWeighted.toFixed(2)}
+                    </span>
+                    {' · '}
+                    Judges: <span className="font-semibold text-white">{activeSubmission.scoreAggregate.judgeCount}</span>
+                  </div>
+                )}
                 <button
                   className="w-full px-3 py-2 text-xs sm:text-sm border border-(--border-active) rounded hover:bg-(--bg-base) transition-colors"
                   onClick={e => download(activeSubmission.id, e)}

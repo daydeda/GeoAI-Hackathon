@@ -31,7 +31,7 @@ function calcWeighted(s: z.infer<typeof ScoreSchema>): number {
 
 export async function judgeRoutes(app: FastifyInstance) {
   // GET /api/v1/judge/submissions — passed proposals only
-  app.get('/submissions', { preHandler: [requireRole('JUDGE', 'ADMIN')] }, async (request, reply) => {
+  app.get('/submissions', { preHandler: [requireRole('JUDGE', 'ADMIN', 'MODERATOR')] }, async (request, reply) => {
     const actor = request.user as JwtPayload
     const { page = '1', limit = '20' } = request.query as Record<string, string>
 
@@ -60,7 +60,7 @@ export async function judgeRoutes(app: FastifyInstance) {
   })
 
   // POST /api/v1/judge/submissions/:submissionId/scores
-  app.post('/submissions/:submissionId/scores', { preHandler: [requireRole('JUDGE', 'ADMIN')] }, async (request, reply) => {
+  app.post('/submissions/:submissionId/scores', { preHandler: [requireRole('JUDGE', 'ADMIN', 'MODERATOR')] }, async (request, reply) => {
     const actor = request.user as JwtPayload
     const { submissionId } = request.params as { submissionId: string }
     const body = ScoreSchema.safeParse(request.body)
@@ -137,7 +137,7 @@ export async function judgeRoutes(app: FastifyInstance) {
   })
 
   // GET /api/v1/judge/submissions/:submissionId/aggregate
-  app.get('/submissions/:submissionId/aggregate', { preHandler: [requireRole('JUDGE', 'ADMIN')] }, async (request, reply) => {
+  app.get('/submissions/:submissionId/aggregate', { preHandler: [requireRole('JUDGE', 'ADMIN', 'MODERATOR')] }, async (request, reply) => {
     const { submissionId } = request.params as { submissionId: string }
 
     const [aggregate, scores] = await Promise.all([

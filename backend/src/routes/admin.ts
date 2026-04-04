@@ -88,16 +88,73 @@ export async function adminRoutes(app: FastifyInstance) {
   })
 
   // GET /api/v1/admin/teams — list all teams with scores
-  app.get('/teams', { preHandler: [requireRole('ADMIN', 'MODERATOR')] }, async (_req, reply) => {
+  app.get('/teams', { preHandler: [requireRole('ADMIN', 'MODERATOR')] }, async (request, reply) => {
+    const { page = '1', limit = '20' } = request.query as Record<string, string>
+    const take = Math.min(100, Math.max(1, Number(limit) || 20))
+    const currentPage = Math.max(1, Number(page) || 1)
+
     const teams = await prisma.team.findMany({
       include: {
-        leader: { select: { id: true, email: true, fullName: true } },
-        members: { include: { user: { select: { id: true, email: true, fullName: true } } } },
+        leader: { select: { id: true, email: true, fullName: true, avatarUrl: true, idCardFileKey: true } },
+        members: { include: { user: { select: { id: true, email: true, fullName: true, avatarUrl: true, idCardFileKey: true } } } },
         submissions: { where: { isActive: true }, include: { scoreAggregate: true, moderatorReview: true } },
       },
       orderBy: { createdAt: 'desc' },
+      skip: (currentPage - 1) * take,
+      take,
     })
-    return teams
+
+    const total = await prisma.team.count()
+
+    return {
+      data: teams.map((team) => ({
+        ...team,
+        leader: {
+          ...team.leader,
+          idCardUploaded: Boolean(team.leader.idCardFileKey),
+        },
+        members: team.members.map((member) => ({
+          ...member,
+          user: {
+            ...member.user,
+            idCardUploaded: Boolean(member.user.idCardFileKey),
+          },
+        })),
+      })),
+      total,
+      page: currentPage,
+      limit: take,
+    }
+  })
+
+  // GET /api/v1/admin/users/:userId/uploads/:type/view
+  app.get('/users/:userId/uploads/:type/view', { preHandler: [requireRole('ADMIN', 'MODERATOR')] }, async (request, reply) => {
+    const { userId, type } = request.params as { userId: string; type: string }
+    const user = await prisma.user.findUnique({ where: { id: userId } })
+    if (!user) return reply.status(404).send({ error: 'User not found' })
+
+    if (type === 'avatar') {
+      if (!user.avatarUrl) return reply.status(404).send({ error: 'Avatar not found' })
+      return reply.redirect(user.avatarUrl)
+    }
+
+    if (type === 'id-card') {
+      if (!user.idCardFileKey) return reply.status(404).send({ error: 'ID card not found' })
+      const stream = await minioClient.getObject(BUCKET, user.idCardFileKey)
+      const fileName = user.idCardFileName || 'student-id'
+      const lowered = fileName.toLowerCase()
+      const contentType = lowered.endsWith('.pdf')
+        ? 'application/pdf'
+        : lowered.endsWith('.png')
+          ? 'image/png'
+          : 'image/jpeg'
+
+      reply.header('Content-Type', contentType)
+      reply.header('Content-Disposition', `inline; filename="${fileName}"`)
+      return reply.send(stream)
+    }
+
+    return reply.status(400).send({ error: 'Unsupported upload type' })
   })
 
   // PATCH /api/v1/admin/teams/:teamId/status
