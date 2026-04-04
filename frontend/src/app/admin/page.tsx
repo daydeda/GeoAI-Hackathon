@@ -264,7 +264,7 @@ function AdminContent() {
                 </tr>
               </thead>
               <tbody>
-                {filteredUsers.slice(0, 10).map(u => (
+                {filteredUsers.map(u => (
                   <tr key={u.id} className="border-b border-white/[0.02]">
                     <td className="py-5">
                       <div className="mb-1 text-sm font-semibold text-white">{u.email}</div>
