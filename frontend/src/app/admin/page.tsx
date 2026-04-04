@@ -54,11 +54,17 @@ function AdminContent() {
   const { showAlert } = useAlert()
   const [users, setUsers] = useState<UserRow[]>([])
   const [totalUsers, setTotalUsers] = useState(0)
+  const [userPage, setUserPage] = useState(1)
+  const [userLimit] = useState(20)
   const [teams, setTeams] = useState<TeamRow[]>([])
   const [logs, setLogs] = useState<LogRow[]>([])
   const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(true)
   const [confirmAction, setConfirmAction] = useState<{ type: 'PROMOTE' | 'DISQUALIFY' | 'REVOKE' | 'RESTORE', teamId: string, teamName: string } | null>(null)
+
+  const totalUserPages = Math.max(1, Math.ceil(totalUsers / userLimit))
+  const userFrom = totalUsers === 0 ? 0 : (userPage - 1) * userLimit + 1
+  const userTo = Math.min(userPage * userLimit, totalUsers)
 
   const fetchAll = useCallback(async () => {
     setLoading(true)
@@ -67,8 +73,15 @@ function AdminContent() {
 
     try {
       const opts = { credentials: 'include', signal: controller.signal } as const
+      const userParams = new URLSearchParams({
+        page: String(userPage),
+        limit: String(userLimit),
+      })
+      const trimmedSearch = search.trim()
+      if (trimmedSearch) userParams.set('search', trimmedSearch)
+
       const [usersRes, teamsRes, logsRes] = await Promise.all([
-        fetch(`${API}/api/v1/admin/users`, opts),
+        fetch(`${API}/api/v1/admin/users?${userParams.toString()}`, opts),
         fetch(`${API}/api/v1/admin/teams`, opts),
         fetch(`${API}/api/v1/admin/audit-logs?limit=10`, opts),
       ])
@@ -94,7 +107,7 @@ function AdminContent() {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [search, userLimit, userPage])
 
   useEffect(() => {
     let active = true;
@@ -166,7 +179,6 @@ function AdminContent() {
     }
   }
 
-  const filteredUsers = users.filter(u => !search || u.email.includes(search) || u.fullName.toLowerCase().includes(search.toLowerCase()))
   const exportCards: Array<{ label: string; title: string; type: string; icon: LucideIcon }> = [
     { label: 'TEAMS REGISTRY', title: 'Export Teams as CSV', type: 'TEAMS', icon: Download },
     { label: 'PROPOSAL BUNDLE', title: 'Export Proposals as XLSX', type: 'SUBMISSIONS', icon: FileSpreadsheet },
@@ -247,7 +259,10 @@ function AdminContent() {
                 <input
                   placeholder="SEARCH UUID / EMAIL"
                   value={search}
-                  onChange={e => setSearch(e.target.value)}
+                  onChange={e => {
+                    setSearch(e.target.value)
+                    setUserPage(1)
+                  }}
                   className="w-full rounded border border-(--border-subtle) bg-(--bg-base) px-3 py-2 pl-9 text-xs tracking-[0.05em] text-white outline-none md:w-[260px]"
                 />
               </div>
@@ -264,7 +279,7 @@ function AdminContent() {
                 </tr>
               </thead>
               <tbody>
-                {filteredUsers.map(u => (
+                {users.map(u => (
                   <tr key={u.id} className="border-b border-white/[0.02]">
                     <td className="py-5">
                       <div className="mb-1 text-sm font-semibold text-white">{u.email}</div>
@@ -306,8 +321,42 @@ function AdminContent() {
                     </td>
                   </tr>
                 ))}
+                {users.length === 0 && (
+                  <tr>
+                    <td colSpan={4} className="py-8 text-center text-sm text-(--text-muted)">
+                      ไม่พบผู้ใช้ที่ตรงกับคำค้นหา
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
+            </div>
+
+            <div className="mt-4 flex flex-col gap-3 border-t border-white/5 pt-4 text-xs text-(--text-muted) sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                แสดงผู้ใช้ {userFrom}-{userTo} จากทั้งหมด {totalUsers}
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setUserPage((p) => Math.max(1, p - 1))}
+                  disabled={userPage <= 1 || loading}
+                  className="rounded border border-(--border-subtle) px-3 py-1.5 text-xs text-(--text-secondary) disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  ก่อนหน้า
+                </button>
+                <span className="min-w-[84px] text-center text-(--text-secondary)">
+                  หน้า {userPage}/{totalUserPages}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setUserPage((p) => Math.min(totalUserPages, p + 1))}
+                  disabled={userPage >= totalUserPages || loading}
+                  className="rounded border border-(--border-subtle) px-3 py-1.5 text-xs text-(--text-secondary) disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  ถัดไป
+                </button>
+              </div>
             </div>
           </div>
 
