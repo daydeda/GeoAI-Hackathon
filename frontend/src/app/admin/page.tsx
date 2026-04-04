@@ -390,7 +390,7 @@ function AdminContent() {
 
             <div className="mt-4 flex flex-col gap-3 border-t border-white/5 pt-4 text-xs text-(--text-muted) sm:flex-row sm:items-center sm:justify-between">
               <div>
-                แสดงผู้ใช้ {userFrom}-{userTo} จากทั้งหมด {totalUsers}
+                Showing users {userFrom}-{userTo} of {totalUsers}
               </div>
               <div className="flex items-center gap-2">
                 <button
@@ -399,10 +399,10 @@ function AdminContent() {
                   disabled={userPage <= 1 || loading}
                   className="rounded border border-(--border-subtle) px-3 py-1.5 text-xs text-(--text-secondary) disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  ก่อนหน้า
+                  Prev
                 </button>
                 <span className="min-w-[84px] text-center text-(--text-secondary)">
-                  หน้า {userPage}/{totalUserPages}
+                  Next {userPage}/{totalUserPages}
                 </span>
                 <button
                   type="button"
