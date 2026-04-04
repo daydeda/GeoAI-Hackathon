@@ -62,7 +62,7 @@ type NavItem = {
 const topLinks = [
   { href: '/team', label: 'Challenges' },
   { href: '/team', label: 'Leaderboard' },
-  { href: '/resources', label: 'Docs' },
+  { href: '/docs', label: 'Docs' },
   { href: '/team', label: 'Support' },
 ]
 
@@ -197,6 +197,22 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     )
   }
 
+  const resourcesSubMenu = (onClick?: () => void) => (
+    <Link
+      href="/resources/knowledge"
+      onClick={onClick}
+      className="group flex items-center gap-3 border-l-[3px] px-6 py-2.5 pl-12 text-xs font-semibold uppercase tracking-[0.05em] transition-all sm:text-sm"
+      style={{
+        color: 'var(--accent-green)',
+        borderLeftColor: 'var(--accent-green)',
+        background: 'rgba(0, 230, 118, 0.08)',
+      }}
+    >
+      <BookOpen size={14} style={{ color: 'var(--accent-green)' }} aria-hidden="true" />
+      <span>Knowledge</span>
+    </Link>
+  )
+
   return (
     <div className="min-h-screen flex flex-col bg-(--bg-base)">
       {needsProfileSetup && (
@@ -288,7 +304,14 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
           <div className="mb-6">
             <div className="px-6 pb-3 text-[10px] tracking-[0.1em] text-(--text-muted)">MAIN MENU</div>
-            <div className="space-y-1">{baseMenu.map((item) => menuItem(item))}</div>
+            <div className="space-y-1">
+              {baseMenu.map((item) => (
+                <div key={item.href}>
+                  {menuItem(item)}
+                  {item.href === '/resources' && isActiveRoute('/resources') && resourcesSubMenu()}
+                </div>
+              ))}
+            </div>
           </div>
 
           {adminMenu.length > 0 && (
@@ -349,7 +372,14 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           </div>
 
           <div className="px-4 pb-2 text-[10px] tracking-[0.1em] text-(--text-muted)">MAIN MENU</div>
-          <div className="space-y-1">{baseMenu.map((item) => menuItem(item, () => setMobileMenuOpen(false)))}</div>
+          <div className="space-y-1">
+            {baseMenu.map((item) => (
+              <div key={item.href}>
+                {menuItem(item, () => setMobileMenuOpen(false))}
+                {item.href === '/resources' && isActiveRoute('/resources') && resourcesSubMenu(() => setMobileMenuOpen(false))}
+              </div>
+            ))}
+          </div>
 
           {adminMenu.length > 0 && (
             <>

@@ -131,6 +131,13 @@ const sponsoredBy = [
   { name: 'ETDA', href: 'https://www.etda.or.th/en' },
 ]
 
+const navLinks = [
+  { label: 'Challenges', href: '#timeline' },
+  { label: 'Leaderboard', href: '/login' },
+  { label: 'Docs', href: '/docs' },
+  { label: 'Support', href: '/resources' },
+]
+
 export default function LandingPage() {
   const { days, hours, mins, secs } = useCountdown(DEADLINE)
   const timeline = getTimeline()
@@ -147,14 +154,14 @@ export default function LandingPage() {
           
           {/* Desktop Menu */}
           <div className="hidden lg:flex items-center gap-8">
-            {['Challenges', 'Leaderboard', 'Docs', 'Support'].map(item => (
-              <a
-                key={item}
-                href="#"
+            {navLinks.map((item) => (
+              <Link
+                key={item.label}
+                href={item.href}
                 className="text-xs sm:text-sm text-(--text-secondary) hover:text-(--text-primary) transition-colors font-medium"
               >
-                {item}
-              </a>
+                {item.label}
+              </Link>
             ))}
             <Link href="/login" className="px-4 sm:px-6 py-2 sm:py-2.5 bg-(--accent-cyan) text-(--bg-base) rounded font-semibold text-xs sm:text-sm hover:opacity-90 transition-opacity">
               Register Now
@@ -174,14 +181,14 @@ export default function LandingPage() {
         {/* Mobile Menu */}
         {mobileMenuOpen && (
           <div className="lg:hidden mt-4 pb-4 space-y-3 border-t border-(--border-subtle) pt-4">
-            {['Challenges', 'Leaderboard', 'Docs', 'Support'].map(item => (
-              <a
-                key={item}
-                href="#"
+            {navLinks.map((item) => (
+              <Link
+                key={item.label}
+                href={item.href}
                 className="block px-4 py-2 text-sm text-(--text-secondary) hover:text-(--text-primary) transition-colors"
               >
-                {item}
-              </a>
+                {item.label}
+              </Link>
             ))}
             <Link
               href="/login"

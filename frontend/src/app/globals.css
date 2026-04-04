@@ -48,6 +48,14 @@ body {
 
 h1, h2, h3 { font-family: 'Rajdhani', sans-serif; font-weight: 700; letter-spacing: 0.02em; }
 
+/* Keep Kanit headings on Docs/Knowledge pages despite global heading styles. */
+.docs-kanit h1,
+.docs-kanit h2,
+.docs-kanit h3 {
+  font-family: inherit;
+  letter-spacing: normal;
+}
+
 /* ─── Scrollbar ──────────────────────────────────────────── */
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: var(--bg-base); }
