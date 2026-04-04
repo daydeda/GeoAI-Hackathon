@@ -117,26 +117,26 @@ function JudgeContent() {
   }
 
   return (
-    <div className="flex min-h-screen bg-[var(--bg-base)]">
+    <div className="flex min-h-screen bg-(--bg-base)">
       {successMessage && (
         <div className="fixed inset-0 bg-[rgba(5,13,26,0.85)] z-50 flex items-center justify-center backdrop-blur-xl transition-all duration-300">
-           <div className="bg-[var(--bg-surface)] border border-[rgba(0,230,118,0.3)] p-8 sm:p-12 rounded-lg flex flex-col items-center gap-6 sm:gap-8 shadow-2xl animate-appear">
+           <div className="bg-(--bg-surface) border border-[rgba(0,230,118,0.3)] p-8 sm:p-12 rounded-lg flex flex-col items-center gap-6 sm:gap-8 shadow-2xl animate-appear">
               <style>{`
                 @keyframes appear {
                   0% { opacity: 0; transform: scale(0.95) translateY(10px); }
                   100% { opacity: 1; transform: scale(1) translateY(0); }
                 }
               `}</style>
-              <div className="w-16 sm:w-20 h-16 sm:h-20 rounded-full bg-[rgba(0,230,118,0.1)] flex items-center justify-center border-2 border-[var(--accent-green)] text-3xl sm:text-4xl text-[var(--accent-green)]">
+              <div className="w-16 sm:w-20 h-16 sm:h-20 rounded-full bg-[rgba(0,230,118,0.1)] flex items-center justify-center border-2 border-(--accent-green) text-3xl sm:text-4xl text-(--accent-green)">
                 ✓
               </div>
               <div className="text-center">
                  <h2 className="font-display text-xl sm:text-2xl lg:text-3xl text-white mb-2 sm:mb-3 font-bold tracking-wider">SUCCESSFUL UPDATE</h2>
-                 <p className="text-[var(--text-secondary)] text-sm sm:text-base mb-4 sm:mb-6">{successMessage}</p>
+                 <p className="text-(--text-secondary) text-sm sm:text-base mb-4 sm:mb-6">{successMessage}</p>
                  
                  <button 
                    onClick={() => setSuccessMessage(null)}
-                   className="bg-[var(--accent-green)] text-black px-6 sm:px-8 py-2 sm:py-3 font-bold text-xs sm:text-sm tracking-widest rounded hover:brightness-110 transition"
+                   className="bg-(--accent-green) text-black px-6 sm:px-8 py-2 sm:py-3 font-bold text-xs sm:text-sm tracking-widest rounded hover:brightness-110 transition"
                  >
                    CONTINUE REVIEWING
                  </button>
@@ -146,13 +146,13 @@ function JudgeContent() {
       )}
       
       {/* Outer Judge Sidebar */}
-      <div className="hidden sm:flex sm:w-40 md:w-48 lg:w-60 bg-[var(--bg-base)] border-r border-[rgba(255,255,255,0.05)] flex-col py-4 sm:py-6 lg:py-8 px-3 sm:px-4">
+      <div className="hidden sm:flex sm:w-40 md:w-48 lg:w-60 bg-(--bg-base) border-r border-[rgba(255,255,255,0.05)] flex-col py-4 sm:py-6 lg:py-8 px-3 sm:px-4">
         <div className="px-3 sm:px-4 mb-6 sm:mb-10">
           <div className="flex items-center gap-2 sm:gap-3 mb-1">
-            <span className="text-lg sm:text-xl text-[var(--accent-cyan)]">🛡</span>
+            <span className="text-lg sm:text-xl text-(--accent-cyan)">🛡</span>
             <div className="text-white text-xs sm:text-sm font-bold tracking-wider">LEAD JUDGE</div>
           </div>
-          <div className="text-[8px] sm:text-[9px] text-[var(--text-muted)] tracking-widest pl-6 sm:pl-8">{user?.roles?.includes('ADMIN') ? 'ADMINISTRATOR' : 'ORBITAL SECTOR 7'}</div>
+          <div className="text-[8px] sm:text-[9px] text-(--text-muted) tracking-widest pl-6 sm:pl-8">{user?.roles?.includes('ADMIN') ? 'ADMINISTRATOR' : 'ORBITAL SECTOR 7'}</div>
         </div>
 
         <div className="flex flex-col gap-1">
@@ -166,8 +166,8 @@ function JudgeContent() {
               onClick={() => setActiveTab(tab)}
               className={`px-3 sm:px-4 py-2 sm:py-3 flex items-center gap-2 sm:gap-3 cursor-pointer text-xs sm:text-sm font-semibold tracking-wider transition border-l-3 ${
                 activeTab === tab
-                  ? 'bg-[rgba(0,229,255,0.05)] border-[var(--accent-cyan)] text-[var(--accent-cyan)]'
-                  : 'border-transparent text-[var(--text-secondary)] hover:text-white'
+                  ? 'bg-[rgba(0,229,255,0.05)] border-(--accent-cyan) text-(--accent-cyan)'
+                  : 'border-transparent text-(--text-secondary) hover:text-white'
               }`}
             >
               <span>{icon}</span> <span className="hidden sm:inline">{label}</span>
@@ -178,10 +178,10 @@ function JudgeContent() {
         <div className="flex-1"></div>
 
         <div className="px-3 sm:px-4 py-4 sm:py-6 flex flex-col gap-3 sm:gap-4 border-t border-[rgba(255,255,255,0.05)]">
-          <button className="text-[var(--text-secondary)] text-xs sm:text-sm font-semibold tracking-wider flex items-center gap-2 hover:text-white transition">
+          <button className="text-(--text-secondary) text-xs sm:text-sm font-semibold tracking-wider flex items-center gap-2 hover:text-white transition">
             <HelpCircle size={16} /> <span className="hidden sm:inline">HELP CENTER</span>
           </button>
-          <button onClick={logout} className="text-[var(--text-muted)] text-xs sm:text-sm font-semibold tracking-wider flex items-center gap-2 hover:text-white transition">
+          <button onClick={logout} className="text-(--text-muted) text-xs sm:text-sm font-semibold tracking-wider flex items-center gap-2 hover:text-white transition">
             <LogOut size={16} /> <span className="hidden sm:inline">LOG OUT</span>
           </button>
         </div>
@@ -190,8 +190,8 @@ function JudgeContent() {
       {activeTab === 'SETTINGS' ? (
         <div className="flex-1 px-4 sm:px-6 lg:px-8 py-6 sm:py-8 flex flex-col">
            <h1 className="font-display text-2xl sm:text-3xl lg:text-4xl text-white mb-6 sm:mb-8">SYSTEM SETTINGS</h1>
-           <div className="bg-[var(--bg-surface)] p-6 sm:p-8 rounded border border-[rgba(255,255,255,0.05)] max-w-2xl">
-             <p className="text-[var(--text-secondary)] leading-relaxed text-sm sm:text-base">System configuration for the judging environment. Manage your profile, notification preferences, and rubric templates here.</p>
+           <div className="bg-(--bg-surface) p-6 sm:p-8 rounded border border-[rgba(255,255,255,0.05)] max-w-2xl">
+             <p className="text-(--text-secondary) leading-relaxed text-sm sm:text-base">System configuration for the judging environment. Manage your profile, notification preferences, and rubric templates here.</p>
              <div className="mt-6 sm:mt-8 flex flex-col gap-4">
                {[
                  { label: 'Email Notifications', checked: true },
@@ -199,7 +199,7 @@ function JudgeContent() {
                ].map(({ label, checked }) => (
                  <div key={label} className="flex justify-between items-center py-3 sm:py-4 border-b border-[rgba(255,255,255,0.05)]">
                     <span className="text-white text-sm sm:text-base">{label}</span>
-                    <input type="checkbox" defaultChecked={checked} className="w-4 h-4 accent-[var(--accent-cyan)]" />
+                    <input type="checkbox" defaultChecked={checked} className="w-4 h-4 accent-(--accent-cyan)" />
                  </div>
                ))}
              </div>
@@ -208,7 +208,7 @@ function JudgeContent() {
       ) : (
         <>
           {/* Inner Queue Sidebar */}
-          <div className="hidden md:flex md:w-56 lg:w-64 bg-[var(--bg-surface)] border-r border-[rgba(255,255,255,0.05)] flex-col overflow-y-auto">
+          <div className="hidden md:flex md:w-56 lg:w-64 bg-(--bg-surface) border-r border-[rgba(255,255,255,0.05)] flex-col overflow-y-auto">
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24, alignItems: 'baseline' }}>
               <h2 style={{ fontSize: 16, fontWeight: 600, color: 'white', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
                 {activeTab.replace('_', ' ')} <span style={{ color: 'var(--text-muted)' }}>({String(currentTabQueue.length).padStart(2, '0')})</span>

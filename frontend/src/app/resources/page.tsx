@@ -55,30 +55,30 @@ function ResourcesContent() {
   ]
 
   return (
-    <div className="min-h-screen px-4 sm:px-6 lg:px-8 py-6 sm:py-8 max-w-7xl mx-auto bg-[var(--bg-base)] flex flex-col">
+    <div className="min-h-screen px-4 sm:px-6 lg:px-8 py-6 sm:py-8 max-w-7xl mx-auto bg-(--bg-base) flex flex-col">
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:justify-between lg:items-start gap-6 sm:gap-8 mb-8 sm:mb-12">
         <div>
-          <div className="font-mono text-[8px] sm:text-xs text-[var(--accent-green)] mb-2 sm:mb-4 tracking-widest">
-            <span className="text-[var(--accent-green)] mr-1.5">■</span> DATA & INTELLIGENCE
+          <div className="font-mono text-[8px] sm:text-xs text-(--accent-green) mb-2 sm:mb-4 tracking-widest">
+            <span className="text-(--accent-green) mr-1.5">■</span> DATA & INTELLIGENCE
           </div>
           <h1 className="font-display text-2xl sm:text-3xl lg:text-4xl text-white mb-2 sm:mb-4">Resources Hub</h1>
-          <p className="text-[var(--text-secondary)] text-xs sm:text-sm lg:text-base">Official datasets, API documentation, and mission-critical intelligence.</p>
+          <p className="text-(--text-secondary) text-xs sm:text-sm lg:text-base">Official datasets, API documentation, and mission-critical intelligence.</p>
         </div>
         <div className="text-left lg:text-right">
-          <div className="font-mono text-[8px] sm:text-xs text-[var(--text-muted)] tracking-widest mb-2 sm:mb-4">SYSTEM_STATUS: NOMINAL</div>
+          <div className="font-mono text-[8px] sm:text-xs text-(--text-muted) tracking-widest mb-2 sm:mb-4">SYSTEM_STATUS: NOMINAL</div>
           <div className="flex items-center gap-2 justify-start lg:justify-end mb-4 sm:mb-6">
-            <span className="w-1.5 h-1.5 bg-[var(--accent-green)]" />
-            <span className="text-[var(--accent-green)] text-[8px] sm:text-xs font-semibold tracking-widest">OPERATIONAL</span>
+            <span className="w-1.5 h-1.5 bg-(--accent-green)" />
+            <span className="text-(--accent-green) text-[8px] sm:text-xs font-semibold tracking-widest">OPERATIONAL</span>
           </div>
           
           <div className="flex flex-col sm:flex-row gap-2">
             <div className="relative flex-1 sm:flex-none">
               <input
                 placeholder="Search resources..."
-                className="w-full sm:w-40 lg:w-56 bg-[var(--bg-surface)] border border-[rgba(255,255,255,0.1)] rounded px-3 py-2 text-xs sm:text-sm text-white placeholder-[var(--text-muted)] outline-none focus:border-[rgba(255,255,255,0.2)]"
+                className="w-full sm:w-40 lg:w-56 bg-(--bg-surface) border border-[rgba(255,255,255,0.1)] rounded px-3 py-2 text-xs sm:text-sm text-white placeholder-(--text-muted) outline-none focus:border-[rgba(255,255,255,0.2)]"
               />
-              <Search size={14} className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[var(--text-muted)]" />
+              <Search size={14} className="absolute right-3 top-1/2 transform -translate-y-1/2 text-(--text-muted)" />
             </div>
             <button className="bg-transparent border border-[rgba(255,255,255,0.1)] px-3 py-2 rounded text-white text-xs sm:text-sm tracking-widest font-semibold hover:border-[rgba(255,255,255,0.2)] transition flex items-center justify-center gap-2 whitespace-nowrap">
               <Filter size={14} /> Filter System
@@ -93,9 +93,9 @@ function ResourcesContent() {
           <div key={secIdx} className="flex flex-col gap-3 sm:gap-4">
             <div className="flex items-center gap-2 sm:gap-3 mb-2">
               <span className={`text-[8px] sm:text-xs font-bold tracking-widest px-2 py-1 rounded ${
-                sec.color === 'var(--accent-green)' ? 'bg-[rgba(0,230,118,0.1)] text-[var(--accent-green)]' :
-                sec.color === 'var(--accent-cyan)' ? 'bg-[rgba(0,229,255,0.1)] text-[var(--accent-cyan)]' :
-                'bg-[rgba(255,167,38,0.1)] text-[var(--accent-amber)]'
+                sec.color === 'var(--accent-green)' ? 'bg-[rgba(0,230,118,0.1)] text-(--accent-green)' :
+                sec.color === 'var(--accent-cyan)' ? 'bg-[rgba(0,229,255,0.1)] text-(--accent-cyan)' :
+                'bg-[rgba(255,167,38,0.1)] text-(--accent-amber)'
               }`}>
                 {sec.icon}
               </span>
@@ -105,19 +105,19 @@ function ResourcesContent() {
             </div>
 
             {sec.items.map((item, i) => (
-              <div key={i} className="bg-[var(--bg-surface)] border border-[rgba(255,255,255,0.05)] rounded p-4 sm:p-6 flex-1 flex flex-col hover:border-[rgba(255,255,255,0.1)] transition">
+              <div key={i} className="bg-(--bg-surface) border border-[rgba(255,255,255,0.05)] rounded p-4 sm:p-6 flex-1 flex flex-col hover:border-[rgba(255,255,255,0.1)] transition">
                 <div className="flex justify-between items-start gap-2 mb-3 sm:mb-4">
                   <div className="text-2xl sm:text-3xl">{item.icon}</div>
                   <div className="flex gap-1.5 flex-wrap justify-end">
-                    {item.tag1 && <span className="bg-[rgba(255,255,255,0.05)] border border-[rgba(255,255,255,0.1)] text-[7px] sm:text-[8px] tracking-widest px-1.5 py-1 text-[var(--text-secondary)] rounded">{item.tag1}</span>}
-                    {item.tag2 && <span className="bg-[rgba(255,255,255,0.05)] border border-[rgba(255,255,255,0.1)] text-[7px] sm:text-[8px] tracking-widest px-1.5 py-1 text-[var(--text-secondary)] rounded">{item.tag2}</span>}
+                    {item.tag1 && <span className="bg-[rgba(255,255,255,0.05)] border border-[rgba(255,255,255,0.1)] text-[7px] sm:text-[8px] tracking-widest px-1.5 py-1 text-(--text-secondary) rounded">{item.tag1}</span>}
+                    {item.tag2 && <span className="bg-[rgba(255,255,255,0.05)] border border-[rgba(255,255,255,0.1)] text-[7px] sm:text-[8px] tracking-widest px-1.5 py-1 text-(--text-secondary) rounded">{item.tag2}</span>}
                   </div>
                 </div>
                 
                 <h3 className="font-display text-base sm:text-lg text-white mb-2 sm:mb-3">{item.title}</h3>
-                <p className="text-[8px] sm:text-xs lg:text-sm text-[var(--text-secondary)] leading-relaxed mb-4 sm:mb-6 flex-1">{item.desc}</p>
+                <p className="text-[8px] sm:text-xs lg:text-sm text-(--text-secondary) leading-relaxed mb-4 sm:mb-6 flex-1">{item.desc}</p>
                 
-                <div className="border-t border-[rgba(255,255,255,0.05)] pt-3 sm:pt-4 flex items-center gap-2 cursor-pointer hover:text-[var(--accent-cyan)] transition">
+                <div className="border-t border-[rgba(255,255,255,0.05)] pt-3 sm:pt-4 flex items-center gap-2 cursor-pointer hover:text-(--accent-cyan) transition">
                   {item.linkIcon && <span className="text-lg">{item.linkIcon}</span>}
                   <div className="text-[8px] sm:text-xs font-bold tracking-widest" style={{ color: item.linkColor }}>
                     {item.linkText}
@@ -131,7 +131,7 @@ function ResourcesContent() {
       </div>
       
       {/* Footer */}
-      <footer className="border-t border-[rgba(255,255,255,0.05)] pt-4 sm:pt-6 text-center text-[8px] sm:text-xs text-[var(--text-muted)] tracking-wide">
+      <footer className="border-t border-[rgba(255,255,255,0.05)] pt-4 sm:pt-6 text-center text-[8px] sm:text-xs text-(--text-muted) tracking-wide">
         <div className="mb-2">© 2024 GEOAI HACKATHON | PRECISION LENS UI</div>
         <div className="flex flex-wrap justify-center gap-4 sm:gap-6">
           <span>PRIVACY POLICY</span>

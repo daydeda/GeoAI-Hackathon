@@ -1,11 +1,25 @@
 'use client'
 
-import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { LogIn, AlertCircle } from 'lucide-react'
+import { AlertCircle } from 'lucide-react'
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
+
+type LoginMeResponse = {
+  roles?: string[]
+  profileCompleted?: boolean
+}
+
+function getPostLoginPath(user: LoginMeResponse) {
+  const roles = user.roles || []
+  if (roles.length === 0) return '/team'
+  if (roles.includes('ADMIN')) return '/admin'
+  if (roles.includes('JUDGE')) return '/judge'
+  if (roles.includes('MODERATOR')) return '/moderator'
+  if (roles.includes('COMPETITOR') && !user.profileCompleted) return '/team'
+  return '/dashboard'
+}
 
 function getLoginErrorMessage(code: string | null) {
   if (!code) return null
@@ -33,11 +47,12 @@ export default function LoginPage() {
         // Check if user is already authenticated
         const res = await fetch(`${API}/api/v1/auth/me`, { credentials: 'include' })
         if (res.ok) {
-          // User is authenticated, redirect to dashboard
-          router.push('/dashboard')
+          const me = await res.json() as LoginMeResponse
+          // User is authenticated, redirect based on role and onboarding state.
+          router.push(getPostLoginPath(me))
           return
         }
-      } catch (err) {
+      } catch {
         // Not authenticated, continue
       }
 
@@ -55,7 +70,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="relative min-h-screen w-full overflow-hidden bg-[var(--bg-base)] flex flex-col items-center justify-center px-4 py-8 sm:px-6 lg:px-8">
+    <div className="relative min-h-screen w-full overflow-hidden bg-(--bg-base) flex flex-col items-center justify-center px-4 py-8 sm:px-6 lg:px-8">
       {/* Background effects */}
       <div
         className="absolute inset-0 pointer-events-none"
@@ -73,25 +88,25 @@ export default function LoginPage() {
       />
 
       {/* Card */}
-      <div className="relative z-10 w-full max-w-xs sm:max-w-sm animate-fade-in rounded-lg border border-[var(--border-active)] bg-[var(--bg-surface)] p-6 sm:p-8 shadow-lg"
+      <div className="relative z-10 w-full max-w-xs sm:max-w-sm animate-fade-in rounded-lg border border-(--border-active) bg-(--bg-surface) p-6 sm:p-8 shadow-lg"
         style={{ boxShadow: 'var(--glow-cyan)' }}>
         {/* Logo */}
         <div className="mb-6 sm:mb-8 text-center">
-          <div className="font-display text-xl sm:text-2xl font-bold text-[var(--accent-cyan)] mb-2">
+          <div className="font-display text-xl sm:text-2xl font-bold text-(--accent-cyan) mb-2">
             GEOAI HACKATHON
           </div>
-          <div className="text-xs sm:text-xs font-mono text-[var(--text-muted)] tracking-widest">
+          <div className="text-xs sm:text-xs font-mono text-(--text-muted) tracking-widest">
             AGRI-DISASTER AI · 2026
           </div>
         </div>
 
         {/* Divider */}
-        <div className="h-px bg-[var(--border-subtle)] mb-6 sm:mb-8" />
+        <div className="h-px bg-(--border-subtle) mb-6 sm:mb-8" />
 
-        <h2 className="font-display text-lg sm:text-xl mb-2 sm:mb-3 text-[var(--text-primary)] text-center">
+        <h2 className="font-display text-lg sm:text-xl mb-2 sm:mb-3 text-(--text-primary) text-center">
           Operator Authentication
         </h2>
-        <p className="text-xs sm:text-sm text-[var(--text-secondary)] mb-6 sm:mb-8 leading-relaxed text-center">
+        <p className="text-xs sm:text-sm text-(--text-secondary) mb-6 sm:mb-8 leading-relaxed text-center">
           Sign in with your Google account to access the competition platform. Only Google OAuth is supported.
         </p>
 
@@ -107,7 +122,7 @@ export default function LoginPage() {
         <button
           onClick={handleGoogleLogin}
           disabled={isChecking}
-          className="w-full flex items-center justify-center gap-3 py-3 sm:py-3.5 px-4 sm:px-6 rounded-md bg-[var(--accent-cyan)] text-[var(--bg-base)] font-semibold text-sm sm:text-base transition-all hover:opacity-90 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full flex items-center justify-center gap-3 py-3 sm:py-3.5 px-4 sm:px-6 rounded-md bg-(--accent-cyan) text-(--bg-base) font-semibold text-sm sm:text-base transition-all hover:opacity-90 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
             <path d="M16.51 8H8.98v3h4.3c-.18 1-.74 1.48-1.6 2.04v2.01h2.6a7.8 7.8 0 0 0 2.38-5.88c0-.57-.05-.66-.15-1.18z" fill="#1f2937"/>

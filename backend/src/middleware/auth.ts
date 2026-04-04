@@ -6,6 +6,7 @@ export interface JwtPayload {
   userId: string
   email: string
   roles: RoleType[]
+  profileCompleted?: boolean
 }
 
 /**
@@ -50,7 +51,10 @@ export function authorize(...allowedRoles: RoleType[]) {
     })
 
     const roleNames = userRoleEntries.map(ur => ur.role.name)
-    const hasRole = allowedRoles.some(role => roleNames.includes(role)) || roleNames.includes('ADMIN')
+    const hasRole =
+      allowedRoles.some(role => roleNames.includes(role)) ||
+      roleNames.includes('ADMIN') ||
+      roleNames.includes('MODERATOR')
 
     if (!hasRole) {
       return reply.status(403).send({

@@ -35,13 +35,13 @@ export function middleware(request: NextRequest) {
         const roles: string[] = payload.roles || []
 
         // Basic RBAC routing based on decoded roles
-        if (pathname.startsWith('/admin') && !roles.includes('ADMIN')) {
+        if (pathname.startsWith('/admin') && !(roles.includes('ADMIN') || roles.includes('MODERATOR'))) {
           return NextResponse.redirect(new URL('/team', request.url))
         }
-        if (pathname.startsWith('/judge') && !roles.includes('JUDGE')) {
+        if (pathname.startsWith('/judge') && !(roles.includes('JUDGE') || roles.includes('ADMIN') || roles.includes('MODERATOR'))) {
           return NextResponse.redirect(new URL('/team', request.url))
         }
-        if (pathname.startsWith('/mod') && !roles.includes('MODERATOR')) {
+        if (pathname.startsWith('/mod') && !(roles.includes('MODERATOR') || roles.includes('ADMIN'))) {
           return NextResponse.redirect(new URL('/team', request.url))
         }
       }

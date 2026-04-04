@@ -15,6 +15,7 @@
     "db:seed": "tsx prisma/seed.ts",
     "db:grant-admins": "tsx prisma/grant-admins.ts",
     "db:studio": "prisma studio",
+    "db:studio:ssh": "prisma studio --browser none --hostname 0.0.0.0 --port 5555",
     "db:reset": "prisma migrate reset --force",
     "test": "vitest run",
     "test:watch": "vitest",

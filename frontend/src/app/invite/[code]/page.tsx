@@ -53,28 +53,28 @@ function InviteContent({ code }: { code: string }) {
     }
   }
 
-  if (authLoading) return <div className="min-h-screen flex items-center justify-center bg-[var(--bg-base)] text-[var(--text-muted)] text-sm sm:text-base">Verifying credentials...</div>
+  if (authLoading) return <div className="min-h-screen flex items-center justify-center bg-(--bg-base) text-(--text-muted) text-sm sm:text-base">Verifying credentials...</div>
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[var(--bg-base)] px-4 relative overflow-hidden">
+    <div className="min-h-screen flex items-center justify-center bg-(--bg-base) px-4 relative overflow-hidden">
       {/* Background effects */}
       <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle at 50% 30%, rgba(0,229,255,0.06) 0%, transparent 60%)' }} />
       
-      <div className="w-full max-w-md bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-lg p-8 sm:p-10 shadow-2xl relative z-10 animate-fade-in">
+      <div className="w-full max-w-md bg-(--bg-surface) border border-(--border-subtle) rounded-lg p-8 sm:p-10 shadow-2xl relative z-10 animate-fade-in">
         {/* Header */}
         <div className="mb-6 sm:mb-8">
-          <div className="font-display text-xl sm:text-2xl font-bold text-[var(--accent-cyan)] mb-2">
+          <div className="font-display text-xl sm:text-2xl font-bold text-(--accent-cyan) mb-2">
             SQUAD RECRUITMENT
           </div>
-          <div className="text-xs sm:text-sm text-[var(--text-muted)] tracking-widest">
+          <div className="text-xs sm:text-sm text-(--text-muted) tracking-widest">
             AUTHORIZATION REQUIRED
           </div>
         </div>
 
-        <div className="h-px bg-[var(--border-subtle)] mb-6 sm:mb-8" />
+        <div className="h-px bg-(--border-subtle) mb-6 sm:mb-8" />
 
         {success ? (
-          <div className="p-4 border border-[var(--accent-green)] bg-[rgba(0,230,118,0.1)] text-[var(--accent-green)] rounded-lg mb-4 flex gap-3 items-start">
+          <div className="p-4 border border-(--accent-green) bg-[rgba(0,230,118,0.1)] text-(--accent-green) rounded-lg mb-4 flex gap-3 items-start">
             <CheckCircle size={20} className="flex-shrink-0 mt-0.5" />
             <div className="text-sm sm:text-base">
               {success}
@@ -83,22 +83,22 @@ function InviteContent({ code }: { code: string }) {
           </div>
         ) : (
           <>
-            <p className="text-xs sm:text-sm text-[var(--text-secondary)] mb-4 sm:mb-6 leading-relaxed">
+            <p className="text-xs sm:text-sm text-(--text-secondary) mb-4 sm:mb-6 leading-relaxed">
               You have been invited to join a team for the GeoAI Hackathon.
             </p>
             
-            <div className="bg-[var(--bg-elevated)] p-4 rounded mb-6 sm:mb-8">
-              <div className="font-mono text-[8px] sm:text-xs text-[var(--text-muted)] mb-2 tracking-widest">INVITE CODE</div>
+            <div className="bg-(--bg-elevated) p-4 rounded mb-6 sm:mb-8">
+              <div className="font-mono text-[8px] sm:text-xs text-(--text-muted) mb-2 tracking-widest">INVITE CODE</div>
               <div className="flex items-center justify-between">
-                <div className="font-mono text-lg sm:text-2xl text-[var(--accent-cyan)] tracking-wider">{code}</div>
+                <div className="font-mono text-lg sm:text-2xl text-(--accent-cyan) tracking-wider">{code}</div>
                 <button className="p-2 hover:bg-[rgba(255,255,255,0.05)] rounded transition" title="Copy code">
-                  <Copy size={16} className="text-[var(--text-muted)]" />
+                  <Copy size={16} className="text-(--text-muted)" />
                 </button>
               </div>
             </div>
 
             {error && (
-              <div className="p-3 sm:p-4 border border-[var(--accent-red)] bg-[rgba(255,23,68,0.1)] text-[var(--accent-red)] rounded mb-4 sm:mb-6 flex gap-3 items-start text-xs sm:text-sm">
+              <div className="p-3 sm:p-4 border border-(--accent-red) bg-[rgba(255,23,68,0.1)] text-(--accent-red) rounded mb-4 sm:mb-6 flex gap-3 items-start text-xs sm:text-sm">
                 <AlertCircle size={18} className="flex-shrink-0 mt-0.5" />
                 <span>{error}</span>
               </div>
@@ -107,14 +107,14 @@ function InviteContent({ code }: { code: string }) {
             {!user ? (
               <button
                 onClick={() => router.push('/login')}
-                className="w-full bg-[var(--accent-cyan)] text-black px-4 py-3 sm:py-4 font-bold text-xs sm:text-sm tracking-widest rounded hover:brightness-110 transition flex items-center justify-center gap-2"
+                className="w-full bg-(--accent-cyan) text-black px-4 py-3 sm:py-4 font-bold text-xs sm:text-sm tracking-widest rounded hover:brightness-110 transition flex items-center justify-center gap-2"
               >
                 <LogIn size={16} /> LOGIN TO ACCEPT INVITATION
               </button>
             ) : user.team ? (
               <button
                 disabled
-                className="w-full bg-[var(--bg-base)] text-[var(--text-muted)] border border-[var(--border-subtle)] px-4 py-3 sm:py-4 font-bold text-xs sm:text-sm tracking-widest rounded opacity-50 cursor-not-allowed flex items-center justify-center gap-2"
+                className="w-full bg-(--bg-base) text-(--text-muted) border border-(--border-subtle) px-4 py-3 sm:py-4 font-bold text-xs sm:text-sm tracking-widest rounded opacity-50 cursor-not-allowed flex items-center justify-center gap-2"
               >
                 CURRENTLY ASSIGNED TO A TEAM
               </button>
@@ -122,7 +122,7 @@ function InviteContent({ code }: { code: string }) {
               <button
                 onClick={handleJoin}
                 disabled={loading}
-                className="w-full bg-[var(--accent-cyan)] text-black px-4 py-3 sm:py-4 font-bold text-xs sm:text-sm tracking-widest rounded hover:brightness-110 transition disabled:opacity-50 flex items-center justify-center gap-2"
+                className="w-full bg-(--accent-cyan) text-black px-4 py-3 sm:py-4 font-bold text-xs sm:text-sm tracking-widest rounded hover:brightness-110 transition disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 {loading ? 'PROCESSING TRANSFER...' : 'ACCEPT INVITATION & JOIN TEAM'}
               </button>
@@ -131,7 +131,7 @@ function InviteContent({ code }: { code: string }) {
         )}
 
         <div className="mt-6 sm:mt-8">
-          <Link href="/" className="inline-flex items-center text-[8px] sm:text-xs text-[var(--text-muted)] hover:text-white transition gap-1">
+          <Link href="/" className="inline-flex items-center text-[8px] sm:text-xs text-(--text-muted) hover:text-white transition gap-1">
             ← Abort and return to home
           </Link>
         </div>

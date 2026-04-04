@@ -90,7 +90,7 @@ function TeamContent() {
 
   if (loading || authLoading) return (
     <div className="flex min-h-screen items-center justify-center px-4">
-      <div className="font-mono text-sm text-[var(--accent-cyan)]">Synching with command…</div>
+      <div className="font-mono text-sm text-(--accent-cyan)">Synching with command…</div>
     </div>
   )
 
@@ -100,12 +100,12 @@ function TeamContent() {
         <h1 className="font-display text-2xl sm:text-3xl lg:text-4xl mb-2 sm:mb-4 tracking-widest">
           TEAM OPERATIONS
         </h1>
-        <p className="text-xs sm:text-sm text-[var(--text-secondary)] mb-6 sm:mb-8">
+        <p className="text-xs sm:text-sm text-(--text-secondary) mb-6 sm:mb-8">
           Manage your crew, track affiliation, and invite operatives.
         </p>
 
         {error && (
-          <div className="mb-4 sm:mb-6 p-3 sm:p-4 rounded-md bg-[rgba(255,23,68,0.1)] border border-[var(--accent-red)] text-[var(--accent-red)] text-xs sm:text-sm flex items-start gap-2 sm:gap-3">
+          <div className="mb-4 sm:mb-6 p-3 sm:p-4 rounded-md bg-[rgba(255,23,68,0.1)] border border-(--accent-red) text-(--accent-red) text-xs sm:text-sm flex items-start gap-2 sm:gap-3">
             <span className="text-base flex-shrink-0">⚠️</span>
             <span>{error}</span>
           </div>
@@ -114,13 +114,13 @@ function TeamContent() {
         {!team ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
             {/* Create Team */}
-            <div className="card p-4 sm:p-6 rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-surface)]">
-              <div className="font-mono text-[10px] sm:text-xs text-[var(--accent-cyan)] mb-4 tracking-widest">CREATE NEW UNIT</div>
+            <div className="card p-4 sm:p-6 rounded-lg border border-(--border-subtle) bg-(--bg-surface)">
+              <div className="font-mono text-[10px] sm:text-xs text-(--accent-cyan) mb-4 tracking-widest">CREATE NEW UNIT</div>
               <form onSubmit={createTeam} className="space-y-3 sm:space-y-4">
                 <div>
-                  <label className="label block text-xs sm:text-sm font-mono mb-2 text-[var(--text-secondary)]">Team Name</label>
+                  <label className="label block text-xs sm:text-sm font-mono mb-2 text-(--text-secondary)">Team Name</label>
                   <input
-                    className="input w-full px-3 py-2 rounded border border-[var(--border-subtle)] bg-[var(--bg-base)] text-xs sm:text-sm focus:border-[var(--accent-cyan)] focus:outline-none"
+                    className="input w-full px-3 py-2 rounded border border-(--border-subtle) bg-(--bg-base) text-xs sm:text-sm focus:border-(--accent-cyan) focus:outline-none"
                     required
                     placeholder="E.g. Orbital Hawks"
                     value={name}
@@ -128,9 +128,9 @@ function TeamContent() {
                   />
                 </div>
                 <div>
-                  <label className="label block text-xs sm:text-sm font-mono mb-2 text-[var(--text-secondary)]">Institution / Organization</label>
+                  <label className="label block text-xs sm:text-sm font-mono mb-2 text-(--text-secondary)">Institution / Organization</label>
                   <input
-                    className="input w-full px-3 py-2 rounded border border-[var(--border-subtle)] bg-[var(--bg-base)] text-xs sm:text-sm focus:border-[var(--accent-cyan)] focus:outline-none"
+                    className="input w-full px-3 py-2 rounded border border-(--border-subtle) bg-(--bg-base) text-xs sm:text-sm focus:border-(--accent-cyan) focus:outline-none"
                     required
                     placeholder="University or Company"
                     value={institution}
@@ -138,9 +138,9 @@ function TeamContent() {
                   />
                 </div>
                 <div>
-                  <label className="label block text-xs sm:text-sm font-mono mb-2 text-[var(--text-secondary)]">Mission Track</label>
+                  <label className="label block text-xs sm:text-sm font-mono mb-2 text-(--text-secondary)">Mission Track</label>
                   <select
-                    className="input w-full px-3 py-2 rounded border border-[var(--border-subtle)] bg-[var(--bg-base)] text-xs sm:text-sm focus:border-[var(--accent-cyan)] focus:outline-none"
+                    className="input w-full px-3 py-2 rounded border border-(--border-subtle) bg-(--bg-base) text-xs sm:text-sm focus:border-(--accent-cyan) focus:outline-none"
                     value={track}
                     onChange={e => setTrack(e.target.value)}
                   >
@@ -158,13 +158,13 @@ function TeamContent() {
             </div>
 
             {/* Join Team */}
-            <div className="card p-4 sm:p-6 rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-surface)]">
-              <div className="font-mono text-[10px] sm:text-xs text-[var(--text-muted)] mb-4 tracking-widest">JOIN EXISTING UNIT</div>
+            <div className="card p-4 sm:p-6 rounded-lg border border-(--border-subtle) bg-(--bg-surface)">
+              <div className="font-mono text-[10px] sm:text-xs text-(--text-muted) mb-4 tracking-widest">JOIN EXISTING UNIT</div>
               <form onSubmit={joinTeam} className="space-y-4">
                 <div>
-                  <label className="label block text-xs sm:text-sm font-mono mb-2 text-[var(--text-secondary)]">Invitation Code</label>
+                  <label className="label block text-xs sm:text-sm font-mono mb-2 text-(--text-secondary)">Invitation Code</label>
                   <input
-                    className="input w-full px-3 py-2 rounded border border-[var(--border-subtle)] bg-[var(--bg-base)] text-xs sm:text-sm focus:border-[var(--accent-cyan)] focus:outline-none"
+                    className="input w-full px-3 py-2 rounded border border-(--border-subtle) bg-(--bg-base) text-xs sm:text-sm focus:border-(--accent-cyan) focus:outline-none"
                     required
                     placeholder="Enter 8-character code"
                     value={inviteCode}
@@ -173,7 +173,7 @@ function TeamContent() {
                 </div>
                 <button
                   type="submit"
-                  className="btn btn-outline w-full px-4 py-2.5 rounded font-semibold text-xs sm:text-sm border border-[var(--border-active)] hover:bg-[var(--bg-base)] transition-colors mt-6"
+                  className="btn btn-outline w-full px-4 py-2.5 rounded font-semibold text-xs sm:text-sm border border-(--border-active) hover:bg-(--bg-base) transition-colors mt-6"
                 >
                   REQUEST TRANSFER
                 </button>
@@ -183,7 +183,7 @@ function TeamContent() {
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-[1.5fr_1fr] gap-4 sm:gap-6">
             {/* Left: Crew Roster */}
-            <div className="card p-4 sm:p-6 rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-surface)]">
+            <div className="card p-4 sm:p-6 rounded-lg border border-(--border-subtle) bg-(--bg-surface)">
               <div className="mb-4 sm:mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4">
                 <h2 className="font-display text-lg sm:text-xl">{team.name}</h2>
                 <span className="badge badge-pass text-[10px] sm:text-xs px-2 sm:px-3 py-1">
@@ -191,18 +191,18 @@ function TeamContent() {
                 </span>
               </div>
 
-              <div className="p-3 sm:p-4 bg-[var(--bg-elevated)] rounded-lg mb-4 sm:mb-6">
+              <div className="p-3 sm:p-4 bg-(--bg-elevated) rounded-lg mb-4 sm:mb-6">
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4 text-xs sm:text-sm">
                   <div>
-                    <div className="font-mono text-[10px] text-[var(--text-muted)] mb-1 sm:mb-2">AFFILIATION</div>
+                    <div className="font-mono text-[10px] text-(--text-muted) mb-1 sm:mb-2">AFFILIATION</div>
                     <div className="font-mono">{team.institution}</div>
                   </div>
                   <div>
-                    <div className="font-mono text-[10px] text-[var(--text-muted)] mb-1 sm:mb-2">TRACK</div>
-                    <div className="text-[var(--accent-cyan)] font-semibold">{team.track.replace(/_/g, ' ')}</div>
+                    <div className="font-mono text-[10px] text-(--text-muted) mb-1 sm:mb-2">TRACK</div>
+                    <div className="text-(--accent-cyan) font-semibold">{team.track.replace(/_/g, ' ')}</div>
                   </div>
                   <div>
-                    <div className="font-mono text-[10px] text-[var(--text-muted)] mb-1 sm:mb-2">STATUS</div>
+                    <div className="font-mono text-[10px] text-(--text-muted) mb-1 sm:mb-2">STATUS</div>
                     <div className="font-mono">{team.status}</div>
                   </div>
                 </div>
@@ -211,21 +211,21 @@ function TeamContent() {
               <div className="overflow-x-auto">
                 <table className="w-full text-xs sm:text-sm">
                   <thead>
-                    <tr className="border-b border-[var(--border-subtle)]">
-                      <th className="text-left py-2 px-2 font-mono text-[10px] text-[var(--text-muted)]">OPERATIVE</th>
-                      <th className="text-left py-2 px-2 font-mono text-[10px] text-[var(--text-muted)]">ROLE</th>
-                      {team.isLeader && <th className="text-left py-2 px-2 font-mono text-[10px] text-[var(--text-muted)]">ACTION</th>}
+                    <tr className="border-b border-(--border-subtle)">
+                      <th className="text-left py-2 px-2 font-mono text-[10px] text-(--text-muted)">OPERATIVE</th>
+                      <th className="text-left py-2 px-2 font-mono text-[10px] text-(--text-muted)">ROLE</th>
+                      {team.isLeader && <th className="text-left py-2 px-2 font-mono text-[10px] text-(--text-muted)">ACTION</th>}
                     </tr>
                   </thead>
                   <tbody>
                     {team.members.map(m => (
-                      <tr key={m.userId} className="border-b border-[var(--border-subtle)] hover:bg-[rgba(0,229,255,0.02)]">
+                      <tr key={m.userId} className="border-b border-(--border-subtle) hover:bg-[rgba(0,229,255,0.02)]">
                         <td className="py-3 px-2">
                           <div className="font-semibold text-xs sm:text-sm">{m.fullName} {m.userId === user?.id && '(You)'}</div>
-                          <div className="text-[10px] text-[var(--text-muted)] truncate">{m.email}</div>
+                          <div className="text-[10px] text-(--text-muted) truncate">{m.email}</div>
                         </td>
                         <td className="py-3 px-2">
-                          <span className={`badge text-[10px] px-2 py-1 rounded ${m.isLeader ? 'bg-[var(--accent-cyan)] text-[var(--bg-base)]' : 'bg-[var(--bg-base)] text-[var(--accent-cyan)]'}`}>
+                          <span className={`badge text-[10px] px-2 py-1 rounded ${m.isLeader ? 'bg-(--accent-cyan) text-(--bg-base)' : 'bg-(--bg-base) text-(--accent-cyan)'}`}>
                             {m.isLeader ? 'LEADER' : 'MEMBER'}
                           </span>
                         </td>
@@ -233,7 +233,7 @@ function TeamContent() {
                           <td className="py-3 px-2">
                             {!m.isLeader && (
                               <button
-                                className="text-[10px] px-2 py-1 rounded text-[var(--accent-red)] hover:bg-[rgba(255,23,68,0.1)] transition-colors"
+                                className="text-[10px] px-2 py-1 rounded text-(--accent-red) hover:bg-[rgba(255,23,68,0.1)] transition-colors"
                                 onClick={() => removeMember(m.userId)}
                               >
                                 REMOVE
@@ -250,16 +250,16 @@ function TeamContent() {
 
           {/* Right: Invite Code */}
           {team.isLeader && (
-            <div className="card p-4 sm:p-6 rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-surface)] h-fit">
+            <div className="card p-4 sm:p-6 rounded-lg border border-(--border-subtle) bg-(--bg-surface) h-fit">
               <h3 className="font-display text-lg sm:text-xl mb-3 sm:mb-4">Recruitment Link</h3>
-              <p className="text-xs sm:text-sm text-[var(--text-secondary)] mb-4 sm:mb-6">
+              <p className="text-xs sm:text-sm text-(--text-secondary) mb-4 sm:mb-6">
                 Share this secure code with your teammates to allow them to join your unit.
               </p>
               
-              <label className="block font-mono text-[10px] text-[var(--text-muted)] mb-2 sm:mb-3 tracking-widest">INVITATION CODE</label>
+              <label className="block font-mono text-[10px] text-(--text-muted) mb-2 sm:mb-3 tracking-widest">INVITATION CODE</label>
               <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 mb-4 sm:mb-6">
                 <input
-                  className="flex-1 font-mono px-3 py-2 sm:py-2.5 rounded border border-[var(--border-subtle)] bg-[var(--bg-base)] text-sm text-center text-[var(--accent-cyan)] tracking-widest focus:outline-none focus:border-[var(--accent-cyan)]"
+                  className="flex-1 font-mono px-3 py-2 sm:py-2.5 rounded border border-(--border-subtle) bg-(--bg-base) text-sm text-center text-(--accent-cyan) tracking-widest focus:outline-none focus:border-(--accent-cyan)"
                   readOnly
                   value={team.inviteCode || ''}
                 />
@@ -267,8 +267,8 @@ function TeamContent() {
                   <button
                     className={`px-3 sm:px-4 py-2 sm:py-2.5 rounded font-semibold text-xs sm:text-sm transition-colors flex-shrink-0 ${
                       copied
-                        ? 'bg-[var(--accent-green)] text-[var(--bg-base)]'
-                        : 'bg-[var(--accent-cyan)] text-[var(--bg-base)] hover:opacity-90'
+                        ? 'bg-(--accent-green) text-(--bg-base)'
+                        : 'bg-(--accent-cyan) text-(--bg-base) hover:opacity-90'
                     }`}
                     onClick={() => {
                       navigator.clipboard.writeText(team.inviteCode)
@@ -280,7 +280,7 @@ function TeamContent() {
                   </button>
                 ) : (
                   <button
-                    className="px-3 sm:px-4 py-2 sm:py-2.5 rounded font-semibold text-xs sm:text-sm bg-[var(--accent-cyan)] text-[var(--bg-base)] hover:opacity-90 transition-opacity flex-shrink-0"
+                    className="px-3 sm:px-4 py-2 sm:py-2.5 rounded font-semibold text-xs sm:text-sm bg-(--accent-cyan) text-(--bg-base) hover:opacity-90 transition-opacity flex-shrink-0"
                     onClick={generateInvite}
                   >
                     GENERATE
@@ -288,7 +288,7 @@ function TeamContent() {
                 )}
               </div>
 
-              <div className="text-xs text-[var(--text-muted)] bg-[var(--bg-elevated)] p-3 sm:p-4 rounded">
+              <div className="text-xs text-(--text-muted) bg-(--bg-elevated) p-3 sm:p-4 rounded">
                 <strong>Note:</strong> Maximum 4 members per team. Code gives immediate access. Do not share publicly.
               </div>
             </div>

@@ -10,6 +10,21 @@ function isDeadlinePassed(): boolean {
   return new Date() > new Date(deadline)
 }
 
+async function ensureCompetitorProfileCompleted(userId: string) {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    include: { userRoles: { include: { role: true } } },
+  })
+  if (!user) return { ok: false as const, error: 'User not found', code: 404 }
+
+  const isCompetitor = user.userRoles.some((ur) => ur.role.name === 'COMPETITOR')
+  if (isCompetitor && !user.profileCompleted) {
+    return { ok: false as const, error: 'Profile setup required before submissions', code: 428 }
+  }
+
+  return { ok: true as const }
+}
+
 export async function submissionRoutes(app: FastifyInstance) {
   // GET /api/v1/submissions — get current team submission history
   app.get('/submissions', { preHandler: [authenticate] }, async (request, reply) => {
@@ -29,6 +44,9 @@ export async function submissionRoutes(app: FastifyInstance) {
   // POST /api/v1/submissions/upload — simple upload wrapper
   app.post('/submissions/upload', { preHandler: [authenticate] }, async (request, reply) => {
     const actor = request.user as JwtPayload
+    const profileCheck = await ensureCompetitorProfileCompleted(actor.userId)
+    if (!profileCheck.ok) return reply.status(profileCheck.code).send({ error: profileCheck.error })
+
     const membership = await prisma.teamMember.findFirst({ where: { userId: actor.userId }, include: { team: true } })
     if (!membership) return reply.status(404).send({ error: 'Team not found' })
     if (membership.team.leaderId !== actor.userId) return reply.status(403).send({ error: 'Only team leader can submit' })
@@ -77,6 +95,9 @@ export async function submissionRoutes(app: FastifyInstance) {
   // POST /api/v1/teams/:teamId/submissions — legacy direct upload
   app.post('/teams/:teamId/submissions', { preHandler: [authenticate] }, async (request, reply) => {
     const actor = request.user as JwtPayload
+    const profileCheck = await ensureCompetitorProfileCompleted(actor.userId)
+    if (!profileCheck.ok) return reply.status(profileCheck.code).send({ error: profileCheck.error })
+
     const { teamId } = request.params as { teamId: string }
 
     if (isDeadlinePassed()) {

@@ -17,6 +17,15 @@ model User {
   id             String   @id @default(uuid())
   email          String   @unique
   fullName       String
+  firstName      String?
+  lastName       String?
+  university     String?
+  yearOfStudy    Int?
+  phoneNumber    String?
+  address        String?
+  idCardFileKey  String?
+  idCardFileName String?
+  profileCompleted Boolean @default(false)
   avatarUrl      String?
   oauthProvider  String   @default("google")
   oauthSubject   String   @unique

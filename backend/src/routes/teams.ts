@@ -14,10 +14,32 @@ const CreateTeamSchema = z.object({
   track: z.enum(['SMART_AGRICULTURE', 'DISASTER_FLOOD_RESPONSE']),
 })
 
+async function ensureCompetitorProfileCompleted(userId: string) {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    include: { userRoles: { include: { role: true } } },
+  })
+  if (!user) return { ok: false as const, error: 'User not found' }
+
+  const isCompetitor = user.userRoles.some((ur) => ur.role.name === 'COMPETITOR')
+  if (isCompetitor && !user.profileCompleted) {
+    return {
+      ok: false as const,
+      error: 'Profile setup required before team operations',
+      code: 428,
+    }
+  }
+
+  return { ok: true as const }
+}
+
 export async function teamRoutes(app: FastifyInstance) {
   // POST /api/v1/teams — create team (leader only, must not be in a team)
   app.post('/teams', { preHandler: [authenticate] }, async (request, reply) => {
     const actor = request.user as JwtPayload
+    const profileCheck = await ensureCompetitorProfileCompleted(actor.userId)
+    if (!profileCheck.ok) return reply.status((profileCheck as { code?: number }).code || 400).send({ error: profileCheck.error })
+
     const body = CreateTeamSchema.safeParse(request.body)
     if (!body.success) return reply.status(400).send({ error: body.error.flatten() })
 
@@ -119,6 +141,9 @@ export async function teamRoutes(app: FastifyInstance) {
   // POST /api/v1/invites/:code/join
   app.post('/invites/:code/join', { preHandler: [authenticate] }, async (request, reply) => {
     const actor = request.user as JwtPayload
+    const profileCheck = await ensureCompetitorProfileCompleted(actor.userId)
+    if (!profileCheck.ok) return reply.status((profileCheck as { code?: number }).code || 400).send({ error: profileCheck.error })
+
     const { code } = request.params as { code: string }
 
     const invite = await prisma.invite.findUnique({ where: { code }, include: { team: true } })
@@ -143,6 +168,9 @@ export async function teamRoutes(app: FastifyInstance) {
   // POST /api/v1/teams/join (Body: { inviteCode }) — Frontend alias
   app.post('/teams/join', { preHandler: [authenticate] }, async (request, reply) => {
     const actor = request.user as JwtPayload
+    const profileCheck = await ensureCompetitorProfileCompleted(actor.userId)
+    if (!profileCheck.ok) return reply.status((profileCheck as { code?: number }).code || 400).send({ error: profileCheck.error })
+
     const { inviteCode } = request.body as { inviteCode: string }
 
     if (!inviteCode) return reply.status(400).send({ error: 'Invite code required' })

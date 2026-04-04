@@ -17,7 +17,7 @@ const ExportSchema = z.object({ type: z.nativeEnum(ExportType) })
 
 export async function adminRoutes(app: FastifyInstance) {
   // GET /api/v1/admin/users — list all users with roles
-  app.get('/users', { preHandler: [requireRole('ADMIN')] }, async (request, reply) => {
+  app.get('/users', { preHandler: [requireRole('ADMIN', 'MODERATOR')] }, async (request, reply) => {
     const { search, page = '1', limit = '50' } = request.query as Record<string, string>
 
     const where = search ? {
@@ -40,12 +40,20 @@ export async function adminRoutes(app: FastifyInstance) {
 
     return { data: users.map(u => ({
       id: u.id, email: u.email, fullName: u.fullName, avatarUrl: u.avatarUrl,
+      firstName: u.firstName,
+      lastName: u.lastName,
+      university: u.university,
+      yearOfStudy: u.yearOfStudy,
+      phoneNumber: u.phoneNumber,
+      address: u.address,
+      profileCompleted: u.profileCompleted,
+      idCardUploaded: Boolean(u.idCardFileKey),
       roles: u.userRoles.map(ur => ur.role.name), createdAt: u.createdAt,
     })), total }
   })
 
   // POST /api/v1/admin/users/:userId/roles
-  app.post('/users/:userId/roles', { preHandler: [requireRole('ADMIN')] }, async (request, reply) => {
+  app.post('/users/:userId/roles', { preHandler: [requireRole('ADMIN', 'MODERATOR')] }, async (request, reply) => {
     const actor = request.user as JwtPayload
     const { userId } = request.params as { userId: string }
     const body = AssignRoleSchema.safeParse(request.body)
@@ -65,7 +73,7 @@ export async function adminRoutes(app: FastifyInstance) {
   })
 
   // DELETE /api/v1/admin/users/:userId/roles/:role
-  app.delete('/users/:userId/roles/:role', { preHandler: [requireRole('ADMIN')] }, async (request, reply) => {
+  app.delete('/users/:userId/roles/:role', { preHandler: [requireRole('ADMIN', 'MODERATOR')] }, async (request, reply) => {
     const actor = request.user as JwtPayload
     const { userId, role } = request.params as { userId: string; role: string }
 
@@ -80,7 +88,7 @@ export async function adminRoutes(app: FastifyInstance) {
   })
 
   // GET /api/v1/admin/teams — list all teams with scores
-  app.get('/teams', { preHandler: [requireRole('ADMIN')] }, async (_req, reply) => {
+  app.get('/teams', { preHandler: [requireRole('ADMIN', 'MODERATOR')] }, async (_req, reply) => {
     const teams = await prisma.team.findMany({
       include: {
         leader: { select: { id: true, email: true, fullName: true } },
@@ -93,7 +101,7 @@ export async function adminRoutes(app: FastifyInstance) {
   })
 
   // PATCH /api/v1/admin/teams/:teamId/status
-  app.patch('/teams/:teamId/status', { preHandler: [requireRole('ADMIN')] }, async (request, reply) => {
+  app.patch('/teams/:teamId/status', { preHandler: [requireRole('ADMIN', 'MODERATOR')] }, async (request, reply) => {
     const actor = request.user as JwtPayload
     const { teamId } = request.params as { teamId: string }
     const body = TeamStatusSchema.safeParse(request.body)
@@ -142,7 +150,7 @@ export async function adminRoutes(app: FastifyInstance) {
   })
 
   // GET /api/v1/admin/audit-logs
-  app.get('/audit-logs', { preHandler: [requireRole('ADMIN')] }, async (request, reply) => {
+  app.get('/audit-logs', { preHandler: [requireRole('ADMIN', 'MODERATOR')] }, async (request, reply) => {
     const { page = '1', limit = '50', entityType } = request.query as Record<string, string>
 
     const where = entityType ? { entityType } : {}
@@ -161,7 +169,7 @@ export async function adminRoutes(app: FastifyInstance) {
   })
 
   // POST /api/v1/admin/exports
-  app.post('/exports', { preHandler: [requireRole('ADMIN')] }, async (request, reply) => {
+  app.post('/exports', { preHandler: [requireRole('ADMIN', 'MODERATOR')] }, async (request, reply) => {
     const actor = request.user as JwtPayload
     const body = ExportSchema.safeParse(request.body)
     if (!body.success) return reply.status(400).send({ error: body.error.flatten() })

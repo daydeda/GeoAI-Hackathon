@@ -1,4 +1,12 @@
 {
+  "scripts": {
+    "db:reset": "cd backend && npm run db:push && npm run db:seed",
+    "db:push": "cd backend && npm run db:push",
+    "db:seed": "cd backend && npm run db:seed",
+    "db:generate": "cd backend && npm run db:generate",
+    "db:studio": "cd backend && npm run db:studio",
+    "db:studio:ssh": "cd backend && npm run db:studio:ssh"
+  },
   "devDependencies": {
     "prisma": "^7.6.0"
   },

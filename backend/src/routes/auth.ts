@@ -5,8 +5,25 @@ import { RoleType } from '@prisma/client'
 import { Prisma } from '@prisma/client'
 import { JwtPayload, authenticate } from '../middleware/auth.js'
 import { getAutoGrantedRolesForEmail } from '../config/roleByEmail.js'
+import { z } from 'zod'
+import { minioClient, BUCKET } from '../services/storage.js'
+import { writeAuditLog } from '../services/auditLog.js'
 
 const SCOPES = ['openid', 'email', 'profile']
+const PROFILE_ID_MAX_BYTES = 5 * 1024 * 1024
+
+const ProfileSchema = z.object({
+  firstName: z.string().trim().min(1).max(80),
+  lastName: z.string().trim().min(1).max(80),
+  university: z.string().trim().min(2).max(160),
+  yearOfStudy: z.coerce.number().int().min(1).max(12),
+  phoneNumber: z.string().trim().min(6).max(30),
+  address: z.string().trim().min(8).max(500),
+})
+
+function safeFileName(name: string) {
+  return name.replace(/[^a-zA-Z0-9._-]/g, '_')
+}
 
 function getOAuth2Client() {
   return new google.auth.OAuth2(
@@ -91,12 +108,18 @@ async function syncUserProfileSafely(input: {
 
   const emailOwner = await prisma.user.findUnique({ where: { email } })
   const canSetEmail = !emailOwner || emailOwner.id === userId
+  const existingUser = await prisma.user.findUnique({ where: { id: userId } }) as {
+    profileCompleted?: boolean
+    firstName?: string | null
+    lastName?: string | null
+  } | null
+  const shouldKeepCustomName = Boolean(existingUser?.profileCompleted && existingUser?.firstName && existingUser?.lastName)
 
   return prisma.user.update({
     where: { id: userId },
     data: {
       ...(canSetEmail ? { email } : {}),
-      fullName,
+      ...(shouldKeepCustomName ? {} : { fullName }),
       avatarUrl,
       oauthProvider: 'google',
     },
@@ -175,13 +198,29 @@ export async function authRoutes(app: FastifyInstance) {
       })
 
       // Auto-grant roles based on email policy at login.
+      // If a user has no roles yet (fresh account), default to COMPETITOR.
+      const existingUserRoles = await prisma.userRole.findMany({ where: { userId: user.id } })
       const autoGrantedRoles = getAutoGrantedRolesForEmail(user.email)
+      const desiredRoles = new Set<RoleType>(autoGrantedRoles)
+      if (existingUserRoles.length === 0 && desiredRoles.size === 0) {
+        desiredRoles.add('COMPETITOR')
+      }
+
+      // DB reset can leave role rows missing before seed runs; bootstrap required roles here.
+      for (const roleName of desiredRoles) {
+        await prisma.role.upsert({
+          where: { name: roleName },
+          update: {},
+          create: { name: roleName },
+        })
+      }
+
       const dbRoles = await prisma.role.findMany({
-        where: { name: { in: autoGrantedRoles } },
+        where: { name: { in: Array.from(desiredRoles) } },
       })
       const roleByName = new Map(dbRoles.map(role => [role.name, role]))
 
-      for (const roleName of autoGrantedRoles) {
+      for (const roleName of desiredRoles) {
         const role = roleByName.get(roleName)
         if (!role) continue
 
@@ -199,13 +238,22 @@ export async function authRoutes(app: FastifyInstance) {
       })
       const roles = userRoles.map(ur => ur.role.name as RoleType)
 
-      const payload: JwtPayload = { userId: user.id, email: user.email, roles }
+      const isCompetitorOnboardingRequired = Boolean(roles.includes('COMPETITOR') && !user.profileCompleted)
+
+      const payload: JwtPayload = {
+        userId: user.id,
+        email: user.email,
+        roles,
+        profileCompleted: Boolean(user.profileCompleted),
+      }
       const token = await reply.jwtSign(payload)
 
       let target = '/dashboard'
       if (roles.includes('ADMIN')) target = '/admin'
       else if (roles.includes('JUDGE')) target = '/judge'
       else if (roles.includes('MODERATOR')) target = '/moderator'
+      else if (isCompetitorOnboardingRequired) target = '/team'
+      else if (roles.length === 0) target = '/team'
 
       return reply
         .setCookie('geoai_token', token, {
@@ -229,6 +277,118 @@ export async function authRoutes(app: FastifyInstance) {
       .send({ message: 'Logged out' })
   })
 
+  // PUT /api/v1/auth/profile
+  app.put('/profile', {
+    preHandler: [authenticate],
+  }, async (request, reply) => {
+    const actor = request.user as JwtPayload
+    const existingUser = await prisma.user.findUnique({ where: { id: actor.userId } }) as {
+      id: string
+      profileCompleted?: boolean
+      idCardFileKey?: string | null
+      idCardFileName?: string | null
+    } | null
+    if (!existingUser) return reply.status(404).send({ error: 'User not found' })
+
+    const rawProfileBody: Record<string, string> = {}
+    let uploadedFile:
+      | {
+          mimetype: string
+          filename: string
+          size: number
+          buffer: Buffer
+        }
+      | null = null
+
+    for await (const part of request.parts()) {
+      if (part.type === 'file') {
+        const chunks: Buffer[] = []
+        let totalSize = 0
+        for await (const chunk of part.file) {
+          totalSize += chunk.length
+          if (totalSize > PROFILE_ID_MAX_BYTES) {
+            return reply.status(413).send({ error: 'Student ID file exceeds 5MB limit' })
+          }
+          chunks.push(chunk)
+        }
+
+        if (!uploadedFile) {
+          uploadedFile = {
+            mimetype: part.mimetype,
+            filename: part.filename || 'student-id',
+            size: totalSize,
+            buffer: Buffer.concat(chunks),
+          }
+        }
+      } else {
+        rawProfileBody[part.fieldname] = String(part.value ?? '').trim()
+      }
+    }
+
+    const parsed = ProfileSchema.safeParse(rawProfileBody)
+    if (!parsed.success) return reply.status(400).send({ error: parsed.error.flatten() })
+
+    if (!uploadedFile && !existingUser.idCardFileKey) {
+      return reply.status(400).send({ error: 'Student ID file is required for first-time profile setup' })
+    }
+
+    let idCardFileKey = existingUser.idCardFileKey
+    let idCardFileName = existingUser.idCardFileName
+
+    if (uploadedFile) {
+      const allowedMimeTypes = ['image/jpeg', 'image/png', 'application/pdf']
+      if (!allowedMimeTypes.includes(uploadedFile.mimetype)) {
+        return reply.status(415).send({ error: 'Student ID must be JPG, PNG, or PDF' })
+      }
+
+      const safeName = safeFileName(uploadedFile.filename)
+      idCardFileKey = `profiles/${actor.userId}/student-id-${Date.now()}-${safeName}`
+      idCardFileName = uploadedFile.filename
+      await minioClient.putObject(BUCKET, idCardFileKey, uploadedFile.buffer, uploadedFile.size, {
+        'Content-Type': uploadedFile.mimetype,
+      })
+    }
+
+    const profile = parsed.data
+    const fullName = `${profile.firstName} ${profile.lastName}`.trim()
+
+    const updatedUser = await prisma.user.update({
+      where: { id: actor.userId },
+      data: {
+        firstName: profile.firstName,
+        lastName: profile.lastName,
+        university: profile.university,
+        yearOfStudy: profile.yearOfStudy,
+        phoneNumber: profile.phoneNumber,
+        address: profile.address,
+        idCardFileKey,
+        idCardFileName,
+        fullName,
+        profileCompleted: true,
+      },
+    }) as {
+      university?: string | null
+      yearOfStudy?: number | null
+    }
+
+    await writeAuditLog({
+      actorId: actor.userId,
+      action: existingUser.profileCompleted ? 'PROFILE_UPDATED' : 'PROFILE_COMPLETED',
+      entityType: 'user',
+      entityId: actor.userId,
+      newValue: {
+        fullName,
+        university: updatedUser.university,
+        yearOfStudy: updatedUser.yearOfStudy,
+      },
+    })
+
+    return {
+      message: existingUser.profileCompleted ? 'Profile updated' : 'Profile completed',
+      profileCompleted: true,
+    }
+  })
+
   // GET /api/v1/auth/me
   app.get('/me', {
     preHandler: [authenticate],
@@ -241,24 +401,44 @@ export async function authRoutes(app: FastifyInstance) {
         userRoles: { include: { role: true } },
         teamMembers: { include: { team: { include: { leader: true } } } },
       },
-    })
+    }) as ({
+      profileCompleted?: boolean
+      firstName?: string | null
+      lastName?: string | null
+      university?: string | null
+      yearOfStudy?: number | null
+      phoneNumber?: string | null
+      address?: string | null
+      idCardFileKey?: string | null
+    } & Awaited<ReturnType<typeof prisma.user.findUnique>>)
 
     if (!user) return reply.status(404).send({ error: 'User not found' })
 
-    const teamMembership = user.teamMembers[0] ?? null
+    const u = user as any
+    const teamMembership = u.teamMembers[0] ?? null
 
     return {
-      id: user.id,
-      email: user.email,
-      fullName: user.fullName,
-      avatarUrl: user.avatarUrl,
-      roles: user.userRoles.map(ur => ur.role.name),
+      id: u.id,
+      email: u.email,
+      fullName: u.fullName,
+      avatarUrl: u.avatarUrl,
+      roles: u.userRoles.map((ur: any) => ur.role.name),
+      profileCompleted: u.profileCompleted,
+      profile: {
+        firstName: u.firstName,
+        lastName: u.lastName,
+        university: u.university,
+        yearOfStudy: u.yearOfStudy,
+        phoneNumber: u.phoneNumber,
+        address: u.address,
+        idCardFileUploaded: Boolean(u.idCardFileKey),
+      },
       team: teamMembership ? {
         id: teamMembership.team.id,
         name: teamMembership.team.name,
         track: teamMembership.team.track,
         status: teamMembership.team.currentStatus,
-        isLeader: teamMembership.team.leaderId === user.id,
+        isLeader: teamMembership.team.leaderId === u.id,
       } : null,
     }
   })

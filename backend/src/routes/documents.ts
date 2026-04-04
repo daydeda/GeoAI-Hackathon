@@ -7,7 +7,7 @@ import { minioClient, BUCKET } from '../services/storage.js'
 
 export async function documentRoutes(app: FastifyInstance) {
   // POST /api/v1/teams/:teamId/documents/permission-letter/generate
-  app.post('/teams/:teamId/documents/permission-letter/generate', { preHandler: [requireRole('ADMIN')] }, async (request, reply) => {
+  app.post('/teams/:teamId/documents/permission-letter/generate', { preHandler: [requireRole('ADMIN', 'MODERATOR')] }, async (request, reply) => {
     const actor = request.user as JwtPayload
     const { teamId } = request.params as { teamId: string }
 
@@ -58,9 +58,9 @@ export async function documentRoutes(app: FastifyInstance) {
     // Access check: finalist team members or admin
     const isMember = team.members.some(m => m.userId === actor.userId)
     const userRoles = await prisma.userRole.findMany({ where: { userId: actor.userId }, include: { role: true } })
-    const isAdmin = userRoles.some(ur => ur.role.name === 'ADMIN')
+    const isPrivileged = userRoles.some(ur => ur.role.name === 'ADMIN' || ur.role.name === 'MODERATOR')
 
-    if (!isAdmin && (!isMember || team.currentStatus !== 'FINALIST')) {
+    if (!isPrivileged && (!isMember || team.currentStatus !== 'FINALIST')) {
       return reply.status(403).send({ error: 'Only finalist team members can download permission letters' })
     }
 

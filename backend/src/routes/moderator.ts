@@ -6,9 +6,21 @@ import { writeAuditLog } from '../services/auditLog.js'
 import { ReviewStatus } from '@prisma/client'
 
 const ReviewSchema = z.object({
-  status: z.enum(['PASS', 'FAIL']),
+  status: z.enum(['PASS', 'DISQUALIFIED', 'FAIL']),
   note: z.string().max(1000).optional(),
 })
+
+const ANNOUNCEMENT_DATE = process.env.ANNOUNCEMENT_DATE_ISO || '2026-05-08T00:00:00+07:00'
+
+function normalizeReviewStatus(status: string | null | undefined): 'PASS' | 'DISQUALIFIED' | null {
+  if (!status) return null
+  if (status === 'PASS') return 'PASS'
+  return 'DISQUALIFIED'
+}
+
+function canSendAnnouncement() {
+  return Date.now() >= new Date(ANNOUNCEMENT_DATE).getTime()
+}
 
 export async function moderatorRoutes(app: FastifyInstance) {
   // GET /api/v1/mod/submissions
@@ -31,12 +43,32 @@ export async function moderatorRoutes(app: FastifyInstance) {
 
     // Apply filters
     let filtered = submissions
-    if (status) filtered = filtered.filter(s => s.moderatorReview?.status === status || (status === 'PENDING' && !s.moderatorReview))
+    const normalizedFilterStatus = status === 'DISQUALIFIED' ? 'FAIL' : status
+    if (normalizedFilterStatus) {
+      filtered = filtered.filter(
+        s => s.moderatorReview?.status === normalizedFilterStatus || (normalizedFilterStatus === 'PENDING' && !s.moderatorReview),
+      )
+    }
     if (track) filtered = filtered.filter(s => s.team.track === track)
 
     const total = await prisma.submission.count({ where })
 
-    return { data: filtered, total, page: Number(page), limit: Number(limit) }
+    return {
+      data: filtered.map((submission) => ({
+        ...submission,
+        moderatorReview: submission.moderatorReview
+          ? {
+              ...submission.moderatorReview,
+              status: normalizeReviewStatus(submission.moderatorReview.status),
+            }
+          : null,
+      })),
+      total,
+      page: Number(page),
+      limit: Number(limit),
+      announcementDate: ANNOUNCEMENT_DATE,
+      announcementOpen: canSendAnnouncement(),
+    }
   })
 
   // POST /api/v1/mod/submissions/:submissionId/review
@@ -51,14 +83,16 @@ export async function moderatorRoutes(app: FastifyInstance) {
 
     const oldStatus = submission.moderatorReview?.status ?? null
 
+    const statusForDb: ReviewStatus = body.data.status === 'PASS' ? 'PASS' : 'FAIL'
+
     const review = await prisma.moderatorReview.upsert({
       where: { submissionId },
-      update: { status: body.data.status as ReviewStatus, note: body.data.note, reviewerId: actor.userId, reviewedAt: new Date() },
-      create: { submissionId, reviewerId: actor.userId, status: body.data.status as ReviewStatus, note: body.data.note },
+      update: { status: statusForDb, note: body.data.note, reviewerId: actor.userId, reviewedAt: new Date() },
+      create: { submissionId, reviewerId: actor.userId, status: statusForDb, note: body.data.note },
     })
 
     // Update team status
-    if (body.data.status === 'PASS') {
+    if (statusForDb === 'PASS') {
       await prisma.team.update({ where: { id: submission.teamId }, data: { currentStatus: 'PRE_SCREEN_PASSED' } })
     } else {
       await prisma.team.update({ where: { id: submission.teamId }, data: { currentStatus: 'REJECTED' } })
@@ -70,9 +104,71 @@ export async function moderatorRoutes(app: FastifyInstance) {
       entityType: 'submission',
       entityId: submissionId,
       oldValue: { status: oldStatus },
-      newValue: { status: body.data.status, note: body.data.note },
+      newValue: { status: normalizeReviewStatus(statusForDb), note: body.data.note },
     })
 
-    return review
+    return {
+      ...review,
+      status: normalizeReviewStatus(review.status),
+    }
+  })
+
+  // POST /api/v1/mod/submissions/:submissionId/announcement
+  app.post('/submissions/:submissionId/announcement', { preHandler: [requireRole('MODERATOR', 'ADMIN')] }, async (request, reply) => {
+    if (!canSendAnnouncement()) {
+      return reply.status(403).send({ error: `Announcements are allowed after ${ANNOUNCEMENT_DATE}` })
+    }
+
+    const actor = request.user as JwtPayload
+    const { submissionId } = request.params as { submissionId: string }
+
+    const submission = await prisma.submission.findUnique({
+      where: { id: submissionId },
+      include: {
+        team: {
+          include: {
+            members: { include: { user: true } },
+          },
+        },
+        moderatorReview: true,
+      },
+    })
+
+    if (!submission) return reply.status(404).send({ error: 'Submission not found' })
+    if (!submission.moderatorReview) {
+      return reply.status(400).send({ error: 'Submission has no review result yet' })
+    }
+
+    const announcementStatus = normalizeReviewStatus(submission.moderatorReview.status)
+    const message = announcementStatus === 'PASS'
+      ? `Congratulations. Your team ${submission.team.name} has PASSED the pre-screening stage.`
+      : `Your team ${submission.team.name} is DISQUALIFIED in the pre-screening stage.`
+
+    const recipients = submission.team.members.map((member) => ({
+      userId: member.user.id,
+      email: member.user.email,
+      fullName: member.user.fullName,
+    }))
+
+    await writeAuditLog({
+      actorId: actor.userId,
+      action: 'SUBMISSION_ANNOUNCEMENT_SENT',
+      entityType: 'submission',
+      entityId: submissionId,
+      newValue: {
+        teamId: submission.teamId,
+        status: announcementStatus,
+        recipients: recipients.map((r) => r.email),
+        message,
+      },
+    })
+
+    return {
+      submissionId,
+      teamName: submission.team.name,
+      status: announcementStatus,
+      recipients,
+      message,
+    }
   })
 }

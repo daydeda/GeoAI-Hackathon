@@ -17,7 +17,20 @@ import {
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
 
-interface UserRow { id: string; email: string; fullName: string; roles: string[] }
+interface UserRow {
+  id: string
+  email: string
+  fullName: string
+  firstName?: string
+  lastName?: string
+  university?: string
+  yearOfStudy?: number
+  phoneNumber?: string
+  address?: string
+  profileCompleted?: boolean
+  idCardUploaded?: boolean
+  roles: string[]
+}
 interface TeamRow { id: string; name: string; institution: string; track: string; currentStatus: string; members: unknown[]; score?: number; submissions?: unknown[] }
 interface LogRow { id: string; action: string; entityType: string; entityId: string; oldValue?: string; newValue?: string; createdAt: string; actor?: { email: string } }
 interface TeamSubmissionRow { isActive?: boolean; scoreAggregate?: { totalWeighted?: number } }
@@ -160,23 +173,23 @@ function AdminContent() {
   ]
 
   return (
-    <div className="mx-auto flex min-h-screen w-full max-w-[1440px] flex-col bg-[var(--bg-base)]">
+    <div className="mx-auto flex min-h-screen w-full max-w-[1440px] flex-col bg-(--bg-base)">
       {/* Confirmation Modal */}
       {confirmAction && (
         <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-[rgba(5,13,26,0.85)] p-4 backdrop-blur-sm">
-           <div className="flex w-full max-w-md flex-col gap-6 rounded-lg border border-white/10 bg-[var(--bg-surface)] p-6 shadow-[0_24px_64px_rgba(0,0,0,0.4)] sm:p-8">
+           <div className="flex w-full max-w-md flex-col gap-6 rounded-lg border border-white/10 bg-(--bg-surface) p-6 shadow-[0_24px_64px_rgba(0,0,0,0.4)] sm:p-8">
               <div>
                  <h2 className="font-display mb-2 text-lg font-bold tracking-[0.05em] text-white sm:text-xl">
                    CONFIRM ACTION
                  </h2>
-                 <p className="m-0 text-sm leading-relaxed text-[var(--text-secondary)]">
+                 <p className="m-0 text-sm leading-relaxed text-(--text-secondary)">
                    Are you sure you want to <strong>{confirmAction.type}</strong> team <strong>{confirmAction.teamName}</strong>?
                  </p>
               </div>
               <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:justify-end">
                 <button 
                   onClick={() => setConfirmAction(null)}
-                  className="rounded border border-[var(--border-subtle)] bg-transparent px-6 py-2 text-xs font-semibold tracking-[0.05em] text-[var(--text-muted)]"
+                  className="rounded border border-(--border-subtle) bg-transparent px-6 py-2 text-xs font-semibold tracking-[0.05em] text-(--text-muted)"
                 >
                   CANCEL
                 </button>
@@ -194,7 +207,7 @@ function AdminContent() {
 
       {/* Header */}
       <div className="mb-8 flex flex-col gap-3">
-        <div className="font-mono flex items-center gap-2 text-[11px] tracking-[0.1em] text-[var(--accent-green)]">
+        <div className="font-mono flex items-center gap-2 text-[11px] tracking-[0.1em] text-(--accent-green)">
           <Activity size={12} />
           <span>{loading ? 'SYNCHRONIZING...' : 'ADMINISTRATIVE TERMINAL'}</span>
         </div>
@@ -209,8 +222,8 @@ function AdminContent() {
           { label: 'TOTAL PROPOSALS', value: teams.reduce((acc, t) => acc + (t.submissions?.length || 0), 0).toLocaleString(), change: 'Submitted PDFs', changeColor: 'var(--text-muted)', color: 'var(--accent-amber)' },
           { label: 'CURRENT PHASE', value: 'Judging', change: 'Live Event', changeColor: 'var(--accent-cyan)', color: 'white' },
         ].map((s, i) => (
-          <div key={i} className="flex flex-col gap-3 border-l-2 bg-[var(--bg-surface)] px-6 py-5" style={{ borderLeftColor: s.color }}>
-            <div className="font-mono text-[11px] tracking-[0.1em] text-[var(--text-muted)]">{s.label}</div>
+          <div key={i} className="flex flex-col gap-3 border-l-2 bg-(--bg-surface) px-6 py-5" style={{ borderLeftColor: s.color }}>
+            <div className="font-mono text-[11px] tracking-[0.1em] text-(--text-muted)">{s.label}</div>
             <div className="font-display text-3xl font-bold leading-none sm:text-4xl" style={{ color: s.color }}>
               {s.value}
             </div>
@@ -223,19 +236,19 @@ function AdminContent() {
         {/* Main panels */}
         <div className="flex flex-col gap-6">
           {/* User Management */}
-          <div className="border-t border-white/5 bg-[var(--bg-surface)] p-4 sm:p-6 lg:p-8">
+          <div className="border-t border-white/5 bg-(--bg-surface) p-4 sm:p-6 lg:p-8">
             <div className="mb-5 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
               <div>
                 <h2 className="mb-1 text-xl font-semibold text-white sm:text-2xl">User Management</h2>
-                <div className="text-xs tracking-[0.05em] text-[var(--text-muted)]">REGISTRY CONTROL & ROLE ASSIGNMENT</div>
+                <div className="text-xs tracking-[0.05em] text-(--text-muted)">REGISTRY CONTROL & ROLE ASSIGNMENT</div>
               </div>
               <div className="relative w-full md:w-auto">
-                <Search size={14} className="pointer-events-none absolute left-3 top-2.5 text-[var(--text-muted)]" />
+                <Search size={14} className="pointer-events-none absolute left-3 top-2.5 text-(--text-muted)" />
                 <input
                   placeholder="SEARCH UUID / EMAIL"
                   value={search}
                   onChange={e => setSearch(e.target.value)}
-                  className="w-full rounded border border-[var(--border-subtle)] bg-[var(--bg-base)] px-3 py-2 pl-9 text-xs tracking-[0.05em] text-white outline-none md:w-[260px]"
+                  className="w-full rounded border border-(--border-subtle) bg-(--bg-base) px-3 py-2 pl-9 text-xs tracking-[0.05em] text-white outline-none md:w-[260px]"
                 />
               </div>
             </div>
@@ -244,10 +257,10 @@ function AdminContent() {
             <table className="min-w-[720px] w-full border-collapse">
               <thead>
                 <tr className="border-b border-white/5">
-                  <th className="py-4 text-left text-[11px] font-semibold tracking-[0.1em] text-[var(--text-muted)]">USER IDENTIFIER</th>
-                  <th className="py-4 text-left text-[11px] font-semibold tracking-[0.1em] text-[var(--text-muted)]">AFFILIATION</th>
-                  <th className="py-4 text-left text-[11px] font-semibold tracking-[0.1em] text-[var(--text-muted)]">ROLE ASSIGNMENT</th>
-                  <th className="py-4 text-right text-[11px] font-semibold tracking-[0.1em] text-[var(--text-muted)]">STATUS</th>
+                  <th className="py-4 text-left text-[11px] font-semibold tracking-[0.1em] text-(--text-muted)">USER IDENTIFIER</th>
+                  <th className="py-4 text-left text-[11px] font-semibold tracking-[0.1em] text-(--text-muted)">USER INFORMATION</th>
+                  <th className="py-4 text-left text-[11px] font-semibold tracking-[0.1em] text-(--text-muted)">ROLE ASSIGNMENT</th>
+                  <th className="py-4 text-right text-[11px] font-semibold tracking-[0.1em] text-(--text-muted)">STATUS</th>
                 </tr>
               </thead>
               <tbody>
@@ -255,13 +268,24 @@ function AdminContent() {
                   <tr key={u.id} className="border-b border-white/[0.02]">
                     <td className="py-5">
                       <div className="mb-1 text-sm font-semibold text-white">{u.email}</div>
-                      <div className="font-mono text-[10px] text-[var(--text-muted)]">UUID: {u.id}</div>
+                      <div className="font-mono text-[10px] text-(--text-muted)">UUID: {u.id}</div>
                     </td>
-                    <td className="py-5 text-sm text-[var(--text-secondary)]">{u.fullName}</td>
+                    <td className="py-5 text-sm text-(--text-secondary)">
+                      <div>{u.fullName}</div>
+                      <div className="text-[10px] text-(--text-muted)">
+                        {u.firstName || '-'} {u.lastName || ''}
+                      </div>
+                      <div className="text-[10px] text-(--text-muted)">{u.university || 'University not set'}{u.yearOfStudy ? ` · Year ${u.yearOfStudy}` : ''}</div>
+                      <div className="text-[10px] text-(--text-muted)">{u.phoneNumber || 'Phone not set'}</div>
+                      <div className="text-[10px] text-(--text-muted)">{u.address || 'Address not set'}</div>
+                      <div className="text-[10px] text-(--text-muted)">
+                        Profile: {u.profileCompleted ? 'Completed' : 'Incomplete'} · ID: {u.idCardUploaded ? 'Uploaded' : 'Missing'}
+                      </div>
+                    </td>
                     <td className="py-5">
                       <div className="relative w-[150px]">
                         <select
-                          className="w-full appearance-none rounded border border-white/10 bg-[var(--bg-base)] px-3 py-2 text-xs text-white"
+                          className="w-full appearance-none rounded border border-white/10 bg-(--bg-base) px-3 py-2 text-xs text-white"
                           value={u.roles?.[0] ?? 'COMPETITOR'}
                           onChange={e => assignRole(u.id, e.target.value)}
                         >
@@ -269,7 +293,7 @@ function AdminContent() {
                             <option key={r} value={r}>{r}</option>
                           ))}
                         </select>
-                        <ChevronDown size={12} className="pointer-events-none absolute right-3 top-2.5 text-[var(--text-muted)]" />
+                        <ChevronDown size={12} className="pointer-events-none absolute right-3 top-2.5 text-(--text-muted)" />
                       </div>
                     </td>
                     <td className="py-5 text-right">
@@ -288,52 +312,52 @@ function AdminContent() {
           </div>
 
           {/* Team Management */}
-          <div className="border-t border-white/5 bg-[var(--bg-surface)] p-4 sm:p-6 lg:p-8">
+          <div className="border-t border-white/5 bg-(--bg-surface) p-4 sm:p-6 lg:p-8">
             <h2 className="mb-5 text-xl font-semibold text-white sm:text-2xl">Team Management</h2>
             <div className="overflow-x-auto">
             <table className="min-w-[760px] w-full border-collapse">
               <thead>
                 <tr className="border-b border-white/5">
-                  <th className="py-4 text-left text-[11px] font-semibold tracking-[0.1em] text-[var(--text-muted)]">TEAM NAME</th>
-                  <th className="py-4 text-left text-[11px] font-semibold tracking-[0.1em] text-[var(--text-muted)]">MEMBERS</th>
-                  <th className="py-4 text-left text-[11px] font-semibold tracking-[0.1em] text-[var(--text-muted)]">SCORE (M)</th>
-                  <th className="py-4 text-right text-[11px] font-semibold tracking-[0.1em] text-[var(--text-muted)]">STATE PROMOTION</th>
+                  <th className="py-4 text-left text-[11px] font-semibold tracking-[0.1em] text-(--text-muted)">TEAM NAME</th>
+                  <th className="py-4 text-left text-[11px] font-semibold tracking-[0.1em] text-(--text-muted)">MEMBERS</th>
+                  <th className="py-4 text-left text-[11px] font-semibold tracking-[0.1em] text-(--text-muted)">SCORE (M)</th>
+                  <th className="py-4 text-right text-[11px] font-semibold tracking-[0.1em] text-(--text-muted)">STATE PROMOTION</th>
                 </tr>
               </thead>
               <tbody>
                 {teams.map((t, i) => (
                   <tr key={i} className="border-b border-white/[0.02]">
                     <td className="py-5">
-                      <div className="text-[15px] font-semibold text-[var(--accent-cyan)]">{t.name}</div>
+                      <div className="text-[15px] font-semibold text-(--accent-cyan)">{t.name}</div>
                     </td>
-                    <td className="py-5 text-sm text-[var(--text-secondary)]">{(t.members || []).length} Members</td>
+                    <td className="py-5 text-sm text-(--text-secondary)">{(t.members || []).length} Members</td>
                     <td className="py-5 text-sm text-white">{t.score?.toFixed(4) || 'N/A'}</td>
                     <td className="py-5 text-right">
                       {t.currentStatus === 'FINALIST' ? (
                         <div className="inline-flex items-center gap-3">
-                          <span className="inline-flex items-center gap-1 rounded border border-[var(--accent-green)] bg-[rgba(0,230,118,0.1)] px-3 py-1.5 text-[11px] font-bold tracking-[0.05em] text-[var(--accent-green)]">
+                          <span className="inline-flex items-center gap-1 rounded border border-(--accent-green) bg-[rgba(0,230,118,0.1)] px-3 py-1.5 text-[11px] font-bold tracking-[0.05em] text-(--accent-green)">
                             <Check size={12} /> FINALIST
                           </span>
-                          <button onClick={() => setConfirmAction({ type: 'REVOKE', teamId: t.id, teamName: t.name })} className="border-none bg-transparent text-[10px] text-[var(--text-muted)] underline">REVOKE</button>
+                          <button onClick={() => setConfirmAction({ type: 'REVOKE', teamId: t.id, teamName: t.name })} className="border-none bg-transparent text-[10px] text-(--text-muted) underline">REVOKE</button>
                         </div>
                       ) : t.currentStatus === 'REJECTED' ? (
                         <div className="inline-flex items-center gap-3">
-                          <span className="inline-flex items-center gap-1 rounded border border-[var(--accent-red)] bg-[rgba(255,23,68,0.1)] px-3 py-1.5 text-[11px] font-bold tracking-[0.05em] text-[var(--accent-red)]">
+                          <span className="inline-flex items-center gap-1 rounded border border-(--accent-red) bg-[rgba(255,23,68,0.1)] px-3 py-1.5 text-[11px] font-bold tracking-[0.05em] text-(--accent-red)">
                             <X size={12} /> DISQUALIFIED
                           </span>
-                          <button onClick={() => setConfirmAction({ type: 'RESTORE', teamId: t.id, teamName: t.name })} className="rounded border border-[var(--accent-cyan)] bg-transparent px-3 py-1.5 text-[10px] text-[var(--accent-cyan)]">RESTORE TO FINALIST</button>
+                          <button onClick={() => setConfirmAction({ type: 'RESTORE', teamId: t.id, teamName: t.name })} className="rounded border border-(--accent-cyan) bg-transparent px-3 py-1.5 text-[10px] text-(--accent-cyan)">RESTORE TO FINALIST</button>
                         </div>
                       ) : (
                         <div className="inline-flex gap-3">
                           <button 
                             onClick={() => setConfirmAction({ type: 'PROMOTE', teamId: t.id, teamName: t.name })}
-                            className="border border-[var(--accent-cyan)] bg-[var(--accent-cyan)] px-4 py-2 text-[10px] font-semibold tracking-[0.05em] text-black"
+                            className="border border-(--accent-cyan) bg-(--accent-cyan) px-4 py-2 text-[10px] font-semibold tracking-[0.05em] text-black"
                           >
                             PROMOTE
                           </button>
                           <button 
                             onClick={() => setConfirmAction({ type: 'DISQUALIFY', teamId: t.id, teamName: t.name })}
-                            className="border border-[rgba(255,23,68,0.4)] bg-transparent px-4 py-2 text-[10px] font-semibold tracking-[0.05em] text-[var(--text-muted)]"
+                            className="border border-[rgba(255,23,68,0.4)] bg-transparent px-4 py-2 text-[10px] font-semibold tracking-[0.05em] text-(--text-muted)"
                           >
                             DISQUALIFY
                           </button>
@@ -358,13 +382,13 @@ function AdminContent() {
                 <div 
                   key={exp.type} 
                   onClick={() => exportData(exp.type)}
-                  className="flex cursor-pointer items-center justify-between border-l-2 border-transparent bg-[var(--bg-surface)] px-5 py-4 transition hover:border-[var(--accent-cyan)]"
+                  className="flex cursor-pointer items-center justify-between border-l-2 border-transparent bg-(--bg-surface) px-5 py-4 transition hover:border-(--accent-cyan)"
                 >
                   <div>
-                    <div className="font-mono mb-1 text-[10px] tracking-[0.1em] text-[var(--text-muted)]">{exp.label}</div>
+                    <div className="font-mono mb-1 text-[10px] tracking-[0.1em] text-(--text-muted)">{exp.label}</div>
                     <div className="text-sm font-medium text-white">{exp.title}</div>
                   </div>
-                  <exp.icon size={18} className="text-[var(--accent-cyan)]" />
+                  <exp.icon size={18} className="text-(--accent-cyan)" />
                 </div>
               ))}
             </div>
@@ -373,18 +397,18 @@ function AdminContent() {
           {/* Live Ops Log */}
           <div>
             <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-xs font-semibold tracking-[0.1em] text-[var(--text-secondary)]">LIVE OPERATIONAL LOG</h3>
-              <span className="h-2 w-2 rounded-full bg-[var(--accent-green)] shadow-[0_0_10px_var(--accent-green)]" />
+              <h3 className="text-xs font-semibold tracking-[0.1em] text-(--text-secondary)">LIVE OPERATIONAL LOG</h3>
+              <span className="h-2 w-2 rounded-full bg-(--accent-green) shadow-[0_0_10px_var(--accent-green)]" />
             </div>
 
             <div className="flex flex-col gap-3">
               {logs.slice(0, 4).map((log) => (
-                <div key={log.id} className="bg-[var(--bg-surface)] p-4">
+                <div key={log.id} className="bg-(--bg-surface) p-4">
                   <div className="mb-2 flex justify-between gap-3">
-                    <span className="font-mono text-[10px] text-[var(--text-muted)]">LOG_ID: {log.entityId}</span>
-                    <span className="font-mono text-[10px] text-[var(--text-muted)]">{new Date(log.createdAt).toISOString().split('T')[1].substring(0,8)} UTC</span>
+                    <span className="font-mono text-[10px] text-(--text-muted)">LOG_ID: {log.entityId}</span>
+                    <span className="font-mono text-[10px] text-(--text-muted)">{new Date(log.createdAt).toISOString().split('T')[1].substring(0,8)} UTC</span>
                   </div>
-                  <div className="text-xs leading-relaxed text-[var(--text-secondary)]">
+                  <div className="text-xs leading-relaxed text-(--text-secondary)">
                     {log.action.includes('Warning') ? (
                       <>{log.action.split('Submission Server')[0]} <span style={{ color: 'var(--accent-amber)' }}>Submission Server{log.action.split('Submission Server')[1]}</span></>
                     ) : (
@@ -397,7 +421,7 @@ function AdminContent() {
 
             <div className="mt-4 text-center">
               <Link href="/admin/logs" className="no-underline">
-                <button className="w-full border border-white/10 bg-transparent py-3 text-[11px] tracking-[0.1em] text-[var(--text-muted)]">
+                <button className="w-full border border-white/10 bg-transparent py-3 text-[11px] tracking-[0.1em] text-(--text-muted)">
                   VIEW FULL AUDIT TRAIL
                 </button>
               </Link>
@@ -407,7 +431,7 @@ function AdminContent() {
       </div>
       
       {/* Footer */}
-      <footer className="mt-8 flex flex-col gap-3 border-t border-white/5 pt-6 text-[10px] tracking-[0.05em] text-[var(--text-muted)] lg:flex-row lg:items-center lg:justify-between">
+      <footer className="mt-8 flex flex-col gap-3 border-t border-white/5 pt-6 text-[10px] tracking-[0.05em] text-(--text-muted) lg:flex-row lg:items-center lg:justify-between">
         <div>© 2024 GEOAI HACKATHON | PRECISION LENS UI</div>
         <div className="flex flex-wrap gap-4 lg:gap-6">
           <span>KMITL</span>

@@ -19,6 +19,16 @@ export interface User {
   fullName: string
   avatarUrl?: string
   roles: string[]
+  profileCompleted?: boolean
+  profile?: {
+    firstName?: string | null
+    lastName?: string | null
+    university?: string | null
+    yearOfStudy?: number | null
+    phoneNumber?: string | null
+    address?: string | null
+    idCardFileUploaded?: boolean
+  }
   team: TeamInfo | null
 }
 

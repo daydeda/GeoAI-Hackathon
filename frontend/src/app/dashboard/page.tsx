@@ -86,7 +86,7 @@ function DashboardContent() {
 
   if (loading) return (
     <div className="flex min-h-screen items-center justify-center px-6">
-      <div className="font-mono text-sm text-[var(--accent-cyan)]">INITIALIZING TERMINAL...</div>
+      <div className="font-mono text-sm text-(--accent-cyan)">INITIALIZING TERMINAL...</div>
     </div>
   )
 
@@ -116,14 +116,14 @@ function DashboardContent() {
             COMPETITOR DASHBOARD
           </h1>
           <div className="flex flex-wrap items-center gap-3 sm:gap-4">
-            <span className="h-2 w-2 rounded-full bg-[var(--accent-green)]" style={{ animation: 'pulse-green 2s infinite' }} />
-            <span className="font-mono text-[11px] text-[var(--accent-cyan)]">OPERATIONAL STATUS: ACTIVE</span>
-            <span className="font-mono text-[11px] text-[var(--text-muted)]">LAT: 13.7563 N / LONG: 100.5018 E</span>
+            <span className="h-2 w-2 rounded-full bg-(--accent-green)" style={{ animation: 'pulse-green 2s infinite' }} />
+            <span className="font-mono text-[11px] text-(--accent-cyan)">OPERATIONAL STATUS: ACTIVE</span>
+            <span className="font-mono text-[11px] text-(--text-muted)">LAT: 13.7563 N / LONG: 100.5018 E</span>
           </div>
         </div>
         <div className="text-left lg:text-right">
-          <div className="font-mono mb-1 text-[10px] text-[var(--text-muted)]">TIME TO DEADLINE</div>
-          <div className="font-display text-2xl font-bold tracking-[0.05em] text-[var(--accent-red)] sm:text-3xl">
+          <div className="font-mono mb-1 text-[10px] text-(--text-muted)">TIME TO DEADLINE</div>
+          <div className="font-display text-2xl font-bold tracking-[0.05em] text-(--accent-red) sm:text-3xl">
             {String(h).padStart(2,'0')}:{String(m).padStart(2,'0')}:{String(s).padStart(2,'0')}
           </div>
         </div>
@@ -134,16 +134,16 @@ function DashboardContent() {
         <div className="flex flex-col gap-4">
           {/* Team Unit Card */}
           <div className="card p-5">
-            <div className="font-mono mb-3 text-[10px] text-[var(--text-muted)]">TEAM UNIT</div>
+            <div className="font-mono mb-3 text-[10px] text-(--text-muted)">TEAM UNIT</div>
             <h2 className="font-display mb-4 text-xl sm:text-2xl">
               {team?.name ?? 'No Team Yet'}
             </h2>
 
             {hasTeam ? (
               <>
-                <div className="font-mono mb-2 text-[10px] text-[var(--text-muted)]">INVITE ACCESS CODE</div>
+                <div className="font-mono mb-2 text-[10px] text-(--text-muted)">INVITE ACCESS CODE</div>
                 <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-center">
-                  <code className="font-mono block flex-1 overflow-x-auto rounded border border-[var(--border-subtle)] bg-[var(--bg-base)] px-3 py-2 text-xs text-[var(--accent-cyan)]">
+                  <code className="font-mono block flex-1 overflow-x-auto rounded border border-(--border-subtle) bg-(--bg-base) px-3 py-2 text-xs text-(--accent-cyan)">
                     {team?.inviteCode ?? 'Code required'}
                   </code>
                   {team?.inviteCode ? (
@@ -167,16 +167,16 @@ function DashboardContent() {
                   )}
                 </div>
                 <div className="mb-4 flex items-center justify-between">
-                  <div className="font-mono text-[10px] text-[var(--text-muted)]">MEMBER DEPLOYMENT</div>
-                  <div className="font-display text-xl text-[var(--accent-cyan)]">
+                  <div className="font-mono text-[10px] text-(--text-muted)">MEMBER DEPLOYMENT</div>
+                  <div className="font-display text-xl text-(--accent-cyan)">
                     {team?.memberCount ?? members.length} / {team?.maxMembers ?? 4}
                   </div>
                 </div>
 
                 {team?.status === 'FINALIST' && (
-                  <div className="mb-4 rounded-lg border border-[var(--accent-green)] bg-[rgba(0,230,118,0.05)] p-4">
-                    <div className="font-mono mb-2 text-[10px] tracking-[0.05em] text-[var(--accent-green)]">ONSITE ROUND QUALIFIED</div>
-                    <p className="mb-3 text-xs leading-relaxed text-[var(--text-secondary)]">
+                  <div className="mb-4 rounded-lg border border-(--accent-green) bg-[rgba(0,230,118,0.05)] p-4">
+                    <div className="font-mono mb-2 text-[10px] tracking-[0.05em] text-(--accent-green)">ONSITE ROUND QUALIFIED</div>
+                    <p className="mb-3 text-xs leading-relaxed text-(--text-secondary)">
                       Congratulations! Your team has advanced to the Finalist round. Please download the auto-generated Permission/Leave letter below.
                     </p>
                     <button 
@@ -197,20 +197,20 @@ function DashboardContent() {
             )}
 
             {/* Member list */}
-            <div className="font-mono mb-2 text-[10px] text-[var(--text-muted)]">CREW MANIFEST</div>
+            <div className="font-mono mb-2 text-[10px] text-(--text-muted)">CREW MANIFEST</div>
             <div className="flex flex-col gap-2">
               {members.length > 0 ? members.map((m, i) => (
-                <div key={i} className="flex items-center justify-between border-b border-[var(--border-subtle)] py-2">
+                <div key={i} className="flex items-center justify-between border-b border-(--border-subtle) py-2">
                   <div>
                     <div className="text-sm font-semibold">{m.fullName}</div>
                     <div className="text-[10px] tracking-[0.06em]" style={{ color: m.isLeader ? 'var(--accent-cyan)' : 'var(--text-muted)' }}>
                       {m.isLeader ? 'LEADER' : 'MEMBER'}
                     </div>
                   </div>
-                  <span className="h-1.5 w-1.5 rounded-full bg-[var(--accent-green)]" />
+                  <span className="h-1.5 w-1.5 rounded-full bg-(--accent-green)" />
                 </div>
               )) : (
-                <div className="py-3 text-center text-xs text-[var(--text-muted)]">
+                <div className="py-3 text-center text-xs text-(--text-muted)">
                   No team members yet
                 </div>
               )}
@@ -219,7 +219,7 @@ function DashboardContent() {
 
           {/* Mission Progress */}
           <div className="card p-5">
-            <div className="font-mono mb-4 text-[10px] text-[var(--text-muted)]">MISSION PROGRESS</div>
+            <div className="font-mono mb-4 text-[10px] text-(--text-muted)">MISSION PROGRESS</div>
             {steps.map((step, i) => {
               const isActive = !step.done && (i === 0 || steps[i-1].done)
               return (
@@ -236,6 +236,33 @@ function DashboardContent() {
               )
             })}
           </div>
+
+          {/* Competitor Profile */}
+          <div className="card p-5">
+            <div className="font-mono mb-3 text-[10px] text-(--text-muted)">MY PROFILE</div>
+            <div className="space-y-2 text-sm">
+              <div className="flex items-center justify-between gap-3 border-b border-(--border-subtle) py-2">
+                <span className="text-(--text-muted)">Full Name</span>
+                <span className="text-right">{user?.fullName || '-'}</span>
+              </div>
+              <div className="flex items-center justify-between gap-3 border-b border-(--border-subtle) py-2">
+                <span className="text-(--text-muted)">University</span>
+                <span className="text-right">{user?.profile?.university || '-'}</span>
+              </div>
+              <div className="flex items-center justify-between gap-3 border-b border-(--border-subtle) py-2">
+                <span className="text-(--text-muted)">Year of Study</span>
+                <span className="text-right">{user?.profile?.yearOfStudy ?? '-'}</span>
+              </div>
+              <div className="flex items-center justify-between gap-3 border-b border-(--border-subtle) py-2">
+                <span className="text-(--text-muted)">Phone</span>
+                <span className="text-right">{user?.profile?.phoneNumber || '-'}</span>
+              </div>
+              <div className="flex items-center justify-between gap-3 py-2">
+                <span className="text-(--text-muted)">Student ID File</span>
+                <span className="text-right">{user?.profile?.idCardFileUploaded ? 'Uploaded' : 'Missing'}</span>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Right Column - Submission Terminal */}
@@ -243,38 +270,38 @@ function DashboardContent() {
           <div className="mb-6 flex items-start justify-between">
             <div>
               <div className="mb-1 flex items-center gap-2">
-                <FileText size={18} className="text-[var(--accent-cyan)]" aria-hidden="true" />
+                <FileText size={18} className="text-(--accent-cyan)" aria-hidden="true" />
                 <h2 className="font-display text-lg tracking-[0.06em] sm:text-xl">SUBMISSION TERMINAL</h2>
               </div>
-              <div className="font-mono text-[10px] text-[var(--accent-cyan)]">SECURE UPLINK: 128-BIT ENCRYPTION ACTIVE</div>
+              <div className="font-mono text-[10px] text-(--accent-cyan)">SECURE UPLINK: 128-BIT ENCRYPTION ACTIVE</div>
             </div>
           </div>
 
           {/* Track Selection */}
-          <div className="font-mono mb-3 text-[10px] text-[var(--text-muted)]">SELECT STRATEGIC TRACK</div>
+          <div className="font-mono mb-3 text-[10px] text-(--text-muted)">SELECT STRATEGIC TRACK</div>
           <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
             {tracks.map((t) => (
               <div key={t.id} className={`track-card ${team?.track === t.id ? 'selected' : ''}`} style={{ padding: 16 }}>
-                <t.icon size={22} className="mb-2 text-[var(--accent-cyan)]" aria-hidden="true" />
+                <t.icon size={22} className="mb-2 text-(--accent-cyan)" aria-hidden="true" />
                 <div className="font-display" style={{ fontSize: 14 }}>{t.label}</div>
               </div>
             ))}
           </div>
 
           {/* PDF Upload zone */}
-          <div className="font-mono mb-3 text-[10px] text-[var(--text-muted)]">TECHNICAL PROPOSAL UPLOAD (PDF)</div>
+          <div className="font-mono mb-3 text-[10px] text-(--text-muted)">TECHNICAL PROPOSAL UPLOAD (PDF)</div>
           <Link href="/submissions" className="no-underline">
             <div className="upload-zone mb-5">
-              <Upload size={30} className="mx-auto mb-3 text-[var(--accent-cyan)]" aria-hidden="true" />
+              <Upload size={30} className="mx-auto mb-3 text-(--accent-cyan)" aria-hidden="true" />
               <div className="mb-1 text-sm font-semibold">Drag and drop mission brief</div>
-              <div className="text-xs text-[var(--text-muted)]">Max file size: 20MB. Format: PDF only.</div>
+              <div className="text-xs text-(--text-muted)">Max file size: 20MB. Format: PDF only.</div>
             </div>
           </Link>
 
           {/* GISTDA Declaration */}
-          <div className="mb-6 flex gap-3 rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-base)] p-4">
-            <div className="mt-0.5 h-4 w-4 shrink-0 rounded-[3px] border-2 border-[var(--accent-cyan)]" />
-            <p className="m-0 text-sm leading-relaxed text-[var(--text-secondary)]">
+          <div className="mb-6 flex gap-3 rounded-lg border border-(--border-subtle) bg-(--bg-base) p-4">
+            <div className="mt-0.5 h-4 w-4 shrink-0 rounded-[3px] border-2 border-(--accent-cyan)" />
+            <p className="m-0 text-sm leading-relaxed text-(--text-secondary)">
               I declare that this project utilizes{' '}
               <strong style={{ color: 'var(--accent-amber)' }}>Sphere of GISTDA</strong>{' '}
               and adheres to the multispectral processing guidelines established in the hackathon brief. Any data discrepancies must be reported immediately.

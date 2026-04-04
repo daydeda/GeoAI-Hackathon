@@ -16,6 +16,9 @@ type AuditAction =
   | 'INVITE_CREATED'
   | 'INVITE_REVOKED'
   | 'INVITE_USED'
+  | 'PROFILE_COMPLETED'
+  | 'PROFILE_UPDATED'
+  | 'SUBMISSION_ANNOUNCEMENT_SENT'
 
 interface AuditParams {
   actorId?: string

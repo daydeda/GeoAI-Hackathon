@@ -17,7 +17,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className="bg-[var(--bg-base)] text-[var(--text-primary)]">
+      <body className="bg-(--bg-base) text-(--text-primary)">
         <AlertProvider>
           {children}
         </AlertProvider>
