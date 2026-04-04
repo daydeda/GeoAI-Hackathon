@@ -4,12 +4,24 @@ import { useEffect, useState, useCallback } from 'react'
 import { AuthProvider } from '@/contexts/AuthContext'
 import { useAlert } from '@/contexts/AlertContext'
 import Link from 'next/link'
+import type { LucideIcon } from 'lucide-react'
+import {
+  Activity,
+  Check,
+  ChevronDown,
+  Download,
+  FileSpreadsheet,
+  Search,
+  X,
+} from 'lucide-react'
 
 const API = process.env.NEXT_PUBLIC_API_URL || '/geoai-2026'
 
 interface UserRow { id: string; email: string; fullName: string; roles: string[] }
 interface TeamRow { id: string; name: string; institution: string; track: string; currentStatus: string; members: unknown[]; score?: number; submissions?: unknown[] }
 interface LogRow { id: string; action: string; entityType: string; entityId: string; oldValue?: string; newValue?: string; createdAt: string; actor?: { email: string } }
+interface TeamSubmissionRow { isActive?: boolean; scoreAggregate?: { totalWeighted?: number } }
+interface TeamApiRow extends TeamRow { submissions?: TeamSubmissionRow[] }
 
 import AppShell from '@/components/AppShell'
 
@@ -17,7 +29,7 @@ export default function AdminPage() {
   return (
     <AuthProvider>
       <AppShell>
-        <div style={{ padding: '32px 48px' }}>
+        <div className="px-4 py-6 sm:px-6 lg:px-8">
           <AdminContent />
         </div>
       </AppShell>
@@ -53,8 +65,8 @@ function AdminContent() {
       if (usersRes.ok) { const d = await usersRes.json(); setUsers(d.data || []); setTotalUsers(d.total || 0); }
       if (teamsRes.ok) { 
         const d = await teamsRes.json(); 
-        const formattedTeams = (d || []).map((t: any) => {
-          const activeSub = t.submissions?.find((s: any) => s.isActive);
+        const formattedTeams = (d as TeamApiRow[] || []).map((t) => {
+          const activeSub = t.submissions?.find((s) => s.isActive);
           return { ...t, score: activeSub?.scoreAggregate?.totalWeighted ?? undefined };
         });
         setTeams(formattedTeams); 
@@ -142,36 +154,36 @@ function AdminContent() {
   }
 
   const filteredUsers = users.filter(u => !search || u.email.includes(search) || u.fullName.toLowerCase().includes(search.toLowerCase()))
+  const exportCards: Array<{ label: string; title: string; type: string; icon: LucideIcon }> = [
+    { label: 'TEAMS REGISTRY', title: 'Export Teams as CSV', type: 'TEAMS', icon: Download },
+    { label: 'PROPOSAL BUNDLE', title: 'Export Proposals as XLSX', type: 'SUBMISSIONS', icon: FileSpreadsheet },
+  ]
 
   return (
-    <div style={{ padding: '40px 60px', maxWidth: 1440, margin: '0 auto', background: 'var(--bg-base)', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-      
+    <div className="mx-auto flex min-h-screen w-full max-w-[1440px] flex-col bg-[var(--bg-base)]">
       {/* Confirmation Modal */}
       {confirmAction && (
-        <div style={{ 
-          position: 'fixed', inset: 0, background: 'rgba(5, 13, 26, 0.85)', zIndex: 99999, display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(12px)', transition: 'all 0.3s ease'
-        }}>
-           <div style={{ 
-             background: 'var(--bg-surface)', border: `1px solid rgba(255, 255, 255, 0.1)`, padding: '32px 40px', borderRadius: 8, display: 'flex', flexDirection: 'column', gap: 24, boxShadow: `0 24px 64px rgba(0,0,0,0.4)`, animation: 'appear 0.3s cubic-bezier(0.16, 1, 0.3, 1)', maxWidth: 400
-           }}>
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-[rgba(5,13,26,0.85)] p-4 backdrop-blur-sm">
+           <div className="flex w-full max-w-md flex-col gap-6 rounded-lg border border-white/10 bg-[var(--bg-surface)] p-6 shadow-[0_24px_64px_rgba(0,0,0,0.4)] sm:p-8">
               <div>
-                 <h2 className="font-display" style={{ fontSize: 20, color: 'white', marginBottom: 8, fontWeight: 700, letterSpacing: '0.05em' }}>
+                 <h2 className="font-display mb-2 text-lg font-bold tracking-[0.05em] text-white sm:text-xl">
                    CONFIRM ACTION
                  </h2>
-                 <p style={{ color: 'var(--text-secondary)', fontSize: 13, lineHeight: 1.6, margin: 0 }}>
+                 <p className="m-0 text-sm leading-relaxed text-[var(--text-secondary)]">
                    Are you sure you want to <strong>{confirmAction.type}</strong> team <strong>{confirmAction.teamName}</strong>?
                  </p>
               </div>
-              <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', marginTop: 8 }}>
+              <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:justify-end">
                 <button 
                   onClick={() => setConfirmAction(null)}
-                  style={{ background: 'transparent', color: 'var(--text-muted)', border: '1px solid var(--border-subtle)', padding: '8px 24px', fontSize: 11, fontWeight: 600, letterSpacing: '0.05em', cursor: 'pointer', borderRadius: 2 }}
+                  className="rounded border border-[var(--border-subtle)] bg-transparent px-6 py-2 text-xs font-semibold tracking-[0.05em] text-[var(--text-muted)]"
                 >
                   CANCEL
                 </button>
                 <button 
                   onClick={executeConfirmAction}
-                  style={{ background: confirmAction.type === 'PROMOTE' || confirmAction.type === 'RESTORE' ? 'var(--accent-cyan)' : 'var(--accent-red)', color: 'black', border: 'none', padding: '8px 24px', fontSize: 11, fontWeight: 700, letterSpacing: '0.05em', cursor: 'pointer', borderRadius: 2 }}
+                  className="rounded border-none px-6 py-2 text-xs font-bold tracking-[0.05em] text-black"
+                  style={{ background: confirmAction.type === 'PROMOTE' || confirmAction.type === 'RESTORE' ? 'var(--accent-cyan)' : 'var(--accent-red)' }}
                 >
                   CONFIRM
                 </button>
@@ -181,76 +193,75 @@ function AdminContent() {
       )}
 
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 32 }}>
-        <div>
-          <div className="font-mono" style={{ fontSize: 11, color: 'var(--accent-green)', marginBottom: 8, letterSpacing: '0.1em' }}><span style={{ color: 'var(--accent-green)', marginRight: 6 }}>■</span>  {loading ? 'SYNCHRONIZING...' : 'ADMINISTRATIVE TERMINAL'}</div>
-          <h1 className="font-display" style={{ fontSize: 44, color: 'white' }}>Command Center</h1>
+      <div className="mb-8 flex flex-col gap-3">
+        <div className="font-mono flex items-center gap-2 text-[11px] tracking-[0.1em] text-[var(--accent-green)]">
+          <Activity size={12} />
+          <span>{loading ? 'SYNCHRONIZING...' : 'ADMINISTRATIVE TERMINAL'}</span>
         </div>
+        <h1 className="font-display text-3xl text-white sm:text-4xl md:text-5xl">Command Center</h1>
       </div>
 
       {/* Stat cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 20, marginBottom: 40 }}>
+      <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {[
           { label: 'REGISTERED USERS', value: totalUsers.toLocaleString(), change: 'Platform Wide', changeColor: 'var(--accent-green)', color: 'var(--accent-cyan)' },
           { label: 'ACTIVE TEAMS', value: teams.length.toLocaleString(), change: 'Registered Squads', changeColor: 'var(--accent-green)', color: 'var(--accent-green)' },
           { label: 'TOTAL PROPOSALS', value: teams.reduce((acc, t) => acc + (t.submissions?.length || 0), 0).toLocaleString(), change: 'Submitted PDFs', changeColor: 'var(--text-muted)', color: 'var(--accent-amber)' },
-          { label: 'CURRENT PHASE', value: 'Judging', change: 'Live Event', changeColor: 'var(--accent-cyan)', isText: true, color: 'white' },
+          { label: 'CURRENT PHASE', value: 'Judging', change: 'Live Event', changeColor: 'var(--accent-cyan)', color: 'white' },
         ].map((s, i) => (
-          <div key={i} style={{ 
-            background: 'var(--bg-surface)', borderLeft: `2px solid ${s.color}`, padding: '24px 30px', 
-            display: 'flex', flexDirection: 'column', gap: 12
-          }}>
-            <div className="font-mono" style={{ fontSize: 11, color: 'var(--text-muted)', letterSpacing: '0.1em' }}>{s.label}</div>
-            <div className="font-display" style={{ fontSize: 42, color: s.color, lineHeight: 1, fontWeight: 700 }}>
+          <div key={i} className="flex flex-col gap-3 border-l-2 bg-[var(--bg-surface)] px-6 py-5" style={{ borderLeftColor: s.color }}>
+            <div className="font-mono text-[11px] tracking-[0.1em] text-[var(--text-muted)]">{s.label}</div>
+            <div className="font-display text-3xl font-bold leading-none sm:text-4xl" style={{ color: s.color }}>
               {s.value}
             </div>
-            <div style={{ fontSize: 12, color: s.changeColor, display: 'flex', alignItems: 'center', gap: 6, fontWeight: 500 }}>{s.change}</div>
+            <div className="text-xs font-medium" style={{ color: s.changeColor }}>{s.change}</div>
           </div>
         ))}
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: 32, flex: 1 }}>
+      <div className="grid flex-1 grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
         {/* Main panels */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
+        <div className="flex flex-col gap-6">
           {/* User Management */}
-          <div style={{ background: 'var(--bg-surface)', padding: 32, borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
+          <div className="border-t border-white/5 bg-[var(--bg-surface)] p-4 sm:p-6 lg:p-8">
+            <div className="mb-5 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
               <div>
-                <h2 style={{ fontSize: 22, fontWeight: 600, color: 'white', marginBottom: 4 }}>User Management</h2>
-                <div style={{ fontSize: 12, color: 'var(--text-muted)', letterSpacing: '0.05em' }}>REGISTRY CONTROL & ROLE ASSIGNMENT</div>
+                <h2 className="mb-1 text-xl font-semibold text-white sm:text-2xl">User Management</h2>
+                <div className="text-xs tracking-[0.05em] text-[var(--text-muted)]">REGISTRY CONTROL & ROLE ASSIGNMENT</div>
               </div>
-              <div style={{ position: 'relative' }}>
-                <span style={{ position: 'absolute', left: 12, top: 10, color: 'var(--text-muted)', fontSize: 14 }}>⚲</span>
+              <div className="relative w-full md:w-auto">
+                <Search size={14} className="pointer-events-none absolute left-3 top-2.5 text-[var(--text-muted)]" />
                 <input
                   placeholder="SEARCH UUID / EMAIL"
                   value={search}
                   onChange={e => setSearch(e.target.value)}
-                  style={{ background: 'var(--bg-base)', border: '1px solid var(--border-subtle)', borderRadius: 2, padding: '8px 12px 8px 36px', fontSize: 11, width: 260, color: 'white', outline: 'none', letterSpacing: '0.05em' }}
+                  className="w-full rounded border border-[var(--border-subtle)] bg-[var(--bg-base)] px-3 py-2 pl-9 text-xs tracking-[0.05em] text-white outline-none md:w-[260px]"
                 />
               </div>
             </div>
-            
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+
+            <div className="overflow-x-auto">
+            <table className="min-w-[720px] w-full border-collapse">
               <thead>
-                <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                  <th style={{ padding: '16px 0', textAlign: 'left', fontSize: 11, color: 'var(--text-muted)', letterSpacing: '0.1em', fontWeight: 600 }}>USER IDENTIFIER</th>
-                  <th style={{ padding: '16px 0', textAlign: 'left', fontSize: 11, color: 'var(--text-muted)', letterSpacing: '0.1em', fontWeight: 600 }}>AFFILIATION</th>
-                  <th style={{ padding: '16px 0', textAlign: 'left', fontSize: 11, color: 'var(--text-muted)', letterSpacing: '0.1em', fontWeight: 600 }}>ROLE ASSIGNMENT</th>
-                  <th style={{ padding: '16px 0', textAlign: 'right', fontSize: 11, color: 'var(--text-muted)', letterSpacing: '0.1em', fontWeight: 600 }}>STATUS</th>
+                <tr className="border-b border-white/5">
+                  <th className="py-4 text-left text-[11px] font-semibold tracking-[0.1em] text-[var(--text-muted)]">USER IDENTIFIER</th>
+                  <th className="py-4 text-left text-[11px] font-semibold tracking-[0.1em] text-[var(--text-muted)]">AFFILIATION</th>
+                  <th className="py-4 text-left text-[11px] font-semibold tracking-[0.1em] text-[var(--text-muted)]">ROLE ASSIGNMENT</th>
+                  <th className="py-4 text-right text-[11px] font-semibold tracking-[0.1em] text-[var(--text-muted)]">STATUS</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredUsers.slice(0, 10).map(u => (
-                  <tr key={u.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.02)' }}>
-                    <td style={{ padding: '20px 0' }}>
-                      <div style={{ fontWeight: 600, fontSize: 14, color: 'white', marginBottom: 4 }}>{u.email}</div>
-                      <div className="font-mono" style={{ fontSize: 10, color: 'var(--text-muted)' }}>UUID: {u.id}</div>
+                  <tr key={u.id} className="border-b border-white/[0.02]">
+                    <td className="py-5">
+                      <div className="mb-1 text-sm font-semibold text-white">{u.email}</div>
+                      <div className="font-mono text-[10px] text-[var(--text-muted)]">UUID: {u.id}</div>
                     </td>
-                    <td style={{ padding: '20px 0', fontSize: 13, color: 'var(--text-secondary)' }}>{u.fullName}</td>
-                    <td style={{ padding: '20px 0' }}>
-                      <div style={{ position: 'relative', width: 140 }}>
+                    <td className="py-5 text-sm text-[var(--text-secondary)]">{u.fullName}</td>
+                    <td className="py-5">
+                      <div className="relative w-[150px]">
                         <select
-                          style={{ appearance: 'none', width: '100%', background: 'var(--bg-base)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', padding: '8px 12px', fontSize: 12, borderRadius: 2, cursor: 'pointer' }}
+                          className="w-full appearance-none rounded border border-white/10 bg-[var(--bg-base)] px-3 py-2 text-xs text-white"
                           value={u.roles?.[0] ?? 'COMPETITOR'}
                           onChange={e => assignRole(u.id, e.target.value)}
                         >
@@ -258,13 +269,13 @@ function AdminContent() {
                             <option key={r} value={r}>{r}</option>
                           ))}
                         </select>
-                        <span style={{ position: 'absolute', right: 12, top: 10, color: 'var(--text-muted)', pointerEvents: 'none', fontSize: 10 }}>▼</span>
+                        <ChevronDown size={12} className="pointer-events-none absolute right-3 top-2.5 text-[var(--text-muted)]" />
                       </div>
                     </td>
-                    <td style={{ padding: '20px 0', textAlign: 'right' }}>
-                      <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-                        <span style={{ width: 6, height: 6, borderRadius: '50%', background: u.roles.includes('ADMIN') ? 'var(--accent-amber)' : 'var(--accent-green)' }} />
-                        <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.05em', color: u.roles?.includes('ADMIN') ? 'var(--accent-amber)' : 'var(--accent-green)' }}>
+                    <td className="py-5 text-right">
+                      <div className="inline-flex items-center gap-2">
+                        <span className="h-1.5 w-1.5 rounded-full" style={{ background: u.roles.includes('ADMIN') ? 'var(--accent-amber)' : 'var(--accent-green)' }} />
+                        <span className="text-[11px] font-semibold tracking-[0.05em]" style={{ color: u.roles?.includes('ADMIN') ? 'var(--accent-amber)' : 'var(--accent-green)' }}>
                           {u.roles?.includes('ADMIN') ? 'RESTRICTED' : u.roles?.includes('COMPETITOR') ? 'ACTIVE' : 'VERIFIED'}
                         </span>
                       </div>
@@ -273,50 +284,56 @@ function AdminContent() {
                 ))}
               </tbody>
             </table>
+            </div>
           </div>
 
           {/* Team Management */}
-          <div style={{ background: 'var(--bg-surface)', padding: 32, borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-            <h2 style={{ fontSize: 22, fontWeight: 600, color: 'white', marginBottom: 24 }}>Team Management</h2>
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <div className="border-t border-white/5 bg-[var(--bg-surface)] p-4 sm:p-6 lg:p-8">
+            <h2 className="mb-5 text-xl font-semibold text-white sm:text-2xl">Team Management</h2>
+            <div className="overflow-x-auto">
+            <table className="min-w-[760px] w-full border-collapse">
               <thead>
-                <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                  <th style={{ padding: '16px 0', textAlign: 'left', fontSize: 11, color: 'var(--text-muted)', letterSpacing: '0.1em', fontWeight: 600 }}>TEAM NAME</th>
-                  <th style={{ padding: '16px 0', textAlign: 'left', fontSize: 11, color: 'var(--text-muted)', letterSpacing: '0.1em', fontWeight: 600 }}>MEMBERS</th>
-                  <th style={{ padding: '16px 0', textAlign: 'left', fontSize: 11, color: 'var(--text-muted)', letterSpacing: '0.1em', fontWeight: 600 }}>SCORE (M)</th>
-                  <th style={{ padding: '16px 0', textAlign: 'right', fontSize: 11, color: 'var(--text-muted)', letterSpacing: '0.1em', fontWeight: 600 }}>STATE PROMOTION</th>
+                <tr className="border-b border-white/5">
+                  <th className="py-4 text-left text-[11px] font-semibold tracking-[0.1em] text-[var(--text-muted)]">TEAM NAME</th>
+                  <th className="py-4 text-left text-[11px] font-semibold tracking-[0.1em] text-[var(--text-muted)]">MEMBERS</th>
+                  <th className="py-4 text-left text-[11px] font-semibold tracking-[0.1em] text-[var(--text-muted)]">SCORE (M)</th>
+                  <th className="py-4 text-right text-[11px] font-semibold tracking-[0.1em] text-[var(--text-muted)]">STATE PROMOTION</th>
                 </tr>
               </thead>
               <tbody>
                 {teams.map((t, i) => (
-                  <tr key={i} style={{ borderBottom: '1px solid rgba(255,255,255,0.02)' }}>
-                    <td style={{ padding: '20px 0' }}>
-                      <div style={{ fontWeight: 600, color: 'var(--accent-cyan)', fontSize: 15 }}>{t.name}</div>
+                  <tr key={i} className="border-b border-white/[0.02]">
+                    <td className="py-5">
+                      <div className="text-[15px] font-semibold text-[var(--accent-cyan)]">{t.name}</div>
                     </td>
-                    <td style={{ padding: '20px 0', fontSize: 13, color: 'var(--text-secondary)' }}>{(t.members || []).length} Members</td>
-                    <td style={{ padding: '20px 0', fontSize: 13, color: 'white' }}>{t.score?.toFixed(4) || 'N/A'}</td>
-                    <td style={{ padding: '20px 0', textAlign: 'right' }}>
+                    <td className="py-5 text-sm text-[var(--text-secondary)]">{(t.members || []).length} Members</td>
+                    <td className="py-5 text-sm text-white">{t.score?.toFixed(4) || 'N/A'}</td>
+                    <td className="py-5 text-right">
                       {t.currentStatus === 'FINALIST' ? (
-                        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 12 }}>
-                          <span style={{ color: 'var(--accent-green)', padding: '6px 12px', background: 'rgba(0,230,118,0.1)', border: '1px solid var(--accent-green)', borderRadius: 2, fontSize: 11, fontWeight: 700, letterSpacing: '0.05em' }}>✓ FINALIST</span>
-                          <button onClick={() => setConfirmAction({ type: 'REVOKE', teamId: t.id, teamName: t.name })} style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', fontSize: 10, cursor: 'pointer', textDecoration: 'underline' }}>REVOKE</button>
+                        <div className="inline-flex items-center gap-3">
+                          <span className="inline-flex items-center gap-1 rounded border border-[var(--accent-green)] bg-[rgba(0,230,118,0.1)] px-3 py-1.5 text-[11px] font-bold tracking-[0.05em] text-[var(--accent-green)]">
+                            <Check size={12} /> FINALIST
+                          </span>
+                          <button onClick={() => setConfirmAction({ type: 'REVOKE', teamId: t.id, teamName: t.name })} className="border-none bg-transparent text-[10px] text-[var(--text-muted)] underline">REVOKE</button>
                         </div>
                       ) : t.currentStatus === 'REJECTED' ? (
-                        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 12 }}>
-                          <span style={{ color: 'var(--accent-red)', padding: '6px 12px', background: 'rgba(255,23,68,0.1)', border: '1px solid var(--accent-red)', borderRadius: 2, fontSize: 11, fontWeight: 700, letterSpacing: '0.05em' }}>⨯ DISQUALIFIED</span>
-                          <button onClick={() => setConfirmAction({ type: 'RESTORE', teamId: t.id, teamName: t.name })} style={{ background: 'transparent', border: '1px solid var(--accent-cyan)', color: 'var(--accent-cyan)', padding: '6px 12px', fontSize: 10, cursor: 'pointer', borderRadius: 2 }}>RESTORE TO FINALIST</button>
+                        <div className="inline-flex items-center gap-3">
+                          <span className="inline-flex items-center gap-1 rounded border border-[var(--accent-red)] bg-[rgba(255,23,68,0.1)] px-3 py-1.5 text-[11px] font-bold tracking-[0.05em] text-[var(--accent-red)]">
+                            <X size={12} /> DISQUALIFIED
+                          </span>
+                          <button onClick={() => setConfirmAction({ type: 'RESTORE', teamId: t.id, teamName: t.name })} className="rounded border border-[var(--accent-cyan)] bg-transparent px-3 py-1.5 text-[10px] text-[var(--accent-cyan)]">RESTORE TO FINALIST</button>
                         </div>
                       ) : (
-                        <div style={{ display: 'inline-flex', gap: 12 }}>
+                        <div className="inline-flex gap-3">
                           <button 
                             onClick={() => setConfirmAction({ type: 'PROMOTE', teamId: t.id, teamName: t.name })}
-                            style={{ background: 'var(--accent-cyan)', border: '1px solid var(--accent-cyan)', color: 'black', padding: '8px 16px', fontSize: 10, letterSpacing: '0.05em', fontWeight: 600, cursor: 'pointer' }}
+                            className="border border-[var(--accent-cyan)] bg-[var(--accent-cyan)] px-4 py-2 text-[10px] font-semibold tracking-[0.05em] text-black"
                           >
                             PROMOTE
                           </button>
                           <button 
                             onClick={() => setConfirmAction({ type: 'DISQUALIFY', teamId: t.id, teamName: t.name })}
-                            style={{ background: 'transparent', border: '1px solid rgba(255, 23, 68, 0.4)', color: 'var(--text-muted)', padding: '8px 16px', fontSize: 10, letterSpacing: '0.05em', fontWeight: 600, cursor: 'pointer' }}
+                            className="border border-[rgba(255,23,68,0.4)] bg-transparent px-4 py-2 text-[10px] font-semibold tracking-[0.05em] text-[var(--text-muted)]"
                           >
                             DISQUALIFY
                           </button>
@@ -327,29 +344,27 @@ function AdminContent() {
                 ))}
               </tbody>
             </table>
+            </div>
           </div>
         </div>
 
         {/* Right sidebar */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
+        <div className="flex flex-col gap-6">
           {/* Data Extraction */}
           <div>
-            <h3 style={{ fontSize: 18, fontWeight: 600, color: 'white', marginBottom: 20 }}>Data Extraction</h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {[
-                { label: 'TEAMS REGISTRY', title: 'Export Teams as CSV', type: 'TEAMS', icon: '⬇' },
-                { label: 'PROPOSAL BUNDLE', title: 'Export Proposals as XLSX', type: 'SUBMISSIONS', icon: '☁' },
-              ].map(exp => (
+            <h3 className="mb-4 text-lg font-semibold text-white">Data Extraction</h3>
+            <div className="flex flex-col gap-3">
+              {exportCards.map(exp => (
                 <div 
                   key={exp.type} 
                   onClick={() => exportData(exp.type)}
-                  style={{ background: 'var(--bg-surface)', padding: '16px 20px', borderLeft: '3px solid transparent', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}
+                  className="flex cursor-pointer items-center justify-between border-l-2 border-transparent bg-[var(--bg-surface)] px-5 py-4 transition hover:border-[var(--accent-cyan)]"
                 >
                   <div>
-                    <div className="font-mono" style={{ fontSize: 10, color: 'var(--text-muted)', marginBottom: 4, letterSpacing: '0.1em' }}>{exp.label}</div>
-                    <div style={{ fontSize: 14, color: 'white', fontWeight: 500 }}>{exp.title}</div>
+                    <div className="font-mono mb-1 text-[10px] tracking-[0.1em] text-[var(--text-muted)]">{exp.label}</div>
+                    <div className="text-sm font-medium text-white">{exp.title}</div>
                   </div>
-                  <span style={{ color: 'var(--accent-cyan)', fontSize: 20 }}>{exp.icon}</span>
+                  <exp.icon size={18} className="text-[var(--accent-cyan)]" />
                 </div>
               ))}
             </div>
@@ -357,19 +372,19 @@ function AdminContent() {
 
           {/* Live Ops Log */}
           <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-              <h3 style={{ fontSize: 12, letterSpacing: '0.1em', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase' }}>LIVE OPERATIONAL LOG</h3>
-              <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--accent-green)', boxShadow: '0 0 10px var(--accent-green)' }} />
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="text-xs font-semibold tracking-[0.1em] text-[var(--text-secondary)]">LIVE OPERATIONAL LOG</h3>
+              <span className="h-2 w-2 rounded-full bg-[var(--accent-green)] shadow-[0_0_10px_var(--accent-green)]" />
             </div>
-            
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+
+            <div className="flex flex-col gap-3">
               {logs.slice(0, 4).map((log) => (
-                <div key={log.id} style={{ background: 'var(--bg-surface)', padding: 16 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-                    <span className="font-mono" style={{ fontSize: 10, color: 'var(--text-muted)' }}>LOG_ID: {log.entityId}</span>
-                    <span className="font-mono" style={{ fontSize: 10, color: 'var(--text-muted)' }}>{new Date(log.createdAt).toISOString().split('T')[1].substring(0,8)} UTC</span>
+                <div key={log.id} className="bg-[var(--bg-surface)] p-4">
+                  <div className="mb-2 flex justify-between gap-3">
+                    <span className="font-mono text-[10px] text-[var(--text-muted)]">LOG_ID: {log.entityId}</span>
+                    <span className="font-mono text-[10px] text-[var(--text-muted)]">{new Date(log.createdAt).toISOString().split('T')[1].substring(0,8)} UTC</span>
                   </div>
-                  <div style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+                  <div className="text-xs leading-relaxed text-[var(--text-secondary)]">
                     {log.action.includes('Warning') ? (
                       <>{log.action.split('Submission Server')[0]} <span style={{ color: 'var(--accent-amber)' }}>Submission Server{log.action.split('Submission Server')[1]}</span></>
                     ) : (
@@ -379,10 +394,10 @@ function AdminContent() {
                 </div>
               ))}
             </div>
-            
-            <div style={{ textAlign: 'center', marginTop: 16 }}>
-              <Link href="/admin/logs" style={{ textDecoration: 'none' }}>
-                <button style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: 'var(--text-muted)', padding: '12px 0', width: '100%', fontSize: 11, letterSpacing: '0.1em', cursor: 'pointer' }}>
+
+            <div className="mt-4 text-center">
+              <Link href="/admin/logs" className="no-underline">
+                <button className="w-full border border-white/10 bg-transparent py-3 text-[11px] tracking-[0.1em] text-[var(--text-muted)]">
                   VIEW FULL AUDIT TRAIL
                 </button>
               </Link>
@@ -392,9 +407,9 @@ function AdminContent() {
       </div>
       
       {/* Footer */}
-      <footer style={{ marginTop: 40, borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: 24, display: 'flex', justifyContent: 'space-between', fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.05em' }}>
+      <footer className="mt-8 flex flex-col gap-3 border-t border-white/5 pt-6 text-[10px] tracking-[0.05em] text-[var(--text-muted)] lg:flex-row lg:items-center lg:justify-between">
         <div>© 2024 GEOAI HACKATHON | PRECISION LENS UI</div>
-        <div style={{ display: 'flex', gap: 24 }}>
+        <div className="flex flex-wrap gap-4 lg:gap-6">
           <span>KMITL</span>
           <span>ESRI</span>
           <span>GISTDA</span>

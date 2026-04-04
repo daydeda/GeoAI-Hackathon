@@ -1,6 +1,21 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
+import type { LucideIcon } from 'lucide-react'
+import {
+  Check,
+  CheckCircle2,
+  Circle,
+  ClipboardCopy,
+  Copy,
+  Download,
+  FileText,
+  Leaf,
+  Play,
+  Upload,
+  Waves,
+} from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useAlert } from '@/contexts/AlertContext'
 
@@ -70,8 +85,8 @@ function DashboardContent() {
   }
 
   if (loading) return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh' }}>
-      <div className="font-mono" style={{ color: 'var(--accent-cyan)', fontSize: 14 }}>INITIALIZING TERMINAL...</div>
+    <div className="flex min-h-screen items-center justify-center px-6">
+      <div className="font-mono text-sm text-[var(--accent-cyan)]">INITIALIZING TERMINAL...</div>
     </div>
   )
 
@@ -87,105 +102,115 @@ function DashboardContent() {
     { label: 'REVIEW PHASE', done: false },
   ]
 
+  const tracks: { id: string; label: string; icon: LucideIcon }[] = [
+    { id: 'SMART_AGRICULTURE', label: 'Smart Agriculture', icon: Leaf },
+    { id: 'DISASTER_FLOOD_RESPONSE', label: 'Disaster & Flood Response', icon: Waves },
+  ]
+
   return (
-    <div style={{ minHeight: '100vh', padding: '32px' }}>
+    <div className="min-h-screen px-4 py-6 sm:px-6 lg:px-8">
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 32 }}>
-        <div>
-          <h1 className="font-display" style={{ fontSize: 36, letterSpacing: '0.06em', marginBottom: 4 }}>
+      <div className="mb-8 flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+        <div className="min-w-0">
+          <h1 className="font-display mb-1 text-2xl tracking-[0.06em] sm:text-3xl lg:text-4xl">
             COMPETITOR DASHBOARD
           </h1>
-          <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
-            <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--accent-green)', animation: 'pulse-green 2s infinite' }} />
-            <span className="font-mono" style={{ fontSize: 11, color: 'var(--accent-cyan)' }}>OPERATIONAL STATUS: ACTIVE</span>
-            <span className="font-mono" style={{ fontSize: 11, color: 'var(--text-muted)' }}>LAT: 13.7563° N / LONG: 100.5018° E</span>
+          <div className="flex flex-wrap items-center gap-3 sm:gap-4">
+            <span className="h-2 w-2 rounded-full bg-[var(--accent-green)]" style={{ animation: 'pulse-green 2s infinite' }} />
+            <span className="font-mono text-[11px] text-[var(--accent-cyan)]">OPERATIONAL STATUS: ACTIVE</span>
+            <span className="font-mono text-[11px] text-[var(--text-muted)]">LAT: 13.7563 N / LONG: 100.5018 E</span>
           </div>
         </div>
-        <div style={{ textAlign: 'right' }}>
-          <div className="font-mono" style={{ fontSize: 10, color: 'var(--text-muted)', marginBottom: 4 }}>TIME TO DEADLINE</div>
-          <div className="font-display" style={{ fontSize: 32, color: 'var(--accent-red)', fontWeight: 700, letterSpacing: '0.05em' }}>
+        <div className="text-left lg:text-right">
+          <div className="font-mono mb-1 text-[10px] text-[var(--text-muted)]">TIME TO DEADLINE</div>
+          <div className="font-display text-2xl font-bold tracking-[0.05em] text-[var(--accent-red)] sm:text-3xl">
             {String(h).padStart(2,'0')}:{String(m).padStart(2,'0')}:{String(s).padStart(2,'0')}
           </div>
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '300px 1fr', gap: 24 }}>
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[300px_minmax(0,1fr)]">
         {/* Left Column */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <div className="flex flex-col gap-4">
           {/* Team Unit Card */}
-          <div className="card" style={{ padding: 20 }}>
-            <div className="font-mono" style={{ fontSize: 10, color: 'var(--text-muted)', marginBottom: 12 }}>TEAM UNIT</div>
-            <h2 className="font-display" style={{ fontSize: 22, marginBottom: 16 }}>
+          <div className="card p-5">
+            <div className="font-mono mb-3 text-[10px] text-[var(--text-muted)]">TEAM UNIT</div>
+            <h2 className="font-display mb-4 text-xl sm:text-2xl">
               {team?.name ?? 'No Team Yet'}
             </h2>
 
             {hasTeam ? (
               <>
-                <div className="font-mono" style={{ fontSize: 10, color: 'var(--text-muted)', marginBottom: 8 }}>INVITE ACCESS CODE</div>
-                <div style={{ display: 'flex', gap: 8, marginBottom: 20, alignItems: 'center' }}>
-                  <code className="font-mono" style={{ fontSize: 12, background: 'var(--bg-base)', padding: '8px 12px', borderRadius: 4, border: '1px solid var(--border-subtle)', flex: 1, color: 'var(--accent-cyan)' }}>
+                <div className="font-mono mb-2 text-[10px] text-[var(--text-muted)]">INVITE ACCESS CODE</div>
+                <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-center">
+                  <code className="font-mono block flex-1 overflow-x-auto rounded border border-[var(--border-subtle)] bg-[var(--bg-base)] px-3 py-2 text-xs text-[var(--accent-cyan)]">
                     {team?.inviteCode ?? 'Code required'}
                   </code>
                   {team?.inviteCode ? (
                     <button 
                       className={`btn ${copied ? 'btn-primary' : 'btn-outline'}`} 
-                      style={{ padding: '8px 10px', fontSize: 11 }} 
+                      style={{ padding: '8px 10px', fontSize: 11 }}
                       onClick={() => {
                         navigator.clipboard.writeText(team.inviteCode || '')
                         setCopied(true)
                         setTimeout(() => setCopied(false), 2000)
                       }}
                     >
-                      {copied ? '✓ COPIED' : '⧉ COPY'}
+                      {copied ? <Check size={14} aria-hidden="true" /> : <Copy size={14} aria-hidden="true" />}
+                      <span>{copied ? 'COPIED' : 'COPY'}</span>
                     </button>
                   ) : (
-                    <button className="btn btn-primary" style={{ padding: '8px 10px', fontSize: 11 }} onClick={generateInvite}>GENERATE</button>
+                    <button className="btn btn-primary" style={{ padding: '8px 10px', fontSize: 11 }} onClick={generateInvite}>
+                      <ClipboardCopy size={14} aria-hidden="true" />
+                      <span>GENERATE</span>
+                    </button>
                   )}
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-                  <div className="font-mono" style={{ fontSize: 10, color: 'var(--text-muted)' }}>MEMBER DEPLOYMENT</div>
-                  <div className="font-display" style={{ fontSize: 20, color: 'var(--accent-cyan)' }}>
+                <div className="mb-4 flex items-center justify-between">
+                  <div className="font-mono text-[10px] text-[var(--text-muted)]">MEMBER DEPLOYMENT</div>
+                  <div className="font-display text-xl text-[var(--accent-cyan)]">
                     {team?.memberCount ?? members.length} / {team?.maxMembers ?? 4}
                   </div>
                 </div>
 
                 {team?.status === 'FINALIST' && (
-                  <div style={{ padding: '16px', background: 'rgba(0, 230, 118, 0.05)', border: '1px solid var(--accent-green)', borderRadius: 8, marginBottom: 16 }}>
-                    <div className="font-mono" style={{ fontSize: 10, color: 'var(--accent-green)', marginBottom: 8, letterSpacing: '0.05em' }}>ONSITE ROUND QUALIFIED</div>
-                    <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 12, lineHeight: 1.5 }}>
+                  <div className="mb-4 rounded-lg border border-[var(--accent-green)] bg-[rgba(0,230,118,0.05)] p-4">
+                    <div className="font-mono mb-2 text-[10px] tracking-[0.05em] text-[var(--accent-green)]">ONSITE ROUND QUALIFIED</div>
+                    <p className="mb-3 text-xs leading-relaxed text-[var(--text-secondary)]">
                       Congratulations! Your team has advanced to the Finalist round. Please download the auto-generated Permission/Leave letter below.
                     </p>
                     <button 
                       onClick={downloadPermissionLetter}
-                      className="btn btn-primary" 
-                      style={{ width: '100%', background: 'var(--accent-green)', color: 'black', fontSize: 12, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 8 }}
+                      className="btn w-full justify-center"
+                      style={{ background: 'var(--accent-green)', color: 'black', fontSize: 12 }}
                     >
-                      <span style={{ fontSize: 16 }}>⤓</span> DOWNLOAD THE PERMISSION LETTER
+                      <Download size={16} aria-hidden="true" />
+                      <span>DOWNLOAD THE PERMISSION LETTER</span>
                     </button>
                   </div>
                 )}
               </>
             ) : (
-              <a href="/team" className="btn btn-primary" style={{ display: 'block', textAlign: 'center', textDecoration: 'none', marginBottom: 12 }}>
+              <Link href="/team" className="btn btn-primary mb-3 block text-center no-underline">
                 Create Team
-              </a>
+              </Link>
             )}
 
             {/* Member list */}
-            <div className="font-mono" style={{ fontSize: 10, color: 'var(--text-muted)', marginBottom: 8 }}>CREW MANIFEST</div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <div className="font-mono mb-2 text-[10px] text-[var(--text-muted)]">CREW MANIFEST</div>
+            <div className="flex flex-col gap-2">
               {members.length > 0 ? members.map((m, i) => (
-                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid var(--border-subtle)' }}>
+                <div key={i} className="flex items-center justify-between border-b border-[var(--border-subtle)] py-2">
                   <div>
-                    <div style={{ fontSize: 13, fontWeight: 600 }}>{m.fullName}</div>
-                    <div style={{ fontSize: 10, color: m.isLeader ? 'var(--accent-cyan)' : 'var(--text-muted)', letterSpacing: '0.06em' }}>
+                    <div className="text-sm font-semibold">{m.fullName}</div>
+                    <div className="text-[10px] tracking-[0.06em]" style={{ color: m.isLeader ? 'var(--accent-cyan)' : 'var(--text-muted)' }}>
                       {m.isLeader ? 'LEADER' : 'MEMBER'}
                     </div>
                   </div>
-                  <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--accent-green)' }} />
+                  <span className="h-1.5 w-1.5 rounded-full bg-[var(--accent-green)]" />
                 </div>
               )) : (
-                <div style={{ fontSize: 12, color: 'var(--text-muted)', padding: '12px 0', textAlign: 'center' }}>
+                <div className="py-3 text-center text-xs text-[var(--text-muted)]">
                   No team members yet
                 </div>
               )}
@@ -193,14 +218,16 @@ function DashboardContent() {
           </div>
 
           {/* Mission Progress */}
-          <div className="card" style={{ padding: 20 }}>
-            <div className="font-mono" style={{ fontSize: 10, color: 'var(--text-muted)', marginBottom: 16 }}>MISSION PROGRESS</div>
+          <div className="card p-5">
+            <div className="font-mono mb-4 text-[10px] text-[var(--text-muted)]">MISSION PROGRESS</div>
             {steps.map((step, i) => {
               const isActive = !step.done && (i === 0 || steps[i-1].done)
               return (
                 <div key={i} className="checklist-step">
                   <div className={`checklist-icon ${step.done ? 'done' : isActive ? 'active' : 'pending'}`}>
-                    {step.done ? '✓' : isActive ? '▶' : '○'}
+                    {step.done && <CheckCircle2 size={14} aria-hidden="true" />}
+                    {!step.done && isActive && <Play size={14} aria-hidden="true" />}
+                    {!step.done && !isActive && <Circle size={14} aria-hidden="true" />}
                   </div>
                   <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: '0.04em', paddingTop: 4, color: step.done ? 'var(--accent-green)' : isActive ? 'var(--text-primary)' : 'var(--text-muted)' }}>
                     {step.label}
@@ -211,46 +238,43 @@ function DashboardContent() {
           </div>
         </div>
 
-        {/* Right Column — Submission Terminal */}
-        <div className="card" style={{ padding: 24 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
+        {/* Right Column - Submission Terminal */}
+        <div className="card p-5 sm:p-6">
+          <div className="mb-6 flex items-start justify-between">
             <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                <span style={{ fontSize: 20 }}>📄</span>
-                <h2 className="font-display" style={{ fontSize: 20, letterSpacing: '0.06em' }}>SUBMISSION TERMINAL</h2>
+              <div className="mb-1 flex items-center gap-2">
+                <FileText size={18} className="text-[var(--accent-cyan)]" aria-hidden="true" />
+                <h2 className="font-display text-lg tracking-[0.06em] sm:text-xl">SUBMISSION TERMINAL</h2>
               </div>
-              <div className="font-mono" style={{ fontSize: 10, color: 'var(--accent-cyan)' }}>SECURE UPLINK: 128-BIT ENCRYPTION ACTIVE</div>
+              <div className="font-mono text-[10px] text-[var(--accent-cyan)]">SECURE UPLINK: 128-BIT ENCRYPTION ACTIVE</div>
             </div>
           </div>
 
           {/* Track Selection */}
-          <div className="font-mono" style={{ fontSize: 10, color: 'var(--text-muted)', marginBottom: 12 }}>SELECT STRATEGIC TRACK</div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 24 }}>
-            {[
-              { id: 'SMART_AGRICULTURE', label: 'Smart Agriculture', icon: '🌾' },
-              { id: 'DISASTER_FLOOD_RESPONSE', label: 'Disaster & Flood Response', icon: '🌊' },
-            ].map(t => (
+          <div className="font-mono mb-3 text-[10px] text-[var(--text-muted)]">SELECT STRATEGIC TRACK</div>
+          <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
+            {tracks.map((t) => (
               <div key={t.id} className={`track-card ${team?.track === t.id ? 'selected' : ''}`} style={{ padding: 16 }}>
-                <div style={{ fontSize: 24, marginBottom: 8 }}>{t.icon}</div>
+                <t.icon size={22} className="mb-2 text-[var(--accent-cyan)]" aria-hidden="true" />
                 <div className="font-display" style={{ fontSize: 14 }}>{t.label}</div>
               </div>
             ))}
           </div>
 
           {/* PDF Upload zone */}
-          <div className="font-mono" style={{ fontSize: 10, color: 'var(--text-muted)', marginBottom: 12 }}>TECHNICAL PROPOSAL UPLOAD (PDF)</div>
-          <a href="/submissions" style={{ textDecoration: 'none' }}>
-            <div className="upload-zone" style={{ marginBottom: 20 }}>
-              <div style={{ fontSize: 32, marginBottom: 12 }}>⬆</div>
-              <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 4 }}>Drag and drop mission brief</div>
-              <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Max file size: 20MB. Format: PDF only.</div>
+          <div className="font-mono mb-3 text-[10px] text-[var(--text-muted)]">TECHNICAL PROPOSAL UPLOAD (PDF)</div>
+          <Link href="/submissions" className="no-underline">
+            <div className="upload-zone mb-5">
+              <Upload size={30} className="mx-auto mb-3 text-[var(--accent-cyan)]" aria-hidden="true" />
+              <div className="mb-1 text-sm font-semibold">Drag and drop mission brief</div>
+              <div className="text-xs text-[var(--text-muted)]">Max file size: 20MB. Format: PDF only.</div>
             </div>
-          </a>
+          </Link>
 
           {/* GISTDA Declaration */}
-          <div style={{ display: 'flex', gap: 12, padding: 16, background: 'var(--bg-base)', borderRadius: 8, border: '1px solid var(--border-subtle)', marginBottom: 24 }}>
-            <div style={{ width: 16, height: 16, border: '2px solid var(--accent-cyan)', borderRadius: 3, flexShrink: 0, marginTop: 2 }} />
-            <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6, margin: 0 }}>
+          <div className="mb-6 flex gap-3 rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-base)] p-4">
+            <div className="mt-0.5 h-4 w-4 shrink-0 rounded-[3px] border-2 border-[var(--accent-cyan)]" />
+            <p className="m-0 text-sm leading-relaxed text-[var(--text-secondary)]">
               I declare that this project utilizes{' '}
               <strong style={{ color: 'var(--accent-amber)' }}>Sphere of GISTDA</strong>{' '}
               and adheres to the multispectral processing guidelines established in the hackathon brief. Any data discrepancies must be reported immediately.
@@ -258,9 +282,11 @@ function DashboardContent() {
           </div>
 
           {/* Action buttons */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <button className="btn btn-outline" style={{ padding: '12px', justifyContent: 'center' }}>SAVE MISSION DRAFT</button>
-            <a href="/submissions" className="btn btn-primary" style={{ textDecoration: 'none', padding: '12px', justifyContent: 'center', display: 'flex', alignItems: 'center' }}>INITIATE SUBMISSION</a>
+            <Link href="/submissions" className="btn btn-primary flex items-center justify-center no-underline" style={{ padding: '12px' }}>
+              INITIATE SUBMISSION
+            </Link>
           </div>
         </div>
       </div>

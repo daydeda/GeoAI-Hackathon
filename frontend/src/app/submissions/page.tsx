@@ -79,88 +79,152 @@ function SubmissionsContent() {
     }
   }
 
-  if (loading || authLoading) return <div style={{ padding: 40, color: 'var(--text-muted)' }}>Synching…</div>
+  if (loading || authLoading) return (
+    <div className="flex min-h-screen items-center justify-center px-4">
+      <div className="font-mono text-sm text-[var(--accent-cyan)]">Synching…</div>
+    </div>
+  )
 
   if (!hasTeam) return (
-    <div style={{ padding: '60px 32px', textAlign: 'center' }}>
-      <h1 className="font-display" style={{ fontSize: 32, marginBottom: 16 }}>No Team Found</h1>
-      <p style={{ color: 'var(--text-secondary)' }}>You must create or join a team before submitting.</p>
-      <a href="/team" className="btn btn-primary" style={{ marginTop: 24, textDecoration: 'none' }}>GO TO TEAM TERMINAL</a>
+    <div className="min-h-screen px-4 py-12 sm:py-16 lg:py-20 flex items-center justify-center">
+      <div className="text-center max-w-md mx-auto">
+        <h1 className="font-display text-2xl sm:text-3xl mb-4 sm:mb-6">No Team Found</h1>
+        <p className="text-sm sm:text-base text-[var(--text-secondary)] mb-6 sm:mb-8">
+          You must create or join a team before submitting.
+        </p>
+        <a href="/team" className="inline-block px-6 sm:px-8 py-2.5 sm:py-3 bg-[var(--accent-cyan)] text-[var(--bg-base)] rounded font-semibold text-sm sm:text-base hover:opacity-90 transition-opacity no-underline">
+          GO TO TEAM TERMINAL
+        </a>
+      </div>
     </div>
   )
 
   const activeSubmission = history[0]
 
   return (
-    <div style={{ padding: 32, maxWidth: 1000 }}>
-      <h1 className="font-display" style={{ fontSize: 36, marginBottom: 8 }}>Submission Terminal</h1>
-      <p style={{ color: 'var(--text-secondary)', marginBottom: 32 }}>Upload your technical proposal. Subsequent uploads will version your submission.</p>
+    <div className="min-h-screen px-4 py-6 sm:px-6 lg:px-8">
+      <div className="max-w-5xl mx-auto">
+        <h1 className="font-display text-2xl sm:text-3xl lg:text-4xl mb-2 sm:mb-4 tracking-widest">
+          SUBMISSION TERMINAL
+        </h1>
+        <p className="text-xs sm:text-sm text-[var(--text-secondary)] mb-6 sm:mb-8">
+          Upload your technical proposal. Subsequent uploads will version your submission.
+        </p>
 
-      {error && (
-        <div style={{ padding: 12, border: '1px solid var(--accent-red)', background: 'rgba(255, 23, 68, 0.1)', color: 'var(--accent-red)', borderRadius: 6, marginBottom: 24, fontSize: 13 }}>
-          ⚠️ {error}
-        </div>
-      )}
-
-      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.3fr) minmax(0, 1fr)', gap: 24 }}>
-        {/* Upload Form */}
-        <div className="card" style={{ padding: 24 }}>
-          <div className="font-mono" style={{ fontSize: 10, color: 'var(--accent-cyan)', marginBottom: 16 }}>NEW UPLINK</div>
-          
-          <div {...getRootProps()} className={`upload-zone ${isDragActive ? 'drag-active' : ''}`} style={{ marginBottom: 20 }}>
-            <input {...getInputProps()} />
-            <div style={{ fontSize: 32, marginBottom: 12 }}>{file ? '📄' : '⬆'}</div>
-            <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 4 }}>
-              {file ? file.name : (isDragActive ? 'Drop file here' : 'Drag & drop PDF here')}
-            </div>
-            <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-              {file ? `${(file.size / 1024 / 1024).toFixed(2)} MB` : 'Max 20MB. PDF format only.'}
-            </div>
+        {error && (
+          <div className="mb-4 sm:mb-6 p-3 sm:p-4 rounded-md bg-[rgba(255,23,68,0.1)] border border-[var(--accent-red)] text-[var(--accent-red)] text-xs sm:text-sm flex items-start gap-2 sm:gap-3">
+            <span className="text-base flex-shrink-0">⚠️</span>
+            <span>{error}</span>
           </div>
+        )}
 
-          <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start', padding: 16, background: 'var(--bg-base)', borderRadius: 8, border: '1px solid var(--border-subtle)', marginBottom: 24 }}>
-            <input type="checkbox" id="gistda" checked={gistda} onChange={e => setGistda(e.target.checked)} style={{ marginTop: 4, cursor: 'pointer' }} />
-            <label htmlFor="gistda" style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6, cursor: 'pointer' }}>
-              I declare that this project utilizes <strong style={{ color: 'var(--accent-amber)' }}>Sphere of GISTDA</strong> and adheres to the multispectral processing guidelines established in the hackathon brief.
-            </label>
-          </div>
-
-          <button onClick={upload} disabled={!file || !gistda || uploading} className="btn btn-primary" style={{ width: '100%', justifyContent: 'center' }}>
-            {uploading ? 'UPLOADING...' : 'INITIATE TRANSMISSION'}
-          </button>
-        </div>
-
-        {/* History */}
-        <div className="card" style={{ padding: 24 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-            <div className="font-mono" style={{ fontSize: 10, color: 'var(--text-muted)' }}>VERSION HISTORY</div>
-            <span className="badge badge-draft">{history.length} RECORDS</span>
-          </div>
-
-          {activeSubmission && (
-            <div style={{ padding: '16px', background: 'var(--bg-elevated)', borderRadius: 8, border: '1px solid var(--accent-cyan)', marginBottom: 20 }}>
-              <div style={{ fontSize: 11, color: 'var(--accent-cyan)', fontWeight: 700, marginBottom: 4 }}>ACTIVE PROPOSAL (v{activeSubmission.version})</div>
-              <div style={{ fontSize: 14, color: 'var(--text-primary)', marginBottom: 12 }}>
-                Status: <span style={{ fontWeight: 600, color: activeSubmission.moderatorReview?.status === 'PASS' ? 'var(--accent-green)' : activeSubmission.moderatorReview?.status === 'FAIL' ? 'var(--accent-red)' : 'var(--text-secondary)' }}>
-                  {activeSubmission.moderatorReview?.status || 'UNDER REVIEW'}
-                </span>
+        <div className="grid grid-cols-1 lg:grid-cols-[1.3fr_1fr] gap-4 sm:gap-6">
+          {/* Upload Form */}
+          <div className="card p-4 sm:p-6 rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-surface)]">
+            <div className="font-mono text-[10px] sm:text-xs text-[var(--accent-cyan)] mb-4 tracking-widest">NEW UPLINK</div>
+            
+            <div
+              {...getRootProps()}
+              className={`p-6 sm:p-8 rounded-lg border-2 border-dashed mb-4 sm:mb-6 cursor-pointer transition-colors text-center ${
+                isDragActive
+                  ? 'border-[var(--accent-cyan)] bg-[rgba(0,229,255,0.05)]'
+                  : 'border-[var(--border-subtle)] bg-[var(--bg-base)] hover:border-[var(--border-active)]'
+              }`}
+            >
+              <input {...getInputProps()} />
+              <div className="text-3xl sm:text-4xl mb-2 sm:mb-3">{file ? '📄' : '⬆️'}</div>
+              <div className="font-semibold text-xs sm:text-sm mb-1 text-[var(--text-primary)]">
+                {file ? file.name : (isDragActive ? 'Drop file here' : 'Drag & drop PDF here')}
               </div>
-              <button className="btn btn-outline" style={{ fontSize: 11, padding: '6px 12px', width: '100%', justifyContent: 'center' }} onClick={(e) => download(activeSubmission.id, e)}>
-                VIEW DOCUMENT
-              </button>
+              <div className="text-[10px] sm:text-xs text-[var(--text-muted)]">
+                {file ? `${(file.size / 1024 / 1024).toFixed(2)} MB` : 'Max 20MB. PDF format only.'}
+              </div>
             </div>
-          )}
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            {history.slice(1).map(h => (
-              <div key={h.id} style={{ padding: 12, background: 'var(--bg-base)', border: '1px solid var(--border-subtle)', borderRadius: 6, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div>
-                  <div style={{ fontSize: 13, fontWeight: 600 }}>Version {h.version}</div>
-                  <div className="font-mono" style={{ fontSize: 10, color: 'var(--text-muted)' }}>{new Date(h.submittedAt).toLocaleString()}</div>
+            <div className="flex gap-2 sm:gap-3 items-start p-3 sm:p-4 bg-[var(--bg-base)] rounded-lg border border-[var(--border-subtle)] mb-4 sm:mb-6">
+              <input
+                type="checkbox"
+                id="gistda"
+                checked={gistda}
+                onChange={e => setGistda(e.target.checked)}
+                className="mt-1 cursor-pointer flex-shrink-0"
+              />
+              <label htmlFor="gistda" className="text-xs sm:text-sm text-[var(--text-secondary)] leading-relaxed cursor-pointer">
+                I declare that this project utilizes{' '}
+                <strong className="text-[var(--accent-amber)]">Sphere of GISTDA</strong> and adheres to the
+                multispectral processing guidelines established in the hackathon brief.
+              </label>
+            </div>
+
+            <button
+              onClick={upload}
+              disabled={!file || !gistda || uploading}
+              className="w-full px-4 py-2.5 sm:py-3 bg-[var(--accent-cyan)] text-[var(--bg-base)] rounded font-semibold text-xs sm:text-sm hover:opacity-90 disabled:opacity-50 transition-opacity"
+            >
+              {uploading ? 'UPLOADING...' : 'INITIATE TRANSMISSION'}
+            </button>
+          </div>
+
+          {/* History */}
+          <div className="card p-4 sm:p-6 rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-surface)]">
+            <div className="flex justify-between items-center mb-4 sm:mb-6">
+              <div className="font-mono text-[10px] sm:text-xs text-[var(--text-muted)] tracking-widest">VERSION HISTORY</div>
+              <span className="badge text-[10px] px-2 py-1 bg-[var(--bg-base)] text-[var(--accent-cyan)] rounded">
+                {history.length} RECORDS
+              </span>
+            </div>
+
+            {activeSubmission && (
+              <div className="p-3 sm:p-4 bg-[var(--bg-elevated)] rounded-lg border border-[var(--accent-cyan)] mb-4 sm:mb-6">
+                <div className="text-[10px] sm:text-xs text-[var(--accent-cyan)] font-bold mb-2 uppercase tracking-widest">
+                  ACTIVE PROPOSAL (v{activeSubmission.version})
                 </div>
-                <button className="btn btn-ghost" style={{ fontSize: 11, padding: '4px 8px' }} onClick={(e) => download(h.id, e)}>DL</button>
+                <div className="text-xs sm:text-sm text-[var(--text-primary)] mb-3 sm:mb-4">
+                  Status:{' '}
+                  <span
+                    className="font-semibold"
+                    style={{
+                      color:
+                        activeSubmission.moderatorReview?.status === 'PASS'
+                          ? 'var(--accent-green)'
+                          : activeSubmission.moderatorReview?.status === 'FAIL'
+                            ? 'var(--accent-red)'
+                            : 'var(--text-secondary)',
+                    }}
+                  >
+                    {activeSubmission.moderatorReview?.status || 'UNDER REVIEW'}
+                  </span>
+                </div>
+                <button
+                  className="w-full px-3 py-2 text-xs sm:text-sm border border-[var(--border-active)] rounded hover:bg-[var(--bg-base)] transition-colors"
+                  onClick={e => download(activeSubmission.id, e)}
+                >
+                  VIEW DOCUMENT
+                </button>
               </div>
-            ))}
+            )}
+
+            <div className="flex flex-col gap-2 sm:gap-3">
+              {history.slice(1).map(h => (
+                <div
+                  key={h.id}
+                  className="p-3 sm:p-4 bg-[var(--bg-base)] border border-[var(--border-subtle)] rounded-lg flex justify-between items-center hover:border-[var(--border-active)] transition-colors"
+                >
+                  <div className="min-w-0 flex-1">
+                    <div className="text-xs sm:text-sm font-semibold">Version {h.version}</div>
+                    <div className="font-mono text-[10px] text-[var(--text-muted)] truncate">
+                      {new Date(h.submittedAt).toLocaleString()}
+                    </div>
+                  </div>
+                  <button
+                    className="ml-2 px-2 sm:px-3 py-1 text-xs text-[var(--text-muted)] hover:text-[var(--accent-cyan)] transition-colors flex-shrink-0"
+                    onClick={e => download(h.id, e)}
+                  >
+                    DL
+                  </button>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>

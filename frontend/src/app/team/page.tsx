@@ -88,131 +88,188 @@ function TeamContent() {
     }
   }
 
-  if (loading || authLoading) return <div style={{ padding: 40, color: 'var(--text-muted)' }}>Synching with command…</div>
+  if (loading || authLoading) return (
+    <div className="flex min-h-screen items-center justify-center px-4">
+      <div className="font-mono text-sm text-[var(--accent-cyan)]">Synching with command…</div>
+    </div>
+  )
 
   return (
-    <div style={{ padding: 32, maxWidth: 960 }}>
-      <h1 className="font-display" style={{ fontSize: 36, marginBottom: 8 }}>Team Operations</h1>
-      <p style={{ color: 'var(--text-secondary)', marginBottom: 32 }}>Manage your crew, track affiliation, and invite operatives.</p>
+    <div className="min-h-screen px-4 py-6 sm:px-6 lg:px-8">
+      <div className="max-w-6xl mx-auto">
+        <h1 className="font-display text-2xl sm:text-3xl lg:text-4xl mb-2 sm:mb-4 tracking-widest">
+          TEAM OPERATIONS
+        </h1>
+        <p className="text-xs sm:text-sm text-[var(--text-secondary)] mb-6 sm:mb-8">
+          Manage your crew, track affiliation, and invite operatives.
+        </p>
 
-      {error && (
-        <div style={{ padding: 12, border: '1px solid var(--accent-red)', background: 'rgba(255, 23, 68, 0.1)', color: 'var(--accent-red)', borderRadius: 6, marginBottom: 24, fontSize: 13 }}>
-          ⚠️ {error}
-        </div>
-      )}
-
-      {!team ? (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: 24 }}>
-          {/* Create Team */}
-          <div className="card" style={{ padding: 24 }}>
-            <div className="font-mono" style={{ fontSize: 10, color: 'var(--accent-cyan)', marginBottom: 16 }}>CREATE NEW UNIT</div>
-            <form onSubmit={createTeam}>
-              <div style={{ marginBottom: 16 }}>
-                <label className="label">Team Name</label>
-                <input className="input" required placeholder="E.g. Orbital Hawks" value={name} onChange={e => setName(e.target.value)} />
-              </div>
-              <div style={{ marginBottom: 16 }}>
-                <label className="label">Institution / Organization</label>
-                <input className="input" required placeholder="University or Company" value={institution} onChange={e => setInstitution(e.target.value)} />
-              </div>
-              <div style={{ marginBottom: 24 }}>
-                <label className="label">Mission Track</label>
-                <select className="input" value={track} onChange={e => setTrack(e.target.value)}>
-                  <option value="SMART_AGRICULTURE">Smart Agriculture (Primary)</option>
-                  <option value="DISASTER_FLOOD_RESPONSE">Disaster & Flood Response</option>
-                </select>
-              </div>
-              <button type="submit" className="btn btn-primary" style={{ width: '100%', justifyContent: 'center' }}>INITIALIZE TEAM</button>
-            </form>
+        {error && (
+          <div className="mb-4 sm:mb-6 p-3 sm:p-4 rounded-md bg-[rgba(255,23,68,0.1)] border border-[var(--accent-red)] text-[var(--accent-red)] text-xs sm:text-sm flex items-start gap-2 sm:gap-3">
+            <span className="text-base flex-shrink-0">⚠️</span>
+            <span>{error}</span>
           </div>
+        )}
 
-          {/* Join Team */}
-          <div className="card" style={{ padding: 24 }}>
-            <div className="font-mono" style={{ fontSize: 10, color: 'var(--text-muted)', marginBottom: 16 }}>JOIN EXISTING UNIT</div>
-            <form onSubmit={joinTeam}>
-              <div style={{ marginBottom: 24 }}>
-                <label className="label">Invitation Code</label>
-                <input className="input" required placeholder="Enter 8-character code" value={inviteCode} onChange={e => setInviteCode(e.target.value)} />
-              </div>
-              <button type="submit" className="btn btn-outline" style={{ width: '100%', justifyContent: 'center' }}>REQUEST TRANSFER</button>
-            </form>
-          </div>
-        </div>
-      ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.5fr) minmax(0, 1fr)', gap: 24 }}>
-          {/* Left: Crew Roster */}
-          <div className="card" style={{ padding: 24 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-              <h2 className="font-display" style={{ fontSize: 24 }}>{team.name}</h2>
-              <span className="badge badge-pass">{team.memberCount || team.members.length} / 4 DEPLOYED</span>
+        {!team ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+            {/* Create Team */}
+            <div className="card p-4 sm:p-6 rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-surface)]">
+              <div className="font-mono text-[10px] sm:text-xs text-[var(--accent-cyan)] mb-4 tracking-widest">CREATE NEW UNIT</div>
+              <form onSubmit={createTeam} className="space-y-3 sm:space-y-4">
+                <div>
+                  <label className="label block text-xs sm:text-sm font-mono mb-2 text-[var(--text-secondary)]">Team Name</label>
+                  <input
+                    className="input w-full px-3 py-2 rounded border border-[var(--border-subtle)] bg-[var(--bg-base)] text-xs sm:text-sm focus:border-[var(--accent-cyan)] focus:outline-none"
+                    required
+                    placeholder="E.g. Orbital Hawks"
+                    value={name}
+                    onChange={e => setName(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label className="label block text-xs sm:text-sm font-mono mb-2 text-[var(--text-secondary)]">Institution / Organization</label>
+                  <input
+                    className="input w-full px-3 py-2 rounded border border-[var(--border-subtle)] bg-[var(--bg-base)] text-xs sm:text-sm focus:border-[var(--accent-cyan)] focus:outline-none"
+                    required
+                    placeholder="University or Company"
+                    value={institution}
+                    onChange={e => setInstitution(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label className="label block text-xs sm:text-sm font-mono mb-2 text-[var(--text-secondary)]">Mission Track</label>
+                  <select
+                    className="input w-full px-3 py-2 rounded border border-[var(--border-subtle)] bg-[var(--bg-base)] text-xs sm:text-sm focus:border-[var(--accent-cyan)] focus:outline-none"
+                    value={track}
+                    onChange={e => setTrack(e.target.value)}
+                  >
+                    <option value="SMART_AGRICULTURE">Smart Agriculture (Primary)</option>
+                    <option value="DISASTER_FLOOD_RESPONSE">Disaster & Flood Response</option>
+                  </select>
+                </div>
+                <button
+                  type="submit"
+                  className="btn btn-primary w-full px-4 py-2.5 rounded font-semibold text-xs sm:text-sm hover:opacity-90 transition-opacity mt-4"
+                >
+                  INITIALIZE TEAM
+                </button>
+              </form>
             </div>
 
-            <div style={{ padding: 16, background: 'var(--bg-elevated)', borderRadius: 8, marginBottom: 24 }}>
-              <div style={{ display: 'flex', gap: 24 }}>
+            {/* Join Team */}
+            <div className="card p-4 sm:p-6 rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-surface)]">
+              <div className="font-mono text-[10px] sm:text-xs text-[var(--text-muted)] mb-4 tracking-widest">JOIN EXISTING UNIT</div>
+              <form onSubmit={joinTeam} className="space-y-4">
                 <div>
-                  <div className="font-mono" style={{ fontSize: 10, color: 'var(--text-muted)', marginBottom: 4 }}>AFFILIATION</div>
-                  <div style={{ fontSize: 13 }}>{team.institution}</div>
+                  <label className="label block text-xs sm:text-sm font-mono mb-2 text-[var(--text-secondary)]">Invitation Code</label>
+                  <input
+                    className="input w-full px-3 py-2 rounded border border-[var(--border-subtle)] bg-[var(--bg-base)] text-xs sm:text-sm focus:border-[var(--accent-cyan)] focus:outline-none"
+                    required
+                    placeholder="Enter 8-character code"
+                    value={inviteCode}
+                    onChange={e => setInviteCode(e.target.value)}
+                  />
                 </div>
-                <div>
-                  <div className="font-mono" style={{ fontSize: 10, color: 'var(--text-muted)', marginBottom: 4 }}>TRACK</div>
-                  <div style={{ fontSize: 13, color: 'var(--accent-cyan)' }}>{team.track.replace(/_/g, ' ')}</div>
-                </div>
-                <div>
-                  <div className="font-mono" style={{ fontSize: 10, color: 'var(--text-muted)', marginBottom: 4 }}>STATUS</div>
-                  <div style={{ fontSize: 13 }}>{team.status}</div>
+                <button
+                  type="submit"
+                  className="btn btn-outline w-full px-4 py-2.5 rounded font-semibold text-xs sm:text-sm border border-[var(--border-active)] hover:bg-[var(--bg-base)] transition-colors mt-6"
+                >
+                  REQUEST TRANSFER
+                </button>
+              </form>
+            </div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-[1.5fr_1fr] gap-4 sm:gap-6">
+            {/* Left: Crew Roster */}
+            <div className="card p-4 sm:p-6 rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-surface)]">
+              <div className="mb-4 sm:mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4">
+                <h2 className="font-display text-lg sm:text-xl">{team.name}</h2>
+                <span className="badge badge-pass text-[10px] sm:text-xs px-2 sm:px-3 py-1">
+                  {team.memberCount || team.members.length} / 4 DEPLOYED
+                </span>
+              </div>
+
+              <div className="p-3 sm:p-4 bg-[var(--bg-elevated)] rounded-lg mb-4 sm:mb-6">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4 text-xs sm:text-sm">
+                  <div>
+                    <div className="font-mono text-[10px] text-[var(--text-muted)] mb-1 sm:mb-2">AFFILIATION</div>
+                    <div className="font-mono">{team.institution}</div>
+                  </div>
+                  <div>
+                    <div className="font-mono text-[10px] text-[var(--text-muted)] mb-1 sm:mb-2">TRACK</div>
+                    <div className="text-[var(--accent-cyan)] font-semibold">{team.track.replace(/_/g, ' ')}</div>
+                  </div>
+                  <div>
+                    <div className="font-mono text-[10px] text-[var(--text-muted)] mb-1 sm:mb-2">STATUS</div>
+                    <div className="font-mono">{team.status}</div>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>OPERATIVE</th>
-                  <th>ROLE</th>
-                  {team.isLeader && <th>ACTION</th>}
-                </tr>
-              </thead>
-              <tbody>
-                {team.members.map(m => (
-                  <tr key={m.userId}>
-                    <td>
-                      <div style={{ fontWeight: 600 }}>{m.fullName} {m.userId === user?.id && '(You)'}</div>
-                      <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{m.email}</div>
-                    </td>
-                    <td>
-                      <span className={`badge ${m.isLeader ? 'badge-finalist' : 'badge-draft'}`}>
-                        {m.isLeader ? 'LEADER' : 'MEMBER'}
-                      </span>
-                    </td>
-                    {team.isLeader && (
-                      <td>
-                        {!m.isLeader && (
-                          <button className="btn btn-ghost" style={{ padding: '4px 8px', fontSize: 10, color: 'var(--accent-red)' }} onClick={() => removeMember(m.userId)}>
-                            REMOVE
-                          </button>
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs sm:text-sm">
+                  <thead>
+                    <tr className="border-b border-[var(--border-subtle)]">
+                      <th className="text-left py-2 px-2 font-mono text-[10px] text-[var(--text-muted)]">OPERATIVE</th>
+                      <th className="text-left py-2 px-2 font-mono text-[10px] text-[var(--text-muted)]">ROLE</th>
+                      {team.isLeader && <th className="text-left py-2 px-2 font-mono text-[10px] text-[var(--text-muted)]">ACTION</th>}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {team.members.map(m => (
+                      <tr key={m.userId} className="border-b border-[var(--border-subtle)] hover:bg-[rgba(0,229,255,0.02)]">
+                        <td className="py-3 px-2">
+                          <div className="font-semibold text-xs sm:text-sm">{m.fullName} {m.userId === user?.id && '(You)'}</div>
+                          <div className="text-[10px] text-[var(--text-muted)] truncate">{m.email}</div>
+                        </td>
+                        <td className="py-3 px-2">
+                          <span className={`badge text-[10px] px-2 py-1 rounded ${m.isLeader ? 'bg-[var(--accent-cyan)] text-[var(--bg-base)]' : 'bg-[var(--bg-base)] text-[var(--accent-cyan)]'}`}>
+                            {m.isLeader ? 'LEADER' : 'MEMBER'}
+                          </span>
+                        </td>
+                        {team.isLeader && (
+                          <td className="py-3 px-2">
+                            {!m.isLeader && (
+                              <button
+                                className="text-[10px] px-2 py-1 rounded text-[var(--accent-red)] hover:bg-[rgba(255,23,68,0.1)] transition-colors"
+                                onClick={() => removeMember(m.userId)}
+                              >
+                                REMOVE
+                              </button>
+                            )}
+                          </td>
                         )}
-                      </td>
-                    )}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
 
           {/* Right: Invite Code */}
           {team.isLeader && (
-            <div className="card" style={{ padding: 24, alignSelf: 'flex-start' }}>
-              <h3 className="font-display" style={{ fontSize: 18, marginBottom: 12 }}>Recruitment Link</h3>
-              <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 16 }}>
+            <div className="card p-4 sm:p-6 rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-surface)] h-fit">
+              <h3 className="font-display text-lg sm:text-xl mb-3 sm:mb-4">Recruitment Link</h3>
+              <p className="text-xs sm:text-sm text-[var(--text-secondary)] mb-4 sm:mb-6">
                 Share this secure code with your teammates to allow them to join your unit.
               </p>
               
-              <label className="label">INVITATION CODE</label>
-              <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
-                <input className="input font-mono" readOnly value={team.inviteCode || ''} style={{ color: 'var(--accent-cyan)', fontSize: 16, letterSpacing: '0.1em', textAlign: 'center' }} />
+              <label className="block font-mono text-[10px] text-[var(--text-muted)] mb-2 sm:mb-3 tracking-widest">INVITATION CODE</label>
+              <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 mb-4 sm:mb-6">
+                <input
+                  className="flex-1 font-mono px-3 py-2 sm:py-2.5 rounded border border-[var(--border-subtle)] bg-[var(--bg-base)] text-sm text-center text-[var(--accent-cyan)] tracking-widest focus:outline-none focus:border-[var(--accent-cyan)]"
+                  readOnly
+                  value={team.inviteCode || ''}
+                />
                 {team.inviteCode ? (
-                  <button 
-                    className={`btn ${copied ? 'btn-outline' : 'btn-primary'}`} 
+                  <button
+                    className={`px-3 sm:px-4 py-2 sm:py-2.5 rounded font-semibold text-xs sm:text-sm transition-colors flex-shrink-0 ${
+                      copied
+                        ? 'bg-[var(--accent-green)] text-[var(--bg-base)]'
+                        : 'bg-[var(--accent-cyan)] text-[var(--bg-base)] hover:opacity-90'
+                    }`}
                     onClick={() => {
                       navigator.clipboard.writeText(team.inviteCode)
                       setCopied(true)
@@ -222,17 +279,23 @@ function TeamContent() {
                     {copied ? '✓ COPIED' : 'COPY'}
                   </button>
                 ) : (
-                  <button className="btn btn-primary" onClick={generateInvite}>GENERATE</button>
+                  <button
+                    className="px-3 sm:px-4 py-2 sm:py-2.5 rounded font-semibold text-xs sm:text-sm bg-[var(--accent-cyan)] text-[var(--bg-base)] hover:opacity-90 transition-opacity flex-shrink-0"
+                    onClick={generateInvite}
+                  >
+                    GENERATE
+                  </button>
                 )}
               </div>
 
-              <div style={{ fontSize: 11, color: 'var(--text-muted)', background: 'var(--bg-elevated)', padding: 12, borderRadius: 6 }}>
+              <div className="text-xs text-[var(--text-muted)] bg-[var(--bg-elevated)] p-3 sm:p-4 rounded">
                 <strong>Note:</strong> Maximum 4 members per team. Code gives immediate access. Do not share publicly.
               </div>
             </div>
           )}
         </div>
       )}
+      </div>
     </div>
   )
 }

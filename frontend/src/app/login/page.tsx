@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
+import { LogIn, AlertCircle } from 'lucide-react'
 
 const API = process.env.NEXT_PUBLIC_API_URL || '/geoai-2026'
 
@@ -33,55 +34,50 @@ export default function LoginPage() {
   }
 
   return (
-    <div style={{
-      minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
-      background: 'var(--bg-base)', position: 'relative', overflow: 'hidden',
-    }}>
+    <div className="relative min-h-screen w-full overflow-hidden bg-[var(--bg-base)] flex flex-col items-center justify-center px-4 py-8 sm:px-6 lg:px-8">
       {/* Background effects */}
-      <div style={{
-        position: 'absolute', inset: 0, pointerEvents: 'none',
-        backgroundImage: `radial-gradient(circle at 50% 30%, rgba(0,229,255,0.06) 0%, transparent 60%)`,
-      }} />
-      <div style={{
-        position: 'absolute', inset: 0, pointerEvents: 'none',
-        backgroundImage: `linear-gradient(rgba(0,229,255,0.02) 1px, transparent 1px),
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          backgroundImage: `radial-gradient(circle at 50% 30%, rgba(0,229,255,0.06) 0%, transparent 60%)`,
+        }}
+      />
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          backgroundImage: `linear-gradient(rgba(0,229,255,0.02) 1px, transparent 1px),
                           linear-gradient(90deg, rgba(0,229,255,0.02) 1px, transparent 1px)`,
-        backgroundSize: '40px 40px',
-      }} />
+          backgroundSize: '40px 40px',
+        }}
+      />
 
       {/* Card */}
-      <div className="animate-fade-in" style={{
-        background: 'var(--bg-surface)',
-        border: '1px solid var(--border-active)',
-        borderRadius: 12, padding: '48px 40px',
-        width: '100%', maxWidth: 420,
-        boxShadow: 'var(--glow-cyan)',
-        position: 'relative', zIndex: 1,
-        textAlign: 'center',
-      }}>
+      <div className="relative z-10 w-full max-w-xs sm:max-w-sm animate-fade-in rounded-lg border border-[var(--border-active)] bg-[var(--bg-surface)] p-6 sm:p-8 shadow-lg"
+        style={{ boxShadow: 'var(--glow-cyan)' }}>
         {/* Logo */}
-        <div style={{ marginBottom: 32 }}>
-          <div className="font-display" style={{ fontSize: 24, fontWeight: 700, color: 'var(--accent-cyan)', marginBottom: 4 }}>
+        <div className="mb-6 sm:mb-8 text-center">
+          <div className="font-display text-xl sm:text-2xl font-bold text-[var(--accent-cyan)] mb-2">
             GEOAI HACKATHON
           </div>
-          <div style={{ fontSize: 12, color: 'var(--text-muted)', letterSpacing: '0.08em' }}>
+          <div className="text-xs sm:text-xs font-mono text-[var(--text-muted)] tracking-widest">
             AGRI-DISASTER AI · 2026
           </div>
         </div>
 
         {/* Divider */}
-        <div style={{ height: 1, background: 'var(--border-subtle)', marginBottom: 32 }} />
+        <div className="h-px bg-[var(--border-subtle)] mb-6 sm:mb-8" />
 
-        <h2 className="font-display" style={{ fontSize: 20, marginBottom: 8, color: 'var(--text-primary)' }}>
+        <h2 className="font-display text-lg sm:text-xl mb-2 sm:mb-3 text-[var(--text-primary)] text-center">
           Operator Authentication
         </h2>
-        <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 32, lineHeight: 1.6 }}>
+        <p className="text-xs sm:text-sm text-[var(--text-secondary)] mb-6 sm:mb-8 leading-relaxed text-center">
           Sign in with your Google account to access the competition platform. Only Google OAuth is supported.
         </p>
 
         {errorMessage && (
-          <div style={{ marginBottom: 20, padding: 12, background: 'rgba(255, 82, 82, 0.08)', border: '1px solid rgba(255, 82, 82, 0.35)', borderRadius: 8 }}>
-            <p style={{ margin: 0, fontSize: 12, color: '#ff9f9f', lineHeight: 1.5 }}>
+          <div className="mb-4 sm:mb-6 p-3 sm:p-4 rounded-md bg-[rgba(255,82,82,0.08)] border border-[rgba(255,82,82,0.35)] flex items-start gap-2 sm:gap-3">
+            <AlertCircle size={16} className="text-[#ff9f9f] mt-0.5 flex-shrink-0 sm:mt-1" aria-hidden="true" />
+            <p className="text-xs sm:text-sm text-[#ff9f9f] leading-relaxed">
               {errorMessage}
             </p>
           </div>
@@ -89,15 +85,20 @@ export default function LoginPage() {
 
         <button
           onClick={handleGoogleLogin}
-          className="btn btn-primary"
-          style={{ width: '100%', justifyContent: 'center', fontSize: 14, padding: '14px 24px',fontFamily: 'Inter, sans-serif', textTransform: 'none', letterSpacing: 0 }}
+          className="w-full flex items-center justify-center gap-3 py-3 sm:py-3.5 px-4 sm:px-6 rounded-md bg-[var(--accent-cyan)] text-[var(--bg-base)] font-semibold text-sm sm:text-base transition-all hover:opacity-90 active:scale-95"
         >
-          <svg width="18" height="18" viewBox="0 0 18 18">
-            <path d="M16.51 8H8.98v3h4.3c-.18 1-.74 1.48-1.6 2.04v2.01h2.6a7.8 7.8 0 0 0 2.38-5.88c0-.57-.05-.66-.15-1.18z" fill="#4285F4"/>
-            <path d="M8.98 17c2.16 0 3.97-.72 5.3-1.94l-2.6-2a4.8 4.8 0 0 1-7.18-2.54H1.83v2.07A8 8 0 0 0 8.98 17z" fill="#34A853"/>
-            <path d="M4.5 10.52a4.8 4.8 0 0 1 0-3.04V5.41H1.83a8 8 0 0 0 0 7.18l2.67-2.07z" fill="#FBBC05"/>
-            <path d="M8.98 4.18c1.17 0 2.23.4 3.06 1.2l2.3-2.3A8 8 0 0 0 1.83 5.4L4.5 7.49a4.77 4.77 0 0 1 4.48-3.3z" fill="#EA4335"/>
+          <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
+            <path d="M16.51 8H8.98v3h4.3c-.18 1-.74 1.48-1.6 2.04v2.01h2.6a7.8 7.8 0 0 0 2.38-5.88c0-.57-.05-.66-.15-1.18z" fill="#1f2937"/>
+            <path d="M8.98 17c2.16 0 3.97-.72 5.3-1.94l-2.6-2a4.8 4.8 0 0 1-7.18-2.54H1.83v2.07A8 8 0 0 0 8.98 17z" fill="#1f2937"/>
+            <path d="M4.5 10.52a4.8 4.8 0 0 1 0-3.04V5.41H1.83a8 8 0 0 0 0 7.18l2.67-2.07z" fill="#1f2937"/>
+            <path d="M8.98 4.18c1.17 0 2.23.4 3.06 1.2l2.3-2.3A8 8 0 0 0 1.83 5.4L4.5 7.49a4.77 4.77 0 0 1 4.48-3.3z" fill="#1f2937"/>
           </svg>
+          <span>Sign in with Google</span>
+        </button>
+      </div>
+    </div>
+  )
+}
           Continue with Google
         </button>
 
