@@ -5,7 +5,7 @@ import { AuthProvider } from '@/contexts/AuthContext'
 import AppShell from '@/components/AppShell'
 import { useAuth, TeamInfo } from '@/contexts/AuthContext'
 
-const API = process.env.NEXT_PUBLIC_API_URL || '/geoai-2026'
+const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
 
 interface Member { fullName: string; email: string; isLeader: boolean; userId: string }
 interface TeamData extends TeamInfo { institution: string; memberCount: number; members: Member[]; inviteCode: string }

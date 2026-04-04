@@ -4,7 +4,23 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { Menu, X, MapPin, Zap, Clock } from 'lucide-react'
 
-const DEADLINE = process.env.NEXT_PUBLIC_SUBMISSION_DEADLINE || '2026-05-01T23:59:59+07:00'
+const DEADLINE = process.env.NEXT_PUBLIC_SUBMISSION_DEADLINE || '2026-04-29T23:59:59+07:00'
+const PHASE_01_DATE = '2026-03-31T23:59:59+07:00'
+const PHASE_02_DATE = '2026-04-29T23:59:59+07:00'
+const ANNOUNCEMENT_DATE = '2026-05-08T00:00:00+07:00'
+const DEVELOPMENT_DATE = '2026-05-15T09:00:00+07:00'
+const FINAL_PITCH_DATE = '2026-05-22T09:00:00+07:00'
+
+type TimelineStatus = 'done' | 'active' | 'upcoming'
+
+type TimelineItem = {
+  phase: string
+  dateLabel: string
+  title: string
+  desc: string
+  date: string
+  status: TimelineStatus
+}
 
 function useCountdown(targetDate: string) {
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, mins: 0, secs: 0 })
@@ -56,19 +72,59 @@ const tracks = [
   },
 ]
 
-const timeline = [
-  { phase: 'PHASE 01', title: 'Registration', desc: 'Form your team and declare your research intent.', status: 'done' },
-  { phase: 'PHASE 02', title: 'Proposal Submission', desc: 'Upload technical proposal documents (PDF, max 20 MB).', status: 'active' },
-  { phase: 'PHASE 03', title: 'Moderator Pre-screen', desc: 'Panel reviews proposals for requirement compliance.', status: 'upcoming' },
-  { phase: 'PHASE 04', title: 'Judge Scoring', desc: 'Expert judges assess with a weighted rubric system.', status: 'upcoming' },
-  { phase: 'PHASE 05', title: 'Finalist Documents', desc: 'Comprehensive documentation before the demonstration phase.', status: 'upcoming' },
-  { phase: 'PHASE 06', title: 'Final Pitching', desc: 'Live 15-minute presentation to panel judges. Onsite.', status: 'upcoming' },
-]
+function getTimeline(now = new Date()): TimelineItem[] {
+  const timelineBase = [
+    {
+      phase: 'PHASE 01',
+      dateLabel: '',
+      title: 'Registration',
+      desc: 'Team registration window closed on 29 April.',
+      date: PHASE_01_DATE,
+    },
+    {
+      phase: 'PHASE 02',
+      dateLabel: '29 APR',
+      title: 'Proposal Submission',
+      desc: 'Proposal submission deadline is April 29 (PDF, max 20 MB).',
+      date: PHASE_02_DATE,
+    },
+    {
+      phase: 'PHASE 03',
+      dateLabel: '08 MAY',
+      title: 'Announcement',
+      desc: 'Announcement will be released on 8 May.',
+      date: ANNOUNCEMENT_DATE,
+    },
+    {
+      phase: 'PHASE 04',
+      dateLabel: '15 MAY',
+      title: 'Development',
+      desc: 'Mockup date: 15 May (adjustable).',
+      date: DEVELOPMENT_DATE,
+    },
+    {
+      phase: 'PHASE 05',
+      dateLabel: '22 MAY',
+      title: 'Final Pitching',
+      desc: 'Mockup date: 22 May (adjustable).',
+      date: FINAL_PITCH_DATE,
+    },
+  ]
+
+  const currentIndex = timelineBase.findIndex((item) => now.getTime() < new Date(item.date).getTime())
+  const activeIndex = currentIndex === -1 ? timelineBase.length - 1 : currentIndex
+
+  return timelineBase.map((item, index) => ({
+    ...item,
+    status: index < activeIndex ? 'done' : index === activeIndex ? 'active' : 'upcoming',
+  }))
+}
 
 const sponsors = ['KMITL', 'ESRI', 'GISTDA', 'KMUTNB', 'ETDA']
 
 export default function LandingPage() {
   const { days, hours, mins, secs } = useCountdown(DEADLINE)
+  const timeline = getTimeline()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   return (
@@ -290,7 +346,7 @@ export default function LandingPage() {
                           : 'var(--text-muted)',
                     }}
                   >
-                    {item.phase}
+                    {item.phase} · {item.dateLabel}
                   </div>
                   <h3 className="font-display text-lg sm:text-xl mb-2" style={{
                     color: item.status === 'upcoming' ? 'var(--text-secondary)' : 'var(--text-primary)',

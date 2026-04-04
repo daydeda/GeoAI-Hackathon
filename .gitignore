@@ -9,6 +9,13 @@ out/
 .env
 .env.local
 .env.production
+backend/.env
+backend/.env.*
+frontend/.env
+frontend/.env.*
+!.env.example
+!backend/.env.example
+!frontend/.env.example
 
 # OS
 .DS_Store

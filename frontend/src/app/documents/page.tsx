@@ -6,7 +6,7 @@ import NavRail from '@/components/NavRail'
 import { useAuth } from '@/contexts/AuthContext'
 import { Eye, Lock, Download, CheckCircle2 } from 'lucide-react'
 
-const API = process.env.NEXT_PUBLIC_API_URL || '/geoai-2026'
+const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
 
 function DocumentVaultContent() {
   const { user } = useAuth()

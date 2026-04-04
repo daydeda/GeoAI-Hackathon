@@ -19,8 +19,8 @@ import {
 import { useAuth } from '@/contexts/AuthContext'
 import { useAlert } from '@/contexts/AlertContext'
 
-const API = process.env.NEXT_PUBLIC_API_URL || '/geoai-2026'
-const DEADLINE = process.env.NEXT_PUBLIC_SUBMISSION_DEADLINE || '2026-05-01T23:59:59+07:00'
+const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
+const DEADLINE = process.env.NEXT_PUBLIC_SUBMISSION_DEADLINE || '2026-04-29T23:59:59+07:00'
 
 function useCountdown(target: string) {
   const [t, setT] = useState({ h: 0, m: 0, s: 0 })

@@ -104,6 +104,12 @@ async function syncUserProfileSafely(input: {
 }
 
 export async function authRoutes(app: FastifyInstance) {
+  const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000'
+  const cookieSecureOverride = process.env.COOKIE_SECURE
+  const useSecureCookie =
+    cookieSecureOverride === 'true' ||
+    (cookieSecureOverride !== 'false' && frontendUrl.startsWith('https://'))
+
   // GET /api/v1/auth/google/start
   app.get('/google/start', async (_req, reply) => {
     const oauth2 = getOAuth2Client()
@@ -204,7 +210,7 @@ export async function authRoutes(app: FastifyInstance) {
       return reply
         .setCookie('geoai_token', token, {
           httpOnly: true,
-          secure: process.env.NODE_ENV === 'production',
+          secure: useSecureCookie,
           sameSite: 'lax',
           path: '/',
           maxAge: 60 * 60 * 24 * 7, // 7 days

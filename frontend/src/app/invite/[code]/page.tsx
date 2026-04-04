@@ -6,7 +6,7 @@ import { AuthProvider, useAuth } from '@/contexts/AuthContext'
 import Link from 'next/link'
 import { Copy, LogIn, AlertCircle, CheckCircle } from 'lucide-react'
 
-const API = process.env.NEXT_PUBLIC_API_URL || '/geoai-2026'
+const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
 
 function InviteContent({ code }: { code: string }) {
   const { user, loading: authLoading, refetch } = useAuth()

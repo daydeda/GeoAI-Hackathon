@@ -15,7 +15,7 @@ import {
   X,
 } from 'lucide-react'
 
-const API = process.env.NEXT_PUBLIC_API_URL || '/geoai-2026'
+const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
 
 interface UserRow { id: string; email: string; fullName: string; roles: string[] }
 interface TeamRow { id: string; name: string; institution: string; track: string; currentStatus: string; members: unknown[]; score?: number; submissions?: unknown[] }

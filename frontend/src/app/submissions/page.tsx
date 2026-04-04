@@ -5,7 +5,8 @@ import { AuthProvider, useAuth } from '@/contexts/AuthContext'
 import AppShell from '@/components/AppShell'
 import { useDropzone } from 'react-dropzone'
 
-const API = process.env.NEXT_PUBLIC_API_URL || '/geoai-2026'
+const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
+const ANNOUNCEMENT_DATE = '2026-05-08T00:00:00+07:00'
 
 interface Submission { id: string; version: number; gistdaDeclared: boolean; submittedAt: string; moderatorReview?: { status: string; note?: string } }
 
@@ -100,6 +101,10 @@ function SubmissionsContent() {
   )
 
   const activeSubmission = history[0]
+  const canShowAnnouncement = Date.now() >= new Date(ANNOUNCEMENT_DATE).getTime()
+  const reviewStatus = canShowAnnouncement
+    ? (activeSubmission?.moderatorReview?.status || 'UNDER REVIEW')
+    : 'UNDER REVIEW'
 
   return (
     <div className="min-h-screen px-4 py-6 sm:px-6 lg:px-8">
@@ -185,14 +190,14 @@ function SubmissionsContent() {
                     className="font-semibold"
                     style={{
                       color:
-                        activeSubmission.moderatorReview?.status === 'PASS'
+                        reviewStatus === 'PASS'
                           ? 'var(--accent-green)'
-                          : activeSubmission.moderatorReview?.status === 'FAIL'
+                          : reviewStatus === 'FAIL'
                             ? 'var(--accent-red)'
                             : 'var(--text-secondary)',
                     }}
                   >
-                    {activeSubmission.moderatorReview?.status || 'UNDER REVIEW'}
+                    {reviewStatus}
                   </span>
                 </div>
                 <button

@@ -16,8 +16,8 @@ if [[ ! "$REPLY" =~ ^[Yy]$ ]]; then
 fi
 
 ssh -tt -J "$JUMP_HOST" "$REMOTE_USER@$REMOTE_HOST" "if [ -f /home/geoai/geoai/docker-compose.prod.yml ]; then PROJECT_DIR=/home/geoai/geoai; elif [ -f /home/geoai/docker-compose.prod.yml ]; then PROJECT_DIR=/home/geoai; else echo 'ERROR: docker-compose.prod.yml not found in /home/geoai/geoai or /home/geoai'; exit 1; fi && \
-  if [ ! -f \"\$PROJECT_DIR/.env\" ]; then echo \"ERROR: Missing env file at \$PROJECT_DIR/.env\"; exit 1; fi && \
+  if [ ! -f \"\$PROJECT_DIR/.env.production\" ]; then echo \"ERROR: Missing env file at \$PROJECT_DIR/.env.production\"; exit 1; fi && \
   cd \"\$PROJECT_DIR\" && \
-  sudo docker compose --env-file \"\$PROJECT_DIR/.env\" -f \"\$PROJECT_DIR/docker-compose.prod.yml\" run --rm backend npm run db:grant-admins"
+  sudo docker compose --env-file \"\$PROJECT_DIR/.env.production\" -f \"\$PROJECT_DIR/docker-compose.prod.yml\" run --rm backend npm run db:grant-admins"
 
 echo "Completed: admin roles granted on production database."

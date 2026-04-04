@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
 // Add paths that require authentication here
-const protectedPaths = ['/admin', '/mod', '/judge', '/team', '/submissions', '/resources']
+const protectedPaths = ['/admin', '/mod', '/judge', '/team', '/submissions', '/resources', '/dashboard', '/documents', '/invite']
 
 export function middleware(request: NextRequest) {
   const token = request.cookies.get('geoai_token')
@@ -13,8 +13,8 @@ export function middleware(request: NextRequest) {
 
   if (isProtectedPath) {
     if (!token) {
-      // Not logged in -> redirect to login (or home)
-      return NextResponse.redirect(new URL('/', request.url))
+      // Not logged in -> redirect to login
+      return NextResponse.redirect(new URL('/login', request.url))
     }
 
     // Optional: We can decode the JWT to do basic Role-Based routing here
@@ -50,11 +50,6 @@ export function middleware(request: NextRequest) {
       // The backend API will still block unauthorized requests securely
       console.error('Middleware JWT decode error:', err)
     }
-  }
-
-  // Handle users who are already logged in trying to access the login page
-  if (pathname === '/' && token) {
-    return NextResponse.redirect(new URL('/team', request.url))
   }
 
   return NextResponse.next()

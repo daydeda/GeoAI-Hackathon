@@ -5,7 +5,7 @@ import { AuthProvider, useAuth } from '@/contexts/AuthContext'
 import { useAlert } from '@/contexts/AlertContext'
 import { Check, X, HelpCircle, LogOut } from 'lucide-react'
 
-const API = process.env.NEXT_PUBLIC_API_URL || '/geoai-2026'
+const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
 
 interface Team { name: string; track: string }
 interface File { id: string; originalName: string; fileUrl?: string }

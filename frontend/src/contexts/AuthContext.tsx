@@ -2,8 +2,8 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react'
 
-const API = process.env.NEXT_PUBLIC_API_URL || '/geoai-2026'
-const APP_BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH || '/geoai-2026'
+const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
+const APP_BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH || '/'
 
 export interface TeamInfo {
   id: string

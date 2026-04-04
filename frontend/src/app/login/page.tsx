@@ -2,9 +2,10 @@
 
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { LogIn, AlertCircle } from 'lucide-react'
 
-const API = process.env.NEXT_PUBLIC_API_URL || '/geoai-2026'
+const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
 
 function getLoginErrorMessage(code: string | null) {
   if (!code) return null
@@ -22,12 +23,32 @@ function getLoginErrorMessage(code: string | null) {
 }
 
 export default function LoginPage() {
+  const router = useRouter()
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [isChecking, setIsChecking] = useState(true)
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search)
-    setErrorMessage(getLoginErrorMessage(params.get('error')))
-  }, [])
+    const checkAuth = async () => {
+      try {
+        // Check if user is already authenticated
+        const res = await fetch(`${API}/api/v1/auth/me`, { credentials: 'include' })
+        if (res.ok) {
+          // User is authenticated, redirect to dashboard
+          router.push('/dashboard')
+          return
+        }
+      } catch (err) {
+        // Not authenticated, continue
+      }
+
+      // Check for error messages
+      const params = new URLSearchParams(window.location.search)
+      setErrorMessage(getLoginErrorMessage(params.get('error')))
+      setIsChecking(false)
+    }
+
+    checkAuth()
+  }, [router])
 
   const handleGoogleLogin = () => {
     window.location.href = `${API}/api/v1/auth/google/start`
@@ -85,7 +106,8 @@ export default function LoginPage() {
 
         <button
           onClick={handleGoogleLogin}
-          className="w-full flex items-center justify-center gap-3 py-3 sm:py-3.5 px-4 sm:px-6 rounded-md bg-[var(--accent-cyan)] text-[var(--bg-base)] font-semibold text-sm sm:text-base transition-all hover:opacity-90 active:scale-95"
+          disabled={isChecking}
+          className="w-full flex items-center justify-center gap-3 py-3 sm:py-3.5 px-4 sm:px-6 rounded-md bg-[var(--accent-cyan)] text-[var(--bg-base)] font-semibold text-sm sm:text-base transition-all hover:opacity-90 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
             <path d="M16.51 8H8.98v3h4.3c-.18 1-.74 1.48-1.6 2.04v2.01h2.6a7.8 7.8 0 0 0 2.38-5.88c0-.57-.05-.66-.15-1.18z" fill="#1f2937"/>
@@ -93,7 +115,7 @@ export default function LoginPage() {
             <path d="M4.5 10.52a4.8 4.8 0 0 1 0-3.04V5.41H1.83a8 8 0 0 0 0 7.18l2.67-2.07z" fill="#1f2937"/>
             <path d="M8.98 4.18c1.17 0 2.23.4 3.06 1.2l2.3-2.3A8 8 0 0 0 1.83 5.4L4.5 7.49a4.77 4.77 0 0 1 4.48-3.3z" fill="#1f2937"/>
           </svg>
-          <span>Sign in with Google</span>
+          <span>{isChecking ? 'Checking authorization...' : 'Sign in with Google'}</span>
         </button>
       </div>
     </div>

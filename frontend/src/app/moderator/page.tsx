@@ -5,7 +5,7 @@ import { AuthProvider } from '@/contexts/AuthContext'
 import AppShell from '@/components/AppShell'
 import { Check, X, ChevronDown, RefreshCw } from 'lucide-react'
 
-const API = process.env.NEXT_PUBLIC_API_URL || '/geoai-2026'
+const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
 
 interface Team { name: string; track: string }
 interface File { fileKey: string; originalName: string }
