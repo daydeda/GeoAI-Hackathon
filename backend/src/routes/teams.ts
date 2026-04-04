@@ -22,7 +22,8 @@ async function ensureCompetitorProfileCompleted(userId: string) {
   if (!user) return { ok: false as const, error: 'User not found' }
 
   const isCompetitor = user.userRoles.some((ur) => ur.role.name === 'COMPETITOR')
-  if (isCompetitor && !user.profileCompleted) {
+  const hasElevatedRole = user.userRoles.some((ur) => ur.role.name === 'ADMIN' || ur.role.name === 'MODERATOR' || ur.role.name === 'JUDGE')
+  if (isCompetitor && !hasElevatedRole && !user.profileCompleted) {
     return {
       ok: false as const,
       error: 'Profile setup required before team operations',

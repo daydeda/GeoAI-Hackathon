@@ -111,7 +111,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     return [{ href: '/judge', label: 'Evaluation Queue', icon: ClipboardCheck }]
   }, [actor?.roles])
 
-  const needsProfileSetup = Boolean(actor?.roles?.includes('COMPETITOR') && !actor?.profileCompleted)
+  const hasElevatedRole = Boolean(actor?.roles?.some((role) => role === 'ADMIN' || role === 'MODERATOR' || role === 'JUDGE'))
+  const needsProfileSetup = Boolean(actor?.roles?.includes('COMPETITOR') && !hasElevatedRole && !actor?.profileCompleted)
 
   const saveProfile = async (event: FormEvent) => {
     event.preventDefault()
