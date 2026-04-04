@@ -402,7 +402,7 @@ function AdminContent() {
                   Prev
                 </button>
                 <span className="min-w-[84px] text-center text-(--text-secondary)">
-                  Next {userPage}/{totalUserPages}
+                  Page {userPage}/{totalUserPages}
                 </span>
                 <button
                   type="button"
@@ -410,7 +410,7 @@ function AdminContent() {
                   disabled={userPage >= totalUserPages || loading}
                   className="rounded border border-(--border-subtle) px-3 py-1.5 text-xs text-(--text-secondary) disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  ถัดไป
+                  Next
                 </button>
               </div>
             </div>
