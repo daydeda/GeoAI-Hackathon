@@ -135,7 +135,7 @@ const navLinks = [
   { label: 'Challenges', href: '#timeline' },
   { label: 'Leaderboard', href: '/login' },
   { label: 'Docs', href: '/docs' },
-  { label: 'Support', href: '/resources' },
+  { label: 'Support', href: '/support' },
 ]
 
 export default function LandingPage() {

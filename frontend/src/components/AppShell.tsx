@@ -63,7 +63,7 @@ const topLinks = [
   { href: '/team', label: 'Challenges' },
   { href: '/team', label: 'Leaderboard' },
   { href: '/docs', label: 'Docs' },
-  { href: '/team', label: 'Support' },
+  { href: '/support', label: 'Support' },
 ]
 
 const baseMenu: NavItem[] = [
@@ -71,6 +71,7 @@ const baseMenu: NavItem[] = [
   { href: '/team', label: 'My Team', icon: Users },
   { href: '/submissions', label: 'Submissions', icon: FileText },
   { href: '/resources', label: 'Resources', icon: BookOpen, activeColor: 'var(--accent-green)' },
+  { href: '/support', label: 'Support', icon: LifeBuoy },
 ]
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
@@ -434,7 +435,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       </button>
 
       <Link
-        href="/resources"
+        href="/support"
         className="fixed bottom-4 left-4 z-40 hidden items-center gap-2 rounded-full border border-(--border-subtle) bg-(--bg-surface) px-3 py-2 text-xs text-(--text-secondary) shadow-lg sm:inline-flex lg:hidden"
       >
         <LifeBuoy size={14} />
