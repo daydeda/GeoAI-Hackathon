@@ -44,7 +44,7 @@ services:
       target: runner
     container_name: geoai_backend_prod
     restart: always
-    env_file: .env
+    env_file: .env.production
     environment:
       NODE_ENV: production
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/geoai
@@ -76,7 +76,7 @@ services:
         NEXT_PUBLIC_BASE_PATH: ${NEXT_PUBLIC_BASE_PATH}
     container_name: geoai_frontend_prod
     restart: always
-    env_file: .env
+    env_file: .env.production
     environment:
       NODE_ENV: production
       NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
