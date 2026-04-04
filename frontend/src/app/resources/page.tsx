@@ -2,6 +2,7 @@
 
 import { AuthProvider } from '@/contexts/AuthContext'
 import AppShell from '@/components/AppShell'
+import { Search, Filter, ExternalLink } from 'lucide-react'
 
 function ResourcesContent() {
   interface ResourceItem {
@@ -54,70 +55,74 @@ function ResourcesContent() {
   ]
 
   return (
-    <div style={{ padding: '40px 60px', maxWidth: 1440, margin: '0 auto', background: 'var(--bg-base)', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+    <div className="min-h-screen px-4 sm:px-6 lg:px-8 py-6 sm:py-8 max-w-7xl mx-auto bg-[var(--bg-base)] flex flex-col">
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 40 }}>
+      <div className="flex flex-col lg:flex-row lg:justify-between lg:items-start gap-6 sm:gap-8 mb-8 sm:mb-12">
         <div>
-          <div className="font-mono" style={{ fontSize: 11, color: 'var(--accent-green)', marginBottom: 8, letterSpacing: '0.1em' }}>
-            <span style={{ color: 'var(--accent-green)', marginRight: 6 }}>■</span> DATA & INTELLIGENCE
+          <div className="font-mono text-[8px] sm:text-xs text-[var(--accent-green)] mb-2 sm:mb-4 tracking-widest">
+            <span className="text-[var(--accent-green)] mr-1.5">■</span> DATA & INTELLIGENCE
           </div>
-          <h1 className="font-display" style={{ fontSize: 44, color: 'white', marginBottom: 8 }}>Resources Hub</h1>
-          <p style={{ color: 'var(--text-secondary)', fontSize: 14 }}>Official datasets, API documentation, and mission-critical intelligence.</p>
+          <h1 className="font-display text-2xl sm:text-3xl lg:text-4xl text-white mb-2 sm:mb-4">Resources Hub</h1>
+          <p className="text-[var(--text-secondary)] text-xs sm:text-sm lg:text-base">Official datasets, API documentation, and mission-critical intelligence.</p>
         </div>
-        <div style={{ textAlign: 'right' }}>
-          <div className="font-mono" style={{ fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.1em', marginBottom: 6 }}>SYSTEM_STATUS: NOMINAL</div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'flex-end', marginBottom: 24 }}>
-            <span style={{ width: 6, height: 6, background: 'var(--accent-green)', display: 'inline-block' }} />
-            <span style={{ color: 'var(--accent-green)', fontSize: 11, fontWeight: 600, letterSpacing: '0.05em' }}>OPERATIONAL</span>
+        <div className="text-left lg:text-right">
+          <div className="font-mono text-[8px] sm:text-xs text-[var(--text-muted)] tracking-widest mb-2 sm:mb-4">SYSTEM_STATUS: NOMINAL</div>
+          <div className="flex items-center gap-2 justify-start lg:justify-end mb-4 sm:mb-6">
+            <span className="w-1.5 h-1.5 bg-[var(--accent-green)]" />
+            <span className="text-[var(--accent-green)] text-[8px] sm:text-xs font-semibold tracking-widest">OPERATIONAL</span>
           </div>
           
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <div style={{ position: 'relative' }}>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <div className="relative flex-1 sm:flex-none">
               <input
                 placeholder="Search resources..."
-                style={{ background: 'var(--bg-surface)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 2, padding: '10px 16px', fontSize: 12, width: 240, color: 'white', outline: 'none' }}
+                className="w-full sm:w-40 lg:w-56 bg-[var(--bg-surface)] border border-[rgba(255,255,255,0.1)] rounded px-3 py-2 text-xs sm:text-sm text-white placeholder-[var(--text-muted)] outline-none focus:border-[rgba(255,255,255,0.2)]"
               />
-              <span style={{ position: 'absolute', right: 16, top: 10, color: 'var(--text-muted)', fontSize: 14 }}>⚲</span>
+              <Search size={14} className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[var(--text-muted)]" />
             </div>
-            <button style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', height: 36, padding: '0 16px', borderRadius: 2, color: 'white', fontSize: 11, letterSpacing: '0.05em', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}>
-              Filter System <span style={{ color: 'var(--text-muted)' }}>▼</span>
+            <button className="bg-transparent border border-[rgba(255,255,255,0.1)] px-3 py-2 rounded text-white text-xs sm:text-sm tracking-widest font-semibold hover:border-[rgba(255,255,255,0.2)] transition flex items-center justify-center gap-2 whitespace-nowrap">
+              <Filter size={14} /> Filter System
             </button>
           </div>
         </div>
       </div>
 
       {/* Main grids */}
-      <div style={{ flex: 1, display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 32 }}>
+      <div className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 mb-8 sm:mb-12">
         {sections.map((sec, secIdx) => (
-          <div key={secIdx} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
-              <span style={{ background: `rgba(${sec.color === 'var(--accent-green)' ? '0,230,118' : sec.color === 'var(--accent-cyan)' ? '0,229,255' : '255,167,38'}, 0.1)`, color: sec.color, fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', padding: '4px 8px', borderRadius: 2 }}>
+          <div key={secIdx} className="flex flex-col gap-3 sm:gap-4">
+            <div className="flex items-center gap-2 sm:gap-3 mb-2">
+              <span className={`text-[8px] sm:text-xs font-bold tracking-widest px-2 py-1 rounded ${
+                sec.color === 'var(--accent-green)' ? 'bg-[rgba(0,230,118,0.1)] text-[var(--accent-green)]' :
+                sec.color === 'var(--accent-cyan)' ? 'bg-[rgba(0,229,255,0.1)] text-[var(--accent-cyan)]' :
+                'bg-[rgba(255,167,38,0.1)] text-[var(--accent-amber)]'
+              }`}>
                 {sec.icon}
               </span>
-              <div style={{ fontSize: 15, fontWeight: 600, color: 'white', letterSpacing: '0.05em' }}>
+              <div className="text-sm sm:text-base font-semibold text-white tracking-wider">
                 {sec.title}
               </div>
             </div>
 
             {sec.items.map((item, i) => (
-              <div key={i} style={{ background: 'var(--bg-surface)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 4, padding: 24, flex: 1, display: 'flex', flexDirection: 'column' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
-                  <div style={{ fontSize: 32, opacity: 0.9 }}>{item.icon}</div>
-                  <div style={{ display: 'flex', gap: 6 }}>
-                    {item.tag1 && <span style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', fontSize: 9, letterSpacing: '0.1em', padding: '3px 6px', color: 'var(--text-secondary)', borderRadius: 2 }}>{item.tag1}</span>}
-                    {item.tag2 && <span style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', fontSize: 9, letterSpacing: '0.1em', padding: '3px 6px', color: 'var(--text-secondary)', borderRadius: 2 }}>{item.tag2}</span>}
+              <div key={i} className="bg-[var(--bg-surface)] border border-[rgba(255,255,255,0.05)] rounded p-4 sm:p-6 flex-1 flex flex-col hover:border-[rgba(255,255,255,0.1)] transition">
+                <div className="flex justify-between items-start gap-2 mb-3 sm:mb-4">
+                  <div className="text-2xl sm:text-3xl">{item.icon}</div>
+                  <div className="flex gap-1.5 flex-wrap justify-end">
+                    {item.tag1 && <span className="bg-[rgba(255,255,255,0.05)] border border-[rgba(255,255,255,0.1)] text-[7px] sm:text-[8px] tracking-widest px-1.5 py-1 text-[var(--text-secondary)] rounded">{item.tag1}</span>}
+                    {item.tag2 && <span className="bg-[rgba(255,255,255,0.05)] border border-[rgba(255,255,255,0.1)] text-[7px] sm:text-[8px] tracking-widest px-1.5 py-1 text-[var(--text-secondary)] rounded">{item.tag2}</span>}
                   </div>
                 </div>
                 
-                <h3 className="font-display" style={{ fontSize: 18, color: 'white', marginBottom: 12 }}>{item.title}</h3>
-                <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: 24, flex: 1 }}>{item.desc}</p>
+                <h3 className="font-display text-base sm:text-lg text-white mb-2 sm:mb-3">{item.title}</h3>
+                <p className="text-[8px] sm:text-xs lg:text-sm text-[var(--text-secondary)] leading-relaxed mb-4 sm:mb-6 flex-1">{item.desc}</p>
                 
-                <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: 16, display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
-                  {item.linkIcon && <span style={{ fontSize: 16 }}>{item.linkIcon}</span>}
-                  <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', color: item.linkColor }}>
+                <div className="border-t border-[rgba(255,255,255,0.05)] pt-3 sm:pt-4 flex items-center gap-2 cursor-pointer hover:text-[var(--accent-cyan)] transition">
+                  {item.linkIcon && <span className="text-lg">{item.linkIcon}</span>}
+                  <div className="text-[8px] sm:text-xs font-bold tracking-widest" style={{ color: item.linkColor }}>
                     {item.linkText}
                   </div>
-                  {item.isExternal && <span style={{ color: item.linkColor, fontSize: 14 }}>↗</span>}
+                  {item.isExternal && <ExternalLink size={12} />}
                 </div>
               </div>
             ))}
@@ -126,9 +131,9 @@ function ResourcesContent() {
       </div>
       
       {/* Footer */}
-      <footer style={{ marginTop: 60, borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: 24, display: 'flex', justifyContent: 'space-between', fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.05em' }}>
-        <div>© 2024 GEOAI HACKATHON | PRECISION LENS UI</div>
-        <div style={{ display: 'flex', gap: 24 }}>
+      <footer className="border-t border-[rgba(255,255,255,0.05)] pt-4 sm:pt-6 text-center text-[8px] sm:text-xs text-[var(--text-muted)] tracking-wide">
+        <div className="mb-2">© 2024 GEOAI HACKATHON | PRECISION LENS UI</div>
+        <div className="flex flex-wrap justify-center gap-4 sm:gap-6">
           <span>PRIVACY POLICY</span>
           <span>TERMS OF SERVICE</span>
         </div>

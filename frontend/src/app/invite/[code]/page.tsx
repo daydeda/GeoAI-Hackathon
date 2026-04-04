@@ -1,9 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, use } from 'react'
 import { useRouter } from 'next/navigation'
 import { AuthProvider, useAuth } from '@/contexts/AuthContext'
 import Link from 'next/link'
+import { Copy, LogIn, AlertCircle, CheckCircle } from 'lucide-react'
 
 const API = process.env.NEXT_PUBLIC_API_URL || '/geoai-2026'
 
@@ -16,8 +17,6 @@ function InviteContent({ code }: { code: string }) {
 
   const handleJoin = async () => {
     if (!user) {
-      // Redirect to login if they aren't authenticated
-      // We can pass a callback or just tell them to login
       router.push('/login?returnUrl=/invite/' + code)
       return
     }
@@ -40,7 +39,7 @@ function InviteContent({ code }: { code: string }) {
       
       if (res.ok) {
         setSuccess(`Successfully joined team: ${data.teamName}`)
-        await refetch() // Update auth context
+        await refetch()
         setTimeout(() => {
           router.push('/team')
         }, 1500)
@@ -54,82 +53,76 @@ function InviteContent({ code }: { code: string }) {
     }
   }
 
-  if (authLoading) return <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-base)', color: 'var(--text-muted)' }}>Verifying credentials...</div>
+  if (authLoading) return <div className="min-h-screen flex items-center justify-center bg-[var(--bg-base)] text-[var(--text-muted)] text-sm sm:text-base">Verifying credentials...</div>
 
   return (
-    <div style={{
-      minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
-      background: 'var(--bg-base)', position: 'relative', overflow: 'hidden',
-    }}>
+    <div className="min-h-screen flex items-center justify-center bg-[var(--bg-base)] px-4 relative overflow-hidden">
       {/* Background effects */}
-      <div style={{
-        position: 'absolute', inset: 0, pointerEvents: 'none',
-        backgroundImage: `radial-gradient(circle at 50% 30%, rgba(0,229,255,0.06) 0%, transparent 60%)`,
-      }} />
+      <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle at 50% 30%, rgba(0,229,255,0.06) 0%, transparent 60%)' }} />
       
-      <div className="animate-fade-in card" style={{
-        padding: '48px 40px',
-        width: '100%', maxWidth: 420,
-        boxShadow: 'var(--glow-cyan)',
-        position: 'relative', zIndex: 1,
-        textAlign: 'center',
-      }}>
+      <div className="w-full max-w-md bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-lg p-8 sm:p-10 shadow-2xl relative z-10 animate-fade-in">
         {/* Header */}
-        <div style={{ marginBottom: 32 }}>
-          <div className="font-display" style={{ fontSize: 24, fontWeight: 700, color: 'var(--accent-cyan)', marginBottom: 4 }}>
+        <div className="mb-6 sm:mb-8">
+          <div className="font-display text-xl sm:text-2xl font-bold text-[var(--accent-cyan)] mb-2">
             SQUAD RECRUITMENT
           </div>
-          <div style={{ fontSize: 12, color: 'var(--text-muted)', letterSpacing: '0.08em' }}>
+          <div className="text-xs sm:text-sm text-[var(--text-muted)] tracking-widest">
             AUTHORIZATION REQUIRED
           </div>
         </div>
 
-        <div style={{ height: 1, background: 'var(--border-subtle)', marginBottom: 32 }} />
+        <div className="h-px bg-[var(--border-subtle)] mb-6 sm:mb-8" />
 
         {success ? (
-          <div style={{ padding: 16, border: '1px solid var(--accent-green)', background: 'rgba(0, 230, 118, 0.1)', color: 'var(--accent-green)', borderRadius: 6, marginBottom: 24 }}>
-            {success}
-            <div style={{ fontSize: 12, marginTop: 8, color: 'white' }}>Redirecting to command center...</div>
+          <div className="p-4 border border-[var(--accent-green)] bg-[rgba(0,230,118,0.1)] text-[var(--accent-green)] rounded-lg mb-4 flex gap-3 items-start">
+            <CheckCircle size={20} className="flex-shrink-0 mt-0.5" />
+            <div className="text-sm sm:text-base">
+              {success}
+              <div className="text-[12px] sm:text-xs mt-2 text-white">Redirecting to command center...</div>
+            </div>
           </div>
         ) : (
           <>
-            <p style={{ fontSize: 14, color: 'var(--text-secondary)', marginBottom: 24, lineHeight: 1.6 }}>
+            <p className="text-xs sm:text-sm text-[var(--text-secondary)] mb-4 sm:mb-6 leading-relaxed">
               You have been invited to join a team for the GeoAI Hackathon.
             </p>
             
-            <div style={{ background: 'var(--bg-elevated)', padding: '16px', borderRadius: '8px', marginBottom: '32px' }}>
-              <div className="font-mono" style={{ fontSize: 10, color: 'var(--text-muted)', marginBottom: 8 }}>INVITE CODE</div>
-              <div className="font-mono" style={{ fontSize: 20, color: 'var(--accent-cyan)', letterSpacing: '0.2em' }}>{code}</div>
+            <div className="bg-[var(--bg-elevated)] p-4 rounded mb-6 sm:mb-8">
+              <div className="font-mono text-[8px] sm:text-xs text-[var(--text-muted)] mb-2 tracking-widest">INVITE CODE</div>
+              <div className="flex items-center justify-between">
+                <div className="font-mono text-lg sm:text-2xl text-[var(--accent-cyan)] tracking-wider">{code}</div>
+                <button className="p-2 hover:bg-[rgba(255,255,255,0.05)] rounded transition" title="Copy code">
+                  <Copy size={16} className="text-[var(--text-muted)]" />
+                </button>
+              </div>
             </div>
 
             {error && (
-              <div style={{ padding: 12, border: '1px solid var(--accent-red)', background: 'rgba(255, 23, 68, 0.1)', color: 'var(--accent-red)', borderRadius: 6, marginBottom: 24, fontSize: 13, textAlign: 'left' }}>
-                ⚠️ {error}
+              <div className="p-3 sm:p-4 border border-[var(--accent-red)] bg-[rgba(255,23,68,0.1)] text-[var(--accent-red)] rounded mb-4 sm:mb-6 flex gap-3 items-start text-xs sm:text-sm">
+                <AlertCircle size={18} className="flex-shrink-0 mt-0.5" />
+                <span>{error}</span>
               </div>
             )}
 
             {!user ? (
               <button
                 onClick={() => router.push('/login')}
-                className="btn btn-primary"
-                style={{ width: '100%', justifyContent: 'center' }}
+                className="w-full bg-[var(--accent-cyan)] text-black px-4 py-3 sm:py-4 font-bold text-xs sm:text-sm tracking-widest rounded hover:brightness-110 transition flex items-center justify-center gap-2"
               >
-                LOGIN TO ACCEPT INVITATION
+                <LogIn size={16} /> LOGIN TO ACCEPT INVITATION
               </button>
             ) : user.team ? (
-               <button
-               disabled
-               className="btn btn-outline"
-               style={{ width: '100%', justifyContent: 'center', opacity: 0.5, cursor: 'not-allowed' }}
-             >
-               CURRENTLY ASSIGNED TO A TEAM
-             </button>
+              <button
+                disabled
+                className="w-full bg-[var(--bg-base)] text-[var(--text-muted)] border border-[var(--border-subtle)] px-4 py-3 sm:py-4 font-bold text-xs sm:text-sm tracking-widest rounded opacity-50 cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                CURRENTLY ASSIGNED TO A TEAM
+              </button>
             ) : (
               <button
                 onClick={handleJoin}
                 disabled={loading}
-                className="btn btn-primary"
-                style={{ width: '100%', justifyContent: 'center' }}
+                className="w-full bg-[var(--accent-cyan)] text-black px-4 py-3 sm:py-4 font-bold text-xs sm:text-sm tracking-widest rounded hover:brightness-110 transition disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 {loading ? 'PROCESSING TRANSFER...' : 'ACCEPT INVITATION & JOIN TEAM'}
               </button>
@@ -137,8 +130,8 @@ function InviteContent({ code }: { code: string }) {
           </>
         )}
 
-        <div style={{ marginTop: 24 }}>
-          <Link href="/" style={{ fontSize: 12, color: 'var(--text-muted)', textDecoration: 'none' }}>
+        <div className="mt-6 sm:mt-8">
+          <Link href="/" className="inline-flex items-center text-[8px] sm:text-xs text-[var(--text-muted)] hover:text-white transition gap-1">
             ← Abort and return to home
           </Link>
         </div>
@@ -148,24 +141,10 @@ function InviteContent({ code }: { code: string }) {
 }
 
 export default function InvitePage({ params }: { params: Promise<{ code: string }> }) {
-  // We use React.use() or just simple prop extraction in Next 13+ depending on the exact version,
-  // but assuming Next.js App Router where params is directly accessible.
-  // Actually, in Next.js 15, `params` is a Promise, so it's a good idea to unwrap it if using next@15,
-  // but since we saw 'next': '16.2.2' in package.json, we must treat params as a Promise.
-  
-  // To avoid Next.js sync params warnings, we can just use React.use(params) OR 
-  // simply avoid pulling from params locally and use useSearchParams or useParams.
-  // It's safer to use Next.js navigation hooks if there's any strict async requirements.
+  const resolvedParams = use(params)
   return (
     <AuthProvider>
-       <InviteContentWrapper params={params} />
+      <InviteContent code={resolvedParams.code} />
     </AuthProvider>
   )
-}
-
-import { use } from 'react'
-
-function InviteContentWrapper({ params }: { params: Promise<{ code: string }> }) {
-  const resolvedParams = use(params)
-  return <InviteContent code={resolvedParams.code} />
 }

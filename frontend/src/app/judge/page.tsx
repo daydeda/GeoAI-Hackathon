@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback, useMemo } from 'react'
 import { AuthProvider, useAuth } from '@/contexts/AuthContext'
 import { useAlert } from '@/contexts/AlertContext'
+import { Check, X, HelpCircle, LogOut } from 'lucide-react'
 
 const API = process.env.NEXT_PUBLIC_API_URL || '/geoai-2026'
 
@@ -116,39 +117,26 @@ function JudgeContent() {
   }
 
   return (
-    <div style={{ padding: '0', display: 'flex', minHeight: '100vh', background: 'var(--bg-base)' }}>
+    <div className="flex min-h-screen bg-[var(--bg-base)]">
       {successMessage && (
-        <div style={{ 
-          position: 'fixed', inset: 0, background: 'rgba(5, 13, 26, 0.85)', 
-          zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', 
-          backdropFilter: 'blur(12px)', transition: 'all 0.3s ease'
-        }}>
-           <div style={{ 
-             background: 'var(--bg-surface)', border: '1px solid rgba(0, 230, 118, 0.3)', 
-             padding: '48px 64px', borderRadius: 8, display: 'flex', flexDirection: 'column', 
-             alignItems: 'center', gap: 24, boxShadow: '0 24px 64px rgba(0,230,118,0.15)',
-             animation: 'appear 0.4s cubic-bezier(0.16, 1, 0.3, 1)'
-           }}>
+        <div className="fixed inset-0 bg-[rgba(5,13,26,0.85)] z-50 flex items-center justify-center backdrop-blur-xl transition-all duration-300">
+           <div className="bg-[var(--bg-surface)] border border-[rgba(0,230,118,0.3)] p-8 sm:p-12 rounded-lg flex flex-col items-center gap-6 sm:gap-8 shadow-2xl animate-appear">
               <style>{`
                 @keyframes appear {
                   0% { opacity: 0; transform: scale(0.95) translateY(10px); }
                   100% { opacity: 1; transform: scale(1) translateY(0); }
                 }
               `}</style>
-              <div style={{ width: 80, height: 80, borderRadius: '50%', background: 'rgba(0,230,118,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid var(--accent-green)', color: 'var(--accent-green)', fontSize: 40 }}>
+              <div className="w-16 sm:w-20 h-16 sm:h-20 rounded-full bg-[rgba(0,230,118,0.1)] flex items-center justify-center border-2 border-[var(--accent-green)] text-3xl sm:text-4xl text-[var(--accent-green)]">
                 ✓
               </div>
-              <div style={{ textAlign: 'center' }}>
-                 <h2 className="font-display" style={{ fontSize: 32, color: 'white', marginBottom: 12, fontWeight: 700, letterSpacing: '0.05em' }}>SUCCESSFUL UPDATE</h2>
-                 <p style={{ color: 'var(--text-secondary)', fontSize: 15, marginBottom: 32 }}>{successMessage}</p>
+              <div className="text-center">
+                 <h2 className="font-display text-xl sm:text-2xl lg:text-3xl text-white mb-2 sm:mb-3 font-bold tracking-wider">SUCCESSFUL UPDATE</h2>
+                 <p className="text-[var(--text-secondary)] text-sm sm:text-base mb-4 sm:mb-6">{successMessage}</p>
                  
                  <button 
                    onClick={() => setSuccessMessage(null)}
-                   style={{ 
-                     background: 'var(--accent-green)', color: 'black', border: 'none', 
-                     padding: '12px 32px', fontSize: 13, fontWeight: 700, letterSpacing: '0.1em', 
-                     cursor: 'pointer', borderRadius: 2, transition: 'background 0.2s' 
-                   }}
+                   className="bg-[var(--accent-green)] text-black px-6 sm:px-8 py-2 sm:py-3 font-bold text-xs sm:text-sm tracking-widest rounded hover:brightness-110 transition"
                  >
                    CONTINUE REVIEWING
                  </button>
@@ -156,70 +144,71 @@ function JudgeContent() {
            </div>
         </div>
       )}
+      
       {/* Outer Judge Sidebar */}
-      <div style={{ width: 240, background: 'var(--bg-base)', borderRight: '1px solid rgba(255,255,255,0.05)', display: 'flex', flexDirection: 'column', paddingTop: 24 }}>
-        <div style={{ padding: '0 24px', marginBottom: 40 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 4 }}>
-            <span style={{ fontSize: 24, color: 'var(--accent-cyan)' }}>🛡</span>
-            <div style={{ color: 'white', fontSize: 13, fontWeight: 700, letterSpacing: '0.05em' }}>LEAD JUDGE</div>
+      <div className="hidden sm:flex sm:w-40 md:w-48 lg:w-60 bg-[var(--bg-base)] border-r border-[rgba(255,255,255,0.05)] flex-col py-4 sm:py-6 lg:py-8 px-3 sm:px-4">
+        <div className="px-3 sm:px-4 mb-6 sm:mb-10">
+          <div className="flex items-center gap-2 sm:gap-3 mb-1">
+            <span className="text-lg sm:text-xl text-[var(--accent-cyan)]">🛡</span>
+            <div className="text-white text-xs sm:text-sm font-bold tracking-wider">LEAD JUDGE</div>
           </div>
-          <div style={{ fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.1em', paddingLeft: 36 }}>{user?.roles?.includes('ADMIN') ? 'ADMINISTRATOR' : 'ORBITAL SECTOR 7'}</div>
+          <div className="text-[8px] sm:text-[9px] text-[var(--text-muted)] tracking-widest pl-6 sm:pl-8">{user?.roles?.includes('ADMIN') ? 'ADMINISTRATOR' : 'ORBITAL SECTOR 7'}</div>
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          <div 
-            onClick={() => setActiveTab('QUEUE')}
-            style={{ padding: '12px 24px', display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer', background: activeTab === 'QUEUE' ? 'rgba(0, 229, 255, 0.05)' : 'transparent', borderLeft: activeTab === 'QUEUE' ? '3px solid var(--accent-cyan)' : '3px solid transparent', color: activeTab === 'QUEUE' ? 'var(--accent-cyan)' : 'var(--text-secondary)', fontSize: 12, fontWeight: 600, letterSpacing: '0.05em' }}
-          >
-            <span>⚖️</span> JUDGING QUEUE
-          </div>
-          <div 
-            onClick={() => setActiveTab('PAST_REVIEWS')}
-            style={{ padding: '12px 24px', display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer', background: activeTab === 'PAST_REVIEWS' ? 'rgba(0, 229, 255, 0.05)' : 'transparent', borderLeft: activeTab === 'PAST_REVIEWS' ? '3px solid var(--accent-cyan)' : '3px solid transparent', color: activeTab === 'PAST_REVIEWS' ? 'var(--accent-cyan)' : 'var(--text-secondary)', fontSize: 12, fontWeight: 600, letterSpacing: '0.05em' }}
-          >
-            <span>📜</span> PAST REVIEWS
-          </div>
-          <div 
-            onClick={() => setActiveTab('SETTINGS')}
-            style={{ padding: '12px 24px', display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer', background: activeTab === 'SETTINGS' ? 'rgba(0, 229, 255, 0.05)' : 'transparent', borderLeft: activeTab === 'SETTINGS' ? '3px solid var(--accent-cyan)' : '3px solid transparent', color: activeTab === 'SETTINGS' ? 'var(--accent-cyan)' : 'var(--text-secondary)', fontSize: 12, fontWeight: 600, letterSpacing: '0.05em' }}
-          >
-            <span>⚙️</span> SYSTEM SETTINGS
-          </div>
+        <div className="flex flex-col gap-1">
+          {[
+            { tab: 'QUEUE' as Tab, icon: '⚖️', label: 'JUDGING QUEUE' },
+            { tab: 'PAST_REVIEWS' as Tab, icon: '📜', label: 'PAST REVIEWS' },
+            { tab: 'SETTINGS' as Tab, icon: '⚙️', label: 'SYSTEM SETTINGS' }
+          ].map(({ tab, icon, label }) => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`px-3 sm:px-4 py-2 sm:py-3 flex items-center gap-2 sm:gap-3 cursor-pointer text-xs sm:text-sm font-semibold tracking-wider transition border-l-3 ${
+                activeTab === tab
+                  ? 'bg-[rgba(0,229,255,0.05)] border-[var(--accent-cyan)] text-[var(--accent-cyan)]'
+                  : 'border-transparent text-[var(--text-secondary)] hover:text-white'
+              }`}
+            >
+              <span>{icon}</span> <span className="hidden sm:inline">{label}</span>
+            </button>
+          ))}
         </div>
 
-        <div style={{ flex: 1 }}></div>
+        <div className="flex-1"></div>
 
-        <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <div style={{ color: 'var(--text-secondary)', fontSize: 12, fontWeight: 500, letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer' }}>
-            <span>❓</span> HELP CENTER
-          </div>
-          <div onClick={logout} style={{ color: 'var(--text-muted)', fontSize: 12, fontWeight: 500, letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer' }}>
-            <span>↪</span> LOG OUT
-          </div>
+        <div className="px-3 sm:px-4 py-4 sm:py-6 flex flex-col gap-3 sm:gap-4 border-t border-[rgba(255,255,255,0.05)]">
+          <button className="text-[var(--text-secondary)] text-xs sm:text-sm font-semibold tracking-wider flex items-center gap-2 hover:text-white transition">
+            <HelpCircle size={16} /> <span className="hidden sm:inline">HELP CENTER</span>
+          </button>
+          <button onClick={logout} className="text-[var(--text-muted)] text-xs sm:text-sm font-semibold tracking-wider flex items-center gap-2 hover:text-white transition">
+            <LogOut size={16} /> <span className="hidden sm:inline">LOG OUT</span>
+          </button>
         </div>
       </div>
 
       {activeTab === 'SETTINGS' ? (
-        <div style={{ flex: 1, padding: 48, display: 'flex', flexDirection: 'column' }}>
-           <h1 className="font-display" style={{ fontSize: 36, color: 'white', marginBottom: 24 }}>SYSTEM SETTINGS</h1>
-           <div style={{ background: 'var(--bg-surface)', padding: 32, borderRadius: 4, border: '1px solid rgba(255,255,255,0.05)', maxWidth: 600 }}>
-             <p style={{ color: 'var(--text-secondary)', lineHeight: 1.6 }}>System configuration for the judging environment. Manage your profile, notification preferences, and rubric templates here.</p>
-             <div style={{ marginTop: 24, display: 'flex', flexDirection: 'column', gap: 16 }}>
-               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                  <span style={{ color: 'white', fontSize: 14 }}>Email Notifications</span>
-                  <input type="checkbox" defaultChecked style={{ accentColor: 'var(--accent-cyan)' }} />
-               </div>
-               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                  <span style={{ color: 'white', fontSize: 14 }}>Dark Mode Override</span>
-                  <input type="checkbox" defaultChecked style={{ accentColor: 'var(--accent-cyan)' }} />
-               </div>
+        <div className="flex-1 px-4 sm:px-6 lg:px-8 py-6 sm:py-8 flex flex-col">
+           <h1 className="font-display text-2xl sm:text-3xl lg:text-4xl text-white mb-6 sm:mb-8">SYSTEM SETTINGS</h1>
+           <div className="bg-[var(--bg-surface)] p-6 sm:p-8 rounded border border-[rgba(255,255,255,0.05)] max-w-2xl">
+             <p className="text-[var(--text-secondary)] leading-relaxed text-sm sm:text-base">System configuration for the judging environment. Manage your profile, notification preferences, and rubric templates here.</p>
+             <div className="mt-6 sm:mt-8 flex flex-col gap-4">
+               {[
+                 { label: 'Email Notifications', checked: true },
+                 { label: 'Dark Mode Override', checked: true }
+               ].map(({ label, checked }) => (
+                 <div key={label} className="flex justify-between items-center py-3 sm:py-4 border-b border-[rgba(255,255,255,0.05)]">
+                    <span className="text-white text-sm sm:text-base">{label}</span>
+                    <input type="checkbox" defaultChecked={checked} className="w-4 h-4 accent-[var(--accent-cyan)]" />
+                 </div>
+               ))}
              </div>
            </div>
         </div>
       ) : (
         <>
           {/* Inner Queue Sidebar */}
-          <div style={{ width: 320, background: 'var(--bg-surface)', borderRight: '1px solid rgba(255,255,255,0.05)', padding: 32, display: 'flex', flexDirection: 'column' }}>
+          <div className="hidden md:flex md:w-56 lg:w-64 bg-[var(--bg-surface)] border-r border-[rgba(255,255,255,0.05)] flex-col overflow-y-auto">
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24, alignItems: 'baseline' }}>
               <h2 style={{ fontSize: 16, fontWeight: 600, color: 'white', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
                 {activeTab.replace('_', ' ')} <span style={{ color: 'var(--text-muted)' }}>({String(currentTabQueue.length).padStart(2, '0')})</span>
@@ -266,7 +255,7 @@ function JudgeContent() {
 
           {/* Main Content */}
           {activeSub ? (
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', position: 'relative' }}>
+            <div className="flex-1 flex flex-col overflow-hidden">
               {/* Header */}
               <div style={{ padding: '32px 48px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>

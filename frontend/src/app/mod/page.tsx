@@ -3,11 +3,11 @@
 import { useState } from 'react'
 import { AuthProvider } from '@/contexts/AuthContext'
 import Link from 'next/link'
+import { Menu, X, ChevronDown, Check, XIcon, RefreshCw } from 'lucide-react'
 
 function ModContent() {
   const [search, setSearch] = useState('')
 
-  // Mock data to match Image 4 precisely
   const submissions = [
     { id: '1', team: { name: 'Alpha Centauri Labs', initial: 'A' }, track: 'Atmospheric Mapping', submittedAt: '2024.11.08 14:32:01', artifact: 'PROPOSAL_V4.PDF', status: 'PENDING' },
     { id: '2', team: { name: 'Satellite Watchers', initial: 'S' }, track: 'Urban Expansion', submittedAt: '2024.11.08 12:10:55', artifact: 'URBAN_GROWTH_REPORT.PDF', status: 'PASSED' },
@@ -15,159 +15,173 @@ function ModContent() {
     { id: '4', team: { name: 'Eco-Sync Systems', initial: 'E' }, track: 'Vegetative Density', submittedAt: '2024.11.07 20:15:33', artifact: 'BIOMASS_DATASET_V2.PDF', status: 'PENDING' },
   ]
 
+  const StatCard = ({ label, value, change, changeColor, color }: any) => (
+    <div className="bg-[var(--bg-base)] p-4 sm:p-6 lg:p-8 flex flex-col gap-3">
+      <div className="font-mono text-[8px] sm:text-[9px] lg:text-xs color-[var(--text-muted)] tracking-widest uppercase">{label}</div>
+      <div className="flex items-end gap-2 sm:gap-3">
+        <div className="font-display text-2xl sm:text-3xl lg:text-5xl font-bold" style={{ color }}>{value}</div>
+        <div className="text-xs sm:text-sm pb-1" style={{ color: changeColor }}>{change}</div>
+      </div>
+    </div>
+  )
+
   return (
-    <div style={{ padding: '40px 60px', maxWidth: 1440, margin: '0 auto', background: 'var(--bg-base)', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-      {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 32 }}>
-        <div>
-          <div className="font-mono" style={{ fontSize: 11, color: 'var(--accent-green)', marginBottom: 8, letterSpacing: '0.1em' }}>
-            <span style={{ color: 'var(--accent-green)', marginRight: 6 }}>■</span> INTERNAL OPERATIONS
-          </div>
-          <h1 className="font-display" style={{ fontSize: 44, color: 'white' }}>Moderator Dashboard</h1>
+    <div className="flex flex-col min-h-screen bg-[var(--bg-base)]">
+      <header className="sticky top-0 z-50 bg-[var(--bg-base)] border-b border-[var(--border-subtle)] flex items-center justify-between px-4 sm:px-6 lg:px-8 h-14 sm:h-16">
+        <div className="flex items-center gap-4 sm:gap-8 min-w-0 flex-1">
+          <div className="font-display text-base sm:text-lg lg:text-xl font-bold text-[var(--accent-cyan)] tracking-widest truncate">GEOAI</div>
+          <nav className="hidden lg:flex gap-4 lg:gap-6 text-xs lg:text-sm text-white font-medium">
+            <Link href="#" className="text-[var(--text-secondary)] hover:text-white transition">Challenges</Link>
+            <Link href="#" className="text-[var(--text-secondary)] hover:text-white transition">Leaderboard</Link>
+            <Link href="#" className="text-[var(--text-secondary)] hover:text-white transition">Docs</Link>
+          </nav>
         </div>
-        <div style={{ textAlign: 'right' }}>
-          <div className="font-mono" style={{ fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.1em', marginBottom: 6 }}>SYSTEM_STATUS: NOMINAL</div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'flex-end' }}>
-            <span style={{ width: 6, height: 6, background: 'var(--accent-green)', display: 'inline-block' }} />
-            <span style={{ color: 'var(--accent-green)', fontSize: 11, fontWeight: 600, letterSpacing: '0.05em' }}>OPERATIONAL</span>
-          </div>
+        <div className="flex items-center gap-2 sm:gap-4">
+          <span className="text-xs sm:text-sm text-[var(--accent-cyan)] hidden sm:inline">Role: Mod</span>
+          <div className="w-7 h-7 sm:w-8 sm:h-8 bg-[var(--bg-surface)] rounded flex items-center justify-center text-sm">👤</div>
         </div>
-      </div>
+      </header>
 
-      {/* Stat cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 1, background: 'rgba(255,255,255,0.05)', marginBottom: 40, borderTop: '1px solid rgba(255,255,255,0.05)', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-        {[
-          { label: 'TOTAL PROPOSALS', value: '1,284', change: '+12%', changeColor: 'var(--accent-green)', color: 'white' },
-          { label: 'PENDING REVIEWS', value: '42', change: 'Critical', changeColor: 'var(--accent-amber)', color: 'var(--accent-amber)' },
-          { label: 'TOTAL PASSED', value: '892', change: '69.5%', changeColor: 'var(--text-muted)', color: 'var(--accent-green)' },
-          { label: 'TOTAL FAILED', value: '350', change: '27.2%', changeColor: 'var(--text-muted)', color: '#ff6275' },
-        ].map((s, i) => (
-          <div key={i} style={{ 
-            background: 'var(--bg-base)', padding: '24px 30px', 
-            display: 'flex', flexDirection: 'column', gap: 12
-          }}>
-            <div className="font-mono" style={{ fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>{s.label}</div>
-            <div style={{ display: 'flex', alignItems: 'flex-end', gap: 12 }}>
-              <div className="font-display" style={{ fontSize: 42, color: s.color, lineHeight: 1, fontWeight: 700 }}>
-                {s.value}
+      <div className="flex flex-1">
+        <aside className="hidden sm:block w-40 lg:w-48 bg-[var(--bg-base)] border-r border-[var(--border-subtle)] py-6 sm:py-8 px-3 sm:px-4 flex-shrink-0 overflow-y-auto">
+          <div className="space-y-4 sm:space-y-6">
+            <Link href="#" className="block px-3 sm:px-4 py-2 text-xs sm:text-sm text-[var(--accent-cyan)] font-semibold hover:bg-[var(--bg-surface)] rounded transition">DASHBOARD</Link>
+            <Link href="#" className="block px-3 sm:px-4 py-2 text-xs sm:text-sm text-[var(--text-secondary)] hover:text-white transition">SUBMISSIONS</Link>
+            <Link href="#" className="block px-3 sm:px-4 py-2 text-xs sm:text-sm text-[var(--text-secondary)] hover:text-white transition">ANALYTICS</Link>
+          </div>
+        </aside>
+
+        <main className="flex-1 overflow-hidden flex flex-col">
+          <div className="border-b border-[var(--border-subtle)] bg-[var(--bg-surface)]">
+            <div className="px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+              <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 sm:gap-4">
+                <div>
+                  <div className="font-mono text-[8px] sm:text-xs text-[var(--accent-green)] mb-1 sm:mb-2 tracking-widest">■ INTERNAL OPERATIONS</div>
+                  <h1 className="font-display text-xl sm:text-2xl lg:text-3xl text-white font-bold">Moderator Dashboard</h1>
+                </div>
+                <div className="text-right">
+                  <div className="font-mono text-[8px] sm:text-xs text-[var(--text-muted)] mb-1 tracking-widest">SYSTEM_STATUS: NOMINAL</div>
+                  <div className="flex items-center gap-2 justify-start sm:justify-end">
+                    <span className="w-2 h-2 bg-[var(--accent-green)]" />
+                    <span className="text-[8px] sm:text-xs text-[var(--accent-green)] font-semibold tracking-widest">OPERATIONAL</span>
+                  </div>
+                </div>
               </div>
-              <div style={{ fontSize: 11, color: s.changeColor, fontWeight: 500, paddingBottom: 6 }}>{s.change}</div>
             </div>
-          </div>
-        ))}
-      </div>
 
-      {/* Main panel */}
-      <div style={{ flex: 1, background: 'var(--bg-surface)', borderTop: '1px solid rgba(255,255,255,0.05)', display: 'flex', flexDirection: 'column' }}>
-        
-        {/* Filters */}
-        <div style={{ padding: '20px 32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 24, fontSize: 12, letterSpacing: '0.05em', fontWeight: 600 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, color: 'white' }}>
-              <span style={{ fontSize: 16, color: 'var(--text-muted)' }}>≡</span> FILTERS
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-secondary)', cursor: 'pointer', borderBottom: '1px solid rgba(255,255,255,0.2)', paddingBottom: 4 }}>
-              ALL TRACKS <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>▼</span>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-secondary)', cursor: 'pointer', borderBottom: '1px solid rgba(255,255,255,0.2)', paddingBottom: 4 }}>
-              ALL STATUS <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>▼</span>
+            <div className="border-t border-b border-[rgba(255,255,255,0.05)] bg-[rgba(255,255,255,0.01)]">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-[rgba(255,255,255,0.05)]">
+                <StatCard label="TOTAL" value="1,284" change="+12%" changeColor="var(--accent-green)" color="white" />
+                <StatCard label="PENDING" value="42" change="Critical" changeColor="var(--accent-amber)" color="var(--accent-amber)" />
+                <StatCard label="PASSED" value="892" change="69.5%" changeColor="var(--text-muted)" color="var(--accent-green)" />
+                <StatCard label="FAILED" value="350" change="27.2%" changeColor="var(--text-muted)" color="#ff6275" />
+              </div>
             </div>
           </div>
-          
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <div style={{ position: 'relative' }}>
-              <input
-                placeholder="Search team names..."
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                style={{ background: 'var(--bg-base)', border: 'none', borderRadius: 4, padding: '10px 16px', fontSize: 12, width: 280, color: 'white', outline: 'none' }}
-              />
-              <span style={{ position: 'absolute', right: 16, top: 10, color: 'var(--text-muted)', fontSize: 14 }}>⚲</span>
-            </div>
-            <button style={{ background: 'var(--bg-elevated)', border: 'none', width: 40, height: 40, borderRadius: 4, color: 'white', fontSize: 16, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              ↻
-            </button>
-          </div>
-        </div>
 
-        {/* Table */}
-        <div style={{ padding: '10px 32px 32px' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead>
-              <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                <th style={{ padding: '20px 0', textAlign: 'left', fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.1em', fontWeight: 600 }}>TEAM NAME</th>
-                <th style={{ padding: '20px 0', textAlign: 'left', fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.1em', fontWeight: 600 }}>TRACK</th>
-                <th style={{ padding: '20px 0', textAlign: 'left', fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.1em', fontWeight: 600 }}>SUBMISSION<br/>DATE</th>
-                <th style={{ padding: '20px 0', textAlign: 'left', fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.1em', fontWeight: 600 }}>ARTIFACTS</th>
-                <th style={{ padding: '20px 0', textAlign: 'center', fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.1em', fontWeight: 600 }}>STATUS</th>
-                <th style={{ padding: '20px 0', textAlign: 'right', fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.1em', fontWeight: 600 }}>QUICK<br/>ACTIONS</th>
-              </tr>
-            </thead>
-            <tbody>
-              {submissions.map(sub => (
-                <tr key={sub.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.02)' }}>
-                  <td style={{ padding: '20px 0' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                      <div style={{ width: 24, height: 24, background: 'rgba(0, 229, 255, 0.1)', color: 'var(--accent-cyan)', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 2, fontSize: 12, fontWeight: 700 }}>
-                        {sub.team.initial}
-                      </div>
-                      <div style={{ fontWeight: 600, fontSize: 14, color: 'white' }}>{sub.team.name}</div>
-                    </div>
-                  </td>
-                  <td style={{ padding: '20px 0', fontSize: 12, color: 'var(--text-secondary)' }}>{sub.track}</td>
-                  <td className="font-mono" style={{ padding: '20px 0', fontSize: 11, color: 'var(--text-muted)' }}>{sub.submittedAt.replace(' ', '\\n')}</td>
-                  <td style={{ padding: '20px 0' }}>
-                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, color: 'var(--accent-cyan)', fontSize: 11, fontWeight: 600, letterSpacing: '0.05em' }}>
-                      <span style={{ fontSize: 14 }}>📄</span> {sub.artifact}
-                    </div>
-                  </td>
-                  <td style={{ padding: '20px 0', textAlign: 'center' }}>
-                    <span style={{ 
-                      fontSize: 9, fontWeight: 700, letterSpacing: '0.1em', padding: '4px 10px', borderRadius: 2, border: '1px solid',
-                      ...(sub.status === 'PENDING' ? { color: 'var(--accent-amber)', borderColor: 'rgba(255,167,38,0.3)', background: 'rgba(255,167,38,0.1)' } : {}),
-                      ...(sub.status === 'PASSED' ? { color: 'var(--accent-green)', borderColor: 'rgba(0,230,118,0.3)', background: 'rgba(0,230,118,0.1)' } : {}),
-                      ...(sub.status === 'FAILED' ? { color: '#ff6275', borderColor: 'rgba(255,98,117,0.3)', background: 'rgba(255,98,117,0.1)' } : {}),
-                    }}>
-                      ■ {sub.status}
-                    </span>
-                  </td>
-                  <td style={{ padding: '20px 0', textAlign: 'right' }}>
-                    {sub.status === 'PENDING' ? (
-                      <div style={{ display: 'inline-flex', gap: 8 }}>
-                        <button style={{ width: 28, height: 28, background: 'rgba(0,230,118,0.1)', border: '1px solid var(--accent-green)', color: 'var(--accent-green)', borderRadius: 2, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✓</button>
-                        <button style={{ width: 28, height: 28, background: 'rgba(255,98,117,0.1)', border: '1px solid #ff6275', color: '#ff6275', borderRadius: 2, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
-                      </div>
-                    ) : (
-                      <div style={{ fontSize: 11, color: 'var(--text-muted)', letterSpacing: '0.1em', cursor: 'pointer' }}>
-                        {sub.status === 'PASSED' ? 'DETAILS' : 'RE-REVIEW'}
-                      </div>
-                    )}
-                  </td>
+          <div className="border-b border-[var(--border-subtle)] bg-[var(--bg-surface)] px-4 sm:px-6 lg:px-8 py-3 sm:py-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-center gap-2 sm:gap-4 text-xs sm:text-sm font-semibold flex-wrap">
+                <span className="text-[var(--text-muted)]">≡ FILTERS</span>
+                <div className="flex items-center gap-1 text-[var(--text-secondary)] border-b border-[rgba(255,255,255,0.2)] pb-1 cursor-pointer">
+                  ALL TRACKS <ChevronDown size={12} />
+                </div>
+                <div className="flex items-center gap-1 text-[var(--text-secondary)] border-b border-[rgba(255,255,255,0.2)] pb-1 cursor-pointer">
+                  ALL STATUS <ChevronDown size={12} />
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <div className="relative flex-1 sm:flex-none">
+                  <input
+                    placeholder="Search teams..."
+                    value={search}
+                    onChange={e => setSearch(e.target.value)}
+                    className="w-full sm:w-48 bg-[var(--bg-base)] border border-[var(--border-subtle)] rounded px-3 py-2 text-xs sm:text-sm text-white placeholder-[var(--text-muted)] outline-none"
+                  />
+                </div>
+                <button className="bg-[var(--bg-elevated)] border border-[var(--border-subtle)] p-2 rounded flex items-center justify-center text-white hover:bg-[var(--bg-elevated)]/80 transition">
+                  <RefreshCw size={16} />
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex-1 overflow-x-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+            <table className="w-full text-left text-xs sm:text-sm">
+              <thead>
+                <tr className="border-b border-[rgba(255,255,255,0.05)]">
+                  <th className="py-3 sm:py-4 px-2 sm:px-3 text-[8px] sm:text-xs text-[var(--text-muted)] font-semibold tracking-widest">TEAM</th>
+                  <th className="py-3 sm:py-4 px-2 sm:px-3 text-[8px] sm:text-xs text-[var(--text-muted)] font-semibold tracking-widest hidden sm:table-cell">TRACK</th>
+                  <th className="py-3 sm:py-4 px-2 sm:px-3 text-[8px] sm:text-xs text-[var(--text-muted)] font-semibold tracking-widest hidden lg:table-cell">DATE</th>
+                  <th className="py-3 sm:py-4 px-2 sm:px-3 text-[8px] sm:text-xs text-[var(--text-muted)] font-semibold tracking-widest hidden md:table-cell">ARTIFACT</th>
+                  <th className="py-3 sm:py-4 px-2 sm:px-3 text-[8px] sm:text-xs text-[var(--text-muted)] font-semibold tracking-widest">STATUS</th>
+                  <th className="py-3 sm:py-4 px-2 sm:px-3 text-[8px] sm:text-xs text-[var(--text-muted)] font-semibold tracking-widest">ACTION</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-          
-          {/* Pagination */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 32, paddingTop: 16 }}>
-            <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>SHOWING 1 TO 4 OF 1,284 ENTRIES</div>
-            <div style={{ display: 'flex', gap: 4, fontSize: 11, color: 'var(--text-secondary)' }}>
-              <button style={{ border: 'none', background: 'transparent', color: 'var(--text-muted)', marginRight: 8, cursor: 'pointer' }}>PREVIOUS</button>
-              <button style={{ border: '1px solid var(--border-active)', background: 'rgba(0,229,255,0.1)', width: 24, height: 24, cursor: 'pointer', color: 'var(--accent-cyan)' }}>1</button>
-              <button style={{ border: 'none', background: 'var(--bg-elevated)', width: 24, height: 24, cursor: 'pointer', color: 'white' }}>2</button>
-              <button style={{ border: 'none', background: 'var(--bg-elevated)', width: 24, height: 24, cursor: 'pointer', color: 'white' }}>3</button>
-              <button style={{ border: 'none', background: 'transparent', color: 'var(--text-muted)', marginLeft: 8, cursor: 'pointer' }}>NEXT</button>
+              </thead>
+              <tbody>
+                {submissions.map(sub => (
+                  <tr key={sub.id} className="border-b border-[rgba(255,255,255,0.02)] hover:bg-[rgba(255,255,255,0.01)] transition">
+                    <td className="py-3 sm:py-4 px-2 sm:px-3">
+                      <div className="flex items-center gap-2 sm:gap-3">
+                        <div className="w-6 h-6 sm:w-8 sm:h-8 bg-[rgba(0,229,255,0.1)] text-[var(--accent-cyan)] flex items-center justify-center rounded text-[10px] sm:text-xs font-bold flex-shrink-0">{sub.team.initial}</div>
+                        <span className="font-semibold text-white truncate">{sub.team.name}</span>
+                      </div>
+                    </td>
+                    <td className="py-3 sm:py-4 px-2 sm:px-3 text-[var(--text-secondary)] hidden sm:table-cell truncate">{sub.track}</td>
+                    <td className="py-3 sm:py-4 px-2 sm:px-3 font-mono text-[var(--text-muted)] hidden lg:table-cell text-[9px] sm:text-xs">{sub.submittedAt}</td>
+                    <td className="py-3 sm:py-4 px-2 sm:px-3 hidden md:table-cell">
+                      <div className="inline-flex items-center gap-1 text-[var(--accent-cyan)] text-[9px] sm:text-xs font-semibold">📄 <span className="hidden lg:inline">{sub.artifact}</span></div>
+                    </td>
+                    <td className="py-3 sm:py-4 px-2 sm:px-3">
+                      <span className={`inline-block text-[8px] sm:text-xs font-bold tracking-widest py-1 px-2 rounded border ${
+                        sub.status === 'PENDING' ? 'text-[var(--accent-amber)] border-[rgba(255,167,38,0.3)] bg-[rgba(255,167,38,0.1)]' :
+                        sub.status === 'PASSED' ? 'text-[var(--accent-green)] border-[rgba(0,230,118,0.3)] bg-[rgba(0,230,118,0.1)]' :
+                        'text-[#ff6275] border-[rgba(255,98,117,0.3)] bg-[rgba(255,98,117,0.1)]'
+                      }`}>
+                        ■ {sub.status}
+                      </span>
+                    </td>
+                    <td className="py-3 sm:py-4 px-2 sm:px-3">
+                      {sub.status === 'PENDING' ? (
+                        <div className="inline-flex gap-1 sm:gap-2">
+                          <button className="w-6 h-6 sm:w-8 sm:h-8 bg-[rgba(0,230,118,0.1)] border border-[var(--accent-green)] text-[var(--accent-green)] rounded flex items-center justify-center hover:bg-[rgba(0,230,118,0.2)] transition">
+                            <Check size={14} />
+                          </button>
+                          <button className="w-6 h-6 sm:w-8 sm:h-8 bg-[rgba(255,98,117,0.1)] border border-[#ff6275] text-[#ff6275] rounded flex items-center justify-center hover:bg-[rgba(255,98,117,0.2)] transition">
+                            <XIcon size={14} />
+                          </button>
+                        </div>
+                      ) : (
+                        <span className="text-[8px] sm:text-xs text-[var(--text-muted)] cursor-pointer hover:text-white transition">{sub.status === 'PASSED' ? 'DETAILS' : 'REVIEW'}</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="border-t border-[var(--border-subtle)] bg-[var(--bg-surface)] px-4 sm:px-6 lg:px-8 py-3 sm:py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-xs sm:text-sm">
+            <div className="text-[var(--text-muted)]">SHOWING 1 TO 4 OF 1,284 ENTRIES</div>
+            <div className="flex items-center gap-1 sm:gap-2">
+              <button className="text-[var(--text-muted)] hover:text-white transition px-2 py-1">PREVIOUS</button>
+              <button className="w-6 h-6 sm:w-8 sm:h-8 border border-[var(--border-active)] bg-[rgba(0,229,255,0.1)] text-[var(--accent-cyan)] rounded flex items-center justify-center">1</button>
+              <button className="w-6 h-6 sm:w-8 sm:h-8 border border-[var(--border-subtle)] bg-[var(--bg-elevated)] text-white rounded flex items-center justify-center hover:bg-[var(--bg-elevated)]/80 transition">2</button>
+              <button className="w-6 h-6 sm:w-8 sm:h-8 border border-[var(--border-subtle)] bg-[var(--bg-elevated)] text-white rounded flex items-center justify-center hover:bg-[var(--bg-elevated)]/80 transition">3</button>
+              <button className="text-[var(--text-muted)] hover:text-white transition px-2 py-1">NEXT</button>
             </div>
           </div>
-        </div>
+        </main>
       </div>
-      
-      {/* Footer */}
-      <footer style={{ marginTop: 40, borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: 24, display: 'flex', justifyContent: 'space-between', fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.05em' }}>
-        <div>© 2024 GEOAI HACKATHON | PRECISION LENS UI</div>
-        <div style={{ display: 'flex', gap: 24 }}>
-          <span>PRIVACY POLICY</span>
-          <span>TERMS OF SERVICE</span>
+
+      <footer className="border-t border-[var(--border-subtle)] bg-[var(--bg-base)] px-4 sm:px-6 lg:px-8 py-4 sm:py-6 text-[8px] sm:text-xs text-[var(--text-muted)] tracking-widest">
+        <div className="flex flex-col sm:flex-row sm:justify-between gap-2 sm:gap-4">
+          <div>© 2024 GEOAI HACKATHON</div>
+          <div className="flex flex-wrap gap-4 sm:gap-6">
+            <span>PRIVACY POLICY</span>
+            <span>TERMS OF SERVICE</span>
+          </div>
         </div>
       </footer>
     </div>
@@ -177,54 +191,7 @@ function ModContent() {
 export default function ModPage() {
   return (
     <AuthProvider>
-      {/* Top Navbar */}
-      <header style={{ background: 'var(--bg-base)', borderBottom: '1px solid var(--border-subtle)', height: 60, display: 'flex', alignItems: 'center', padding: '0 24px', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 50 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 40 }}>
-          <div className="font-display" style={{ color: 'var(--accent-cyan)', fontSize: 20, fontWeight: 700, letterSpacing: '0.05em' }}>GEOAI HACKATHON</div>
-          <nav style={{ display: 'flex', gap: 24, fontSize: 13, color: 'white', fontWeight: 500 }}>
-            <Link href="#" style={{ color: 'var(--text-secondary)' }}>Challenges</Link>
-            <Link href="#" style={{ color: 'var(--text-secondary)' }}>Leaderboard</Link>
-            <Link href="#" style={{ color: 'var(--text-secondary)' }}>Docs</Link>
-            <Link href="#" style={{ color: 'var(--text-secondary)' }}>Support</Link>
-          </nav>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16, fontSize: 13 }}>
-          <span style={{ color: 'var(--accent-cyan)' }}>Role: Competitor</span>
-          <div style={{ width: 28, height: 28, background: 'var(--bg-surface)', borderRadius: 2, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>👤</div>
-        </div>
-      </header>
-
-      <div style={{ display: 'flex' }}>
-        {/* Left Sidebar specific to Admin/Mod to match image */}
-        <aside style={{ width: 240, background: 'var(--bg-base)', borderRight: '1px solid var(--border-subtle)', minHeight: 'calc(100vh - 60px)', padding: '32px 0', flexShrink: 0 }}>
-          <div style={{ padding: '0 24px', marginBottom: 40 }}>
-            <div style={{ color: 'var(--accent-cyan)', fontSize: 16, fontWeight: 600, letterSpacing: '0.05em', marginBottom: 4 }}>HACKATHON_v1.0</div>
-            <div style={{ fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.1em' }}>ORBITAL COMMAND</div>
-          </div>
-          
-          <div style={{ marginBottom: 40 }}>
-            <div style={{ padding: '0 24px', fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.1em', marginBottom: 16 }}>MAIN MENU</div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <div style={{ padding: '8px 24px', display: 'flex', alignItems: 'center', gap: 12, color: 'var(--text-secondary)', fontSize: 13, fontWeight: 500 }}><span style={{ fontSize: 16 }}>⊞</span> OVERVIEW</div>
-              <div style={{ padding: '8px 24px', display: 'flex', alignItems: 'center', gap: 12, color: 'var(--text-secondary)', fontSize: 13, fontWeight: 500 }}><span style={{ fontSize: 16 }}>👥</span> MY TEAM</div>
-              <div style={{ padding: '12px 24px', display: 'flex', alignItems: 'center', gap: 12, color: 'var(--accent-green)', fontSize: 13, fontWeight: 500, background: 'rgba(0, 230, 118, 0.05)', borderLeft: '3px solid var(--accent-green)' }}><span style={{ fontSize: 16 }}>📄</span> SUBMISSIONS</div>
-              <div style={{ padding: '8px 24px', display: 'flex', alignItems: 'center', gap: 12, color: 'var(--text-secondary)', fontSize: 13, fontWeight: 500 }}><span style={{ fontSize: 16 }}>📚</span> RESOURCES</div>
-              <div style={{ padding: '8px 24px', display: 'flex', alignItems: 'center', gap: 12, color: 'var(--text-secondary)', fontSize: 13, fontWeight: 500 }}><span style={{ fontSize: 16 }}>⚙</span> SETTINGS</div>
-            </div>
-          </div>
-
-          <div style={{ padding: '24px', marginTop: 40 }}>
-            <button style={{ width: '100%', background: 'linear-gradient(90deg, #4DD0E1, #00E5FF)', color: 'var(--bg-base)', border: 'none', padding: '12px', fontSize: 12, fontWeight: 600, letterSpacing: '0.05em', cursor: 'pointer', display: 'block' }}>
-              NEW PROPOSAL
-            </button>
-          </div>
-        </aside>
-
-        <main style={{ flex: 1, overflowX: 'hidden' }}>
-          <ModContent />
-        </main>
-      </div>
+      <ModContent />
     </AuthProvider>
   )
 }
-
