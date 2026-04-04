@@ -160,7 +160,7 @@ const rewardThemes = [
   },
 ] as const
 
-export function DocsContent({ enhancedRewards = false }: { enhancedRewards?: boolean }) {
+export function DocsContent({ enhancedRewards = true }: { enhancedRewards?: boolean }) {
   return (
     <div className={`${kanit.className} docs-kanit min-h-screen bg-(--bg-base) px-4 py-6 sm:px-6 lg:px-8`} style={{ fontFamily: kanit.style.fontFamily }}>
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-8">
