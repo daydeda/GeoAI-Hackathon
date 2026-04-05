@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { AuthProvider } from '@/contexts/AuthContext'
 import Link from 'next/link'
-import { Menu, X, ChevronDown, Check, XIcon, RefreshCw } from 'lucide-react'
+import { Menu, X, ChevronDown, Check, XIcon, RefreshCw, UserCircle, FileText } from 'lucide-react'
 
 function ModContent() {
   const [search, setSearch] = useState('')
@@ -38,7 +38,9 @@ function ModContent() {
         </div>
         <div className="flex items-center gap-2 sm:gap-4">
           <span className="text-xs sm:text-sm text-(--accent-cyan) hidden sm:inline">Role: Mod</span>
-          <div className="w-7 h-7 sm:w-8 sm:h-8 bg-(--bg-surface) rounded flex items-center justify-center text-sm">👤</div>
+          <div className="w-7 h-7 sm:w-8 sm:h-8 bg-(--bg-surface) rounded flex items-center justify-center text-sm">
+            <UserCircle size={16} className="text-(--accent-cyan)" />
+          </div>
         </div>
       </header>
 
@@ -131,7 +133,7 @@ function ModContent() {
                     <td className="py-3 sm:py-4 px-2 sm:px-3 text-(--text-secondary) hidden sm:table-cell truncate">{sub.track}</td>
                     <td className="py-3 sm:py-4 px-2 sm:px-3 font-mono text-(--text-muted) hidden lg:table-cell text-[9px] sm:text-xs">{sub.submittedAt}</td>
                     <td className="py-3 sm:py-4 px-2 sm:px-3 hidden md:table-cell">
-                      <div className="inline-flex items-center gap-1 text-(--accent-cyan) text-[9px] sm:text-xs font-semibold">📄 <span className="hidden lg:inline">{sub.artifact}</span></div>
+                      <div className="inline-flex items-center gap-1 text-(--accent-cyan) text-[9px] sm:text-xs font-semibold"><FileText size={12} /> <span className="hidden lg:inline">{sub.artifact}</span></div>
                     </td>
                     <td className="py-3 sm:py-4 px-2 sm:px-3">
                       <span className={`inline-block text-[8px] sm:text-xs font-bold tracking-widest py-1 px-2 rounded border ${

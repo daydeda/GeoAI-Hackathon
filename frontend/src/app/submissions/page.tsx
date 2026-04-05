@@ -4,20 +4,29 @@ import { useEffect, useState, useCallback } from 'react'
 import { AuthProvider, useAuth } from '@/contexts/AuthContext'
 import AppShell from '@/components/AppShell'
 import { useDropzone } from 'react-dropzone'
-import { COMPETITION_PHASES } from '@/lib/competitionPhase'
+import { useCompetitionPhases } from '@/hooks/useCompetitionPhases'
+import { AlertTriangle, CheckSquare, FileText, Square, UploadCloud } from 'lucide-react'
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
-const ANNOUNCEMENT_DATE = '2026-05-08T00:00:00+07:00'
-const PROPOSAL_SUBMISSION_DEADLINE =
-  COMPETITION_PHASES.find((phase) => phase.key === 'proposal-submission')?.date || '2026-04-29T23:59:59+07:00'
+const LIVE_REFRESH_MS = 8000
 
 interface Submission {
   id: string
   version: number
   gistdaDeclared: boolean
   submittedAt: string
+  team?: { currentStatus?: string }
   moderatorReview?: { status: string; note?: string }
   scoreAggregate?: { totalWeighted: number; judgeCount: number; calculatedAt?: string }
+  judgeEvaluations?: Array<{
+    comment?: string
+  }>
+}
+
+interface UploadErrorPayload {
+  message?: string
+  error?: string
+  missingMembers?: Array<{ fullName?: string; email?: string; userId?: string }>
 }
 
 function normalizeReviewStatus(status?: string) {
@@ -28,6 +37,7 @@ function normalizeReviewStatus(status?: string) {
 
 function SubmissionsContent() {
   const { user, loading: authLoading } = useAuth()
+  const { phases } = useCompetitionPhases()
   const [history, setHistory] = useState<Submission[]>([])
   const [hasTeam, setHasTeam] = useState(true)
   const [loading, setLoading] = useState(true)
@@ -53,7 +63,34 @@ function SubmissionsContent() {
     }
   }, [user, authLoading])
 
-  useEffect(() => { fetchHistory() }, [fetchHistory])
+  useEffect(() => {
+    void fetchHistory()
+
+    const intervalId = window.setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        void fetchHistory()
+      }
+    }, LIVE_REFRESH_MS)
+
+    const onFocus = () => {
+      void fetchHistory()
+    }
+
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        void fetchHistory()
+      }
+    }
+
+    window.addEventListener('focus', onFocus)
+    document.addEventListener('visibilitychange', onVisibilityChange)
+
+    return () => {
+      window.clearInterval(intervalId)
+      window.removeEventListener('focus', onFocus)
+      document.removeEventListener('visibilitychange', onVisibilityChange)
+    }
+  }, [fetchHistory])
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     setError('')
@@ -64,7 +101,9 @@ function SubmissionsContent() {
   }, [])
 
   const activeSubmission = history[0]
-  const isProposalPhaseEnded = Date.now() > new Date(PROPOSAL_SUBMISSION_DEADLINE).getTime()
+  const proposalDeadline = phases.find((phase) => phase.key === 'proposal-submission')?.date || '2026-04-29T23:59:59+07:00'
+  const announcementDate = phases.find((phase) => phase.key === 'announcement')?.date || '2026-05-08T00:00:00+07:00'
+  const isProposalPhaseEnded = Date.now() > new Date(proposalDeadline).getTime()
   const isJudged = Boolean(activeSubmission?.scoreAggregate)
   const isSubmissionClosed = isProposalPhaseEnded || isJudged
 
@@ -78,8 +117,8 @@ function SubmissionsContent() {
   const upload = async () => {
     if (isSubmissionClosed) {
       setError(isJudged
-        ? 'Submission is locked because judges have already scored your proposal.'
-        : 'Submission is closed because the Proposal Submission phase has ended.')
+        ? 'Editing Disabled: Judges have already begun the scoring process for this submission.'
+        : 'Submission Locked: This proposal is now under review and can no longer be edited.')
       return
     }
     if (!file || !gistda || uploading) return
@@ -93,7 +132,17 @@ function SubmissionsContent() {
         method: 'POST', credentials: 'include', body: formData
       })
       if (res.ok) { setFile(null); setGistda(false); fetchHistory() }
-      else { const d = await res.json(); setError(d.message || 'Upload failed') }
+      else {
+        const d = (await res.json().catch(() => ({}))) as UploadErrorPayload
+        if (Array.isArray(d.missingMembers) && d.missingMembers.length > 0) {
+          const names = d.missingMembers
+            .map((member, index) => member.fullName || member.email || `Member ${index + 1}`)
+            .join(', ')
+          setError(`Upload blocked. Student ID is missing for these members: ${names}`)
+        } else {
+          setError(d.error || d.message || 'Upload failed. Please try again.')
+        }
+      }
     } catch {
       setError('Network error during upload')
     } finally {
@@ -130,10 +179,22 @@ function SubmissionsContent() {
     </div>
   )
 
-  const canShowAnnouncement = Date.now() >= new Date(ANNOUNCEMENT_DATE).getTime()
-  const reviewStatus = canShowAnnouncement
-    ? normalizeReviewStatus(activeSubmission?.moderatorReview?.status)
-    : 'UNDER REVIEW'
+  const canShowAnnouncement = Date.now() >= new Date(announcementDate).getTime()
+  const reviewStatus = (() => {
+    if (!canShowAnnouncement) return 'UNDER REVIEW'
+    if (activeSubmission?.team?.currentStatus === 'FINALIST') return 'QUALIFIED'
+    if (activeSubmission?.team?.currentStatus === 'REJECTED') return 'DISQUALIFIED'
+    return normalizeReviewStatus(activeSubmission?.moderatorReview?.status)
+  })()
+  const feedbackMessage = canShowAnnouncement
+    ? 'No judge feedback has been published for this submission yet.'
+    : 'Judge feedback and detailed notes will be released during the Announcement Phase.'
+
+  const publishedJudgeCards = canShowAnnouncement
+    ? (activeSubmission?.judgeEvaluations || [])
+    : []
+
+  const fallbackJudgeCount = activeSubmission?.scoreAggregate?.judgeCount || 0
 
   return (
     <div className="min-h-screen px-4 py-6 sm:px-6 lg:px-8">
@@ -147,7 +208,7 @@ function SubmissionsContent() {
 
         {error && (
           <div className="mb-4 sm:mb-6 p-3 sm:p-4 rounded-md bg-[rgba(255,23,68,0.1)] border border-(--accent-red) text-(--accent-red) text-xs sm:text-sm flex items-start gap-2 sm:gap-3">
-            <span className="text-base flex-shrink-0">⚠️</span>
+            <AlertTriangle size={16} className="mt-0.5 flex-shrink-0" />
             <span>{error}</span>
           </div>
         )}
@@ -155,9 +216,54 @@ function SubmissionsContent() {
         {isSubmissionClosed && (
           <div className="mb-4 sm:mb-6 rounded-md border border-(--accent-amber) bg-[rgba(255,167,38,0.12)] p-3 sm:p-4 text-xs sm:text-sm text-(--accent-amber)">
             {isJudged
-              ? 'Submission is locked because judges have already given a score.'
-              : 'Submission is closed because the Proposal Submission phase has ended.'}
+              ? 'Editing Disabled: Judges have already begun the scoring process for this submission.'
+              : 'Submission Locked: This proposal is now under review and can no longer be edited.'}
           </div>
+        )}
+
+        {activeSubmission && (
+          <section className="mb-4 sm:mb-6 rounded-lg border border-(--border-subtle) bg-(--bg-surface) p-4 sm:p-6">
+            <h2 className="font-display text-lg tracking-[0.05em] text-(--accent-cyan) sm:text-xl">Judge Feedback &amp; Evaluations</h2>
+            <p className="mt-2 text-xs sm:text-sm text-(--text-secondary)">
+              Review the individual comments provided by our judging panel below.
+            </p>
+
+            {!canShowAnnouncement && (
+              <div className="mt-4 rounded border border-(--accent-amber) bg-[rgba(255,167,38,0.12)] px-3 py-2 text-xs text-(--accent-amber)">
+                Judge feedback and detailed notes will be released during the Announcement Phase.
+              </div>
+            )}
+
+            {canShowAnnouncement && (
+              <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                {publishedJudgeCards.length > 0 ? (
+                  publishedJudgeCards.map((evaluation, index) => (
+                    <article key={`judge-note-${index + 1}`} className="rounded border border-(--border-subtle) bg-(--bg-base) p-3">
+                      <div className="mb-1 text-xs font-semibold tracking-[0.08em] text-(--accent-cyan)">
+                        Judge Feedback {index + 1}
+                      </div>
+                      <div className="text-xs leading-relaxed text-(--text-secondary)">
+                        <span className="whitespace-pre-wrap">{evaluation.comment?.trim() || 'No written comment provided for this judge.'}</span>
+                      </div>
+                    </article>
+                  ))
+                ) : (
+                  Array.from({ length: Math.max(1, fallbackJudgeCount) }).map((_, index) => (
+                    <article key={`judge-placeholder-${index + 1}`} className="rounded border border-(--border-subtle) bg-(--bg-base) p-3">
+                      <div className="mb-1 text-xs font-semibold tracking-[0.08em] text-(--accent-cyan)">
+                        Judge {index + 1}
+                      </div>
+                      <div className="text-xs leading-relaxed text-(--text-secondary)">
+                        {index === 0 && feedbackMessage
+                          ? feedbackMessage
+                          : 'Detailed individual notes for this judge are not available yet.'}
+                      </div>
+                    </article>
+                  ))
+                )}
+              </div>
+            )}
+          </section>
         )}
 
         <div className="grid grid-cols-1 lg:grid-cols-[1.3fr_1fr] gap-4 sm:gap-6">
@@ -176,7 +282,9 @@ function SubmissionsContent() {
               }`}
             >
               <input {...getInputProps()} />
-              <div className="text-3xl sm:text-4xl mb-2 sm:mb-3">{file ? '📄' : '⬆️'}</div>
+              <div className="mb-2 sm:mb-3 flex items-center justify-center">
+                {file ? <FileText size={38} className="text-(--accent-cyan)" /> : <UploadCloud size={38} className="text-(--accent-cyan)" />}
+              </div>
               <div className="font-semibold text-xs sm:text-sm mb-1 text-(--text-primary)">
                 {file ? file.name : (isDragActive ? 'Drop file here' : 'Drag & drop PDF here')}
               </div>
@@ -186,19 +294,21 @@ function SubmissionsContent() {
             </div>
 
             <div className="flex gap-2 sm:gap-3 items-start p-3 sm:p-4 bg-(--bg-base) rounded-lg border border-(--border-subtle) mb-4 sm:mb-6">
-              <input
-                type="checkbox"
-                id="gistda"
-                checked={gistda}
-                onChange={e => setGistda(e.target.checked)}
+              <button
+                type="button"
+                onClick={() => !isSubmissionClosed && setGistda((prev) => !prev)}
                 disabled={isSubmissionClosed}
-                className="mt-1 cursor-pointer flex-shrink-0"
-              />
-              <label htmlFor="gistda" className="text-xs sm:text-sm text-(--text-secondary) leading-relaxed cursor-pointer">
+                className="mt-0.5 flex-shrink-0 rounded border border-(--border-subtle) bg-(--bg-surface) p-1 text-(--accent-cyan) disabled:opacity-60"
+                aria-label="Toggle GISTDA declaration"
+                aria-pressed={gistda}
+              >
+                {gistda ? <CheckSquare size={16} /> : <Square size={16} />}
+              </button>
+              <div className="text-xs sm:text-sm text-(--text-secondary) leading-relaxed">
                 I declare that this project utilizes{' '}
                 <strong className="text-(--accent-amber)">Sphere of GISTDA</strong> and adheres to the
                 multispectral processing guidelines established in the hackathon brief.
-              </label>
+              </div>
             </div>
 
             <button
@@ -230,7 +340,7 @@ function SubmissionsContent() {
                     className="font-semibold"
                     style={{
                       color:
-                        reviewStatus === 'PASS'
+                        reviewStatus === 'PASS' || reviewStatus === 'QUALIFIED'
                           ? 'var(--accent-green)'
                           : reviewStatus === 'DISQUALIFIED'
                             ? 'var(--accent-red)'
@@ -240,16 +350,6 @@ function SubmissionsContent() {
                     {reviewStatus}
                   </span>
                 </div>
-                {canShowAnnouncement && activeSubmission.scoreAggregate && (
-                  <div className="mb-3 rounded border border-(--border-subtle) bg-(--bg-base) px-3 py-2 text-xs text-(--text-secondary)">
-                    Final averaged score:{' '}
-                    <span className="font-semibold text-white">
-                      {activeSubmission.scoreAggregate.totalWeighted.toFixed(2)}
-                    </span>
-                    {' · '}
-                    Judges: <span className="font-semibold text-white">{activeSubmission.scoreAggregate.judgeCount}</span>
-                  </div>
-                )}
                 <button
                   className="w-full px-3 py-2 text-xs sm:text-sm border border-(--border-active) rounded hover:bg-(--bg-base) transition-colors"
                   onClick={e => download(activeSubmission.id, e)}

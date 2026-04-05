@@ -18,18 +18,23 @@ import {
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useAlert } from '@/contexts/AlertContext'
-import { formatPhaseDeadline, getCurrentPhase } from '@/lib/competitionPhase'
+import { formatPhaseDeadline } from '@/lib/competitionPhase'
+import { useCompetitionPhases } from '@/hooks/useCompetitionPhases'
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
-const DEADLINE = process.env.NEXT_PUBLIC_SUBMISSION_DEADLINE || '2026-04-29T23:59:59+07:00'
 
 function useCountdown(target: string) {
-  const [t, setT] = useState({ h: 0, m: 0, s: 0 })
+  const [t, setT] = useState({ d: 0, h: 0, m: 0, s: 0 })
   useEffect(() => {
     const calc = () => {
       const diff = new Date(target).getTime() - Date.now()
-      if (diff <= 0) return setT({ h: 0, m: 0, s: 0 })
-      setT({ h: Math.floor(diff / 3600000), m: Math.floor((diff % 3600000) / 60000), s: Math.floor((diff % 60000) / 1000) })
+      if (diff <= 0) return setT({ d: 0, h: 0, m: 0, s: 0 })
+      setT({
+        d: Math.floor(diff / 86400000),
+        h: Math.floor((diff % 86400000) / 3600000),
+        m: Math.floor((diff % 3600000) / 60000),
+        s: Math.floor((diff % 60000) / 1000),
+      })
     }
     calc()
     const id = setInterval(calc, 1000)
@@ -40,11 +45,11 @@ function useCountdown(target: string) {
 
 function DashboardContent() {
   const { user, loading } = useAuth()
+  const { currentPhase } = useCompetitionPhases()
   const [teamData, setTeamData] = useState<Record<string, unknown> | null>(null)
   const [copied, setCopied] = useState(false)
   const { showAlert } = useAlert()
-  const { h, m, s } = useCountdown(DEADLINE)
-  const currentPhase = getCurrentPhase()
+  const { d, h, m, s } = useCountdown(currentPhase.date)
   const phaseDeadline = formatPhaseDeadline(currentPhase.date)
 
   const fetchTeam = () => {
@@ -125,14 +130,20 @@ function DashboardContent() {
           </div>
         </div>
         <div className="text-left lg:text-right">
-          <div className="font-mono mb-1 text-[10px] text-(--text-muted)">CURRENT PHASE</div>
-          <div className="font-display mb-2 text-lg font-bold tracking-[0.05em] text-(--accent-cyan) sm:text-xl">
-            {currentPhase.title}
-          </div>
-          <div className="font-mono mb-1 text-[10px] text-(--text-muted)">PHASE DEADLINE: {phaseDeadline}</div>
-          <div className="font-mono mb-1 text-[10px] text-(--text-muted)">TIME TO DEADLINE</div>
-          <div className="font-display text-2xl font-bold tracking-[0.05em] text-(--accent-red) sm:text-3xl">
-            {String(h).padStart(2,'0')}:{String(m).padStart(2,'0')}:{String(s).padStart(2,'0')}
+          <div className="inline-block rounded-lg border border-(--accent-cyan) bg-[rgba(0,229,255,0.08)] px-4 py-3 shadow-[0_0_18px_rgba(0,229,255,0.25)]">
+            <div className="mb-1 inline-flex items-center gap-2 rounded border border-(--accent-cyan) bg-[rgba(0,229,255,0.12)] px-2 py-0.5 text-[10px] font-semibold tracking-[0.08em] text-(--accent-cyan)">
+              <span className="h-1.5 w-1.5 rounded-full bg-(--accent-cyan)" style={{ animation: 'pulse-cyan 2s infinite' }} />
+              YOU ARE HERE
+            </div>
+            <div className="font-mono mb-1 text-[10px] text-(--text-muted)">CURRENT PHASE</div>
+            <div className="font-display mb-2 text-lg font-bold tracking-[0.05em] text-(--accent-cyan) sm:text-xl">
+              {currentPhase.title}
+            </div>
+            <div className="font-mono mb-1 text-[10px] text-(--text-muted)">PHASE DEADLINE: {phaseDeadline}</div>
+            <div className="font-mono mb-1 text-[10px] text-(--text-muted)">TIME TO DEADLINE</div>
+            <div className="font-display text-2xl font-bold tracking-[0.05em] text-(--accent-red) sm:text-3xl">
+              {String(d).padStart(2,'0')} : {String(h).padStart(2,'0')} : {String(m).padStart(2,'0')} : {String(s).padStart(2,'0')}
+            </div>
           </div>
         </div>
       </div>

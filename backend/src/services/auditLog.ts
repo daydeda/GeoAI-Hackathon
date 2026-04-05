@@ -21,6 +21,8 @@ type AuditAction =
   | 'USER_DELETED'
   | 'TEAM_DELETED'
   | 'SUBMISSION_ANNOUNCEMENT_SENT'
+  | 'PHASE_DEADLINES_UPDATED'
+  | 'JUDGE_FINAL_STATUS_UPDATED'
 
 interface AuditParams {
   actorId?: string

@@ -80,7 +80,7 @@ const CONTACT_BY_DAY: Record<number, ContactPerson[]> = {
 const FAQ_ITEMS: FaqItem[] = [
   {
     question: 'How many team members are allowed?',
-    answer: 'Each team can have 3 to 5 members. One member must be assigned as the team leader.',
+    answer: 'Each team can have 3 to 4 members. One member must be assigned as the team leader.',
   },
   {
     question: 'Can we update our submission before the deadline?',
@@ -108,7 +108,7 @@ function getContactsForDay(day: number): ContactPerson[] {
   return CONTACT_BY_DAY[day] ?? []
 }
 
-export function SupportContent() {
+function SupportContent() {
   const today = new Date()
   const todayLabel = DAY_NAMES[today.getDay()]
   const contacts = getContactsForDay(today.getDay())

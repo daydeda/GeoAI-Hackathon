@@ -13,6 +13,7 @@ const NAV_SECTIONS = [
       { href: '/dashboard', label: 'Overview', icon: '⊞' },
       { href: '/team', label: 'My Team', icon: '⊙' },
       { href: '/submissions', label: 'Submissions', icon: '⊡' },
+      { href: '/settings', label: 'Settings', icon: '⊗' },
       { href: '/resources', label: 'Resources', icon: '⊟' },
       { href: '/documents', label: 'Documents', icon: '⊠' },
     ] as NavItem[],
@@ -23,6 +24,7 @@ const NAV_SECTIONS = [
       { href: '/mod', label: 'Mod Panel', icon: '⊛', roles: ['MODERATOR', 'ADMIN'] },
       { href: '/judge', label: 'Judge Queue', icon: '⊜', roles: ['JUDGE', 'ADMIN', 'MODERATOR'] },
       { href: '/admin', label: 'Admin Panel', icon: '⊝', roles: ['ADMIN', 'MODERATOR'] },
+      { href: '/admin/deadlines', label: 'Phase Deadlines', icon: '⊚', roles: ['ADMIN', 'MODERATOR'] },
       { href: '/admin/logs', label: 'Logs', icon: '≡', roles: ['ADMIN', 'MODERATOR'] },
     ] as NavItem[],
   },
@@ -38,9 +40,9 @@ export default function NavRail() {
     <nav className="nav-rail" style={{ fontFamily: "'Rajdhani', sans-serif" }}>
       {/* Logo */}
       <div style={{ padding: '0 20px 24px', borderBottom: '1px solid var(--border-subtle)' }}>
-        <div className="font-display" style={{ fontSize: 16, fontWeight: 700, color: 'var(--accent-cyan)', letterSpacing: '0.05em' }}>
+        <Link href="/" className="font-display no-underline" style={{ fontSize: 16, fontWeight: 700, color: 'var(--accent-cyan)', letterSpacing: '0.05em' }}>
           HACKATHON_v1.0
-        </div>
+        </Link>
         <div style={{ fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.08em', marginTop: 2 }}>ORBITAL COMMAND</div>
       </div>
 

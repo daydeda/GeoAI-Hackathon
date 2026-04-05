@@ -3,9 +3,11 @@ import { prisma } from '../plugins/prisma.js'
 import { authenticate, JwtPayload } from '../middleware/auth.js'
 import { writeAuditLog } from '../services/auditLog.js'
 import { minioClient, BUCKET } from '../services/storage.js'
+import { getPhaseByKey } from '../services/phaseConfig.js'
 
-function isDeadlinePassed(): boolean {
-  const deadline = process.env.SUBMISSION_DEADLINE_ISO || '2026-04-29T23:59:59+07:00'
+async function isDeadlinePassed(): Promise<boolean> {
+  const phase = await getPhaseByKey('proposal-submission')
+  const deadline = phase?.date || process.env.SUBMISSION_DEADLINE_ISO || '2026-04-29T23:59:59+07:00'
   return new Date() > new Date(deadline)
 }
 
@@ -38,6 +40,35 @@ async function ensureCompetitorProfileCompleted(userId: string) {
   return { ok: true as const }
 }
 
+async function getMembersMissingStudentId(teamId: string): Promise<Array<{ userId: string; fullName: string; email: string }>> {
+  const members = await prisma.teamMember.findMany({
+    where: { teamId },
+    include: {
+      user: {
+        select: {
+          id: true,
+          fullName: true,
+          email: true,
+          idCardFileKey: true,
+          idCardFileName: true,
+        },
+      },
+    },
+  })
+
+  return members
+    .filter((member) => {
+      const key = (member.user.idCardFileKey || '').trim()
+      const legacyName = (member.user.idCardFileName || '').trim()
+      return key.length === 0 && legacyName.length === 0
+    })
+    .map((member) => ({
+      userId: member.user.id,
+      fullName: member.user.fullName,
+      email: member.user.email,
+    }))
+}
+
 export async function submissionRoutes(app: FastifyInstance) {
   // GET /api/v1/submissions — get current team submission history
   app.get('/submissions', { preHandler: [authenticate] }, async (request, reply) => {
@@ -49,12 +80,39 @@ export async function submissionRoutes(app: FastifyInstance) {
       where: { teamId: membership.teamId },
       orderBy: { version: 'desc' },
       include: {
+        team: { select: { currentStatus: true } },
         moderatorReview: { select: { status: true, note: true } },
         scoreAggregate: { select: { totalWeighted: true, judgeCount: true, calculatedAt: true } },
+        judgeScores: {
+          orderBy: { scoredAt: 'asc' },
+          select: {
+            judgeUserId: true,
+            comments: true,
+            nationalImpactScore: true,
+            technologyMethodologyScore: true,
+            requirementComplianceScore: true,
+            feasibilityScore: true,
+            judge: {
+              select: {
+                fullName: true,
+                email: true,
+              },
+            },
+          },
+        },
       }
     })
 
-    return { data: history }
+    const data = history.map((submission) => ({
+      ...submission,
+      judgeEvaluations: submission.judgeScores.map((score) => {
+        return {
+          comment: score.comments,
+        }
+      }),
+    }))
+
+    return { data }
   })
 
   // POST /api/v1/submissions/upload — simple upload wrapper
@@ -67,12 +125,20 @@ export async function submissionRoutes(app: FastifyInstance) {
     if (!membership) return reply.status(404).send({ error: 'Team not found' })
     if (membership.team.leaderId !== actor.userId) return reply.status(403).send({ error: 'Only team leader can submit' })
 
-    if (isDeadlinePassed()) {
+    if (await isDeadlinePassed()) {
       return reply.status(423).send({ error: 'Submission deadline has passed' })
     }
 
+    const missingMembers = await getMembersMissingStudentId(membership.teamId)
+    if (missingMembers.length > 0) {
+      return reply.status(409).send({
+        error: 'Submission blocked: all team members must upload Student ID before proposal upload',
+        missingMembers,
+      })
+    }
+
     if (await isSubmissionLockedByScoring(membership.teamId)) {
-      return reply.status(423).send({ error: 'Submission is locked because judges have already scored your proposal' })
+      return reply.status(423).send({ error: 'Editing Disabled: Judges have already begun the scoring process for this submission.' })
     }
 
     // Reuse logic below or implement
@@ -120,18 +186,26 @@ export async function submissionRoutes(app: FastifyInstance) {
 
     const { teamId } = request.params as { teamId: string }
 
-    if (isDeadlinePassed()) {
+    if (await isDeadlinePassed()) {
       return reply.status(423).send({ error: 'Submission deadline has passed' })
     }
 
     if (await isSubmissionLockedByScoring(teamId)) {
-      return reply.status(423).send({ error: 'Submission is locked because judges have already scored your proposal' })
+      return reply.status(423).send({ error: 'Editing Disabled: Judges have already begun the scoring process for this submission.' })
     }
 
     // Verify leader
     const team = await prisma.team.findUnique({ where: { id: teamId } })
     if (!team) return reply.status(404).send({ error: 'Team not found' })
     if (team.leaderId !== actor.userId) return reply.status(403).send({ error: 'Only team leader can submit' })
+
+    const missingMembers = await getMembersMissingStudentId(teamId)
+    if (missingMembers.length > 0) {
+      return reply.status(409).send({
+        error: 'Submission blocked: all team members must upload Student ID before proposal upload',
+        missingMembers,
+      })
+    }
 
     // Parse multipart
     const data = await request.file()

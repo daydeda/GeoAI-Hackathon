@@ -10,12 +10,14 @@ import {
   Check,
   Download,
   FileSpreadsheet,
+  Mail,
   Search,
   Trash2,
   X,
 } from 'lucide-react'
-import { formatPhaseDeadline, getCurrentPhase } from '@/lib/competitionPhase'
+import { formatPhaseDeadline } from '@/lib/competitionPhase'
 import CustomDropdown from '@/components/CustomDropdown'
+import { useCompetitionPhases } from '@/hooks/useCompetitionPhases'
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
 
@@ -58,6 +60,12 @@ interface TeamRow {
 interface LogRow { id: string; action: string; entityType: string; entityId: string; oldValue?: string; newValue?: string; createdAt: string; actor?: { email: string } }
 interface TeamSubmissionRow { isActive?: boolean; scoreAggregate?: { totalWeighted?: number } }
 interface TeamApiRow extends TeamRow { submissions?: TeamSubmissionRow[] }
+interface AnnouncementEmailStatus {
+  announcementDate: string
+  enabled: boolean
+  sentCount: number
+  failedCount: number
+}
 
 import AppShell from '@/components/AppShell'
 
@@ -86,9 +94,13 @@ function AdminContent() {
   const [logs, setLogs] = useState<LogRow[]>([])
   const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(true)
+  const [sendingAnnouncement, setSendingAnnouncement] = useState(false)
+  const [announcementStatus, setAnnouncementStatus] = useState<AnnouncementEmailStatus | null>(null)
   const [confirmAction, setConfirmAction] = useState<{ type: 'PROMOTE' | 'DISQUALIFY' | 'REVOKE' | 'RESTORE', teamId: string, teamName: string } | null>(null)
-  const currentPhase = getCurrentPhase()
+  const { currentPhase, phases } = useCompetitionPhases()
   const phaseDeadline = formatPhaseDeadline(currentPhase.date)
+  const announcementPhase = phases.find((phase) => phase.key === 'announcement')
+  const announcementDeadlineText = announcementPhase ? formatPhaseDeadline(announcementPhase.date) : '-'
 
   const totalUserPages = Math.max(1, Math.ceil(totalUsers / userLimit))
   const userFrom = totalUsers === 0 ? 0 : (userPage - 1) * userLimit + 1
@@ -119,10 +131,11 @@ function AdminContent() {
         limit: String(teamLimit),
       })
 
-      const [usersRes, teamsRes, logsRes] = await Promise.all([
+      const [usersRes, teamsRes, logsRes, announcementRes] = await Promise.all([
         fetch(`${API}/api/v1/admin/users?${userParams.toString()}`, opts),
         fetch(`${API}/api/v1/admin/teams?${teamParams.toString()}`, opts),
         fetch(`${API}/api/v1/admin/audit-logs?limit=10`, opts),
+        fetch(`${API}/api/v1/admin/announcement-email/status`, opts),
       ])
       
       clearTimeout(timeoutId)
@@ -138,6 +151,10 @@ function AdminContent() {
         setTotalTeams(d.total || 0);
       }
       if (logsRes.ok) { const d = await logsRes.json(); setLogs(d.data || []); }
+      if (announcementRes.ok) {
+        const d = await announcementRes.json()
+        setAnnouncementStatus(d)
+      }
     } catch (err) {
       if ((err as Error).name === 'AbortError') {
         console.warn('Admin fetch timed out')
@@ -255,6 +272,43 @@ function AdminContent() {
     { label: 'TEAMS REGISTRY', title: 'Export Teams as CSV', type: 'TEAMS', icon: Download },
     { label: 'PROPOSAL BUNDLE', title: 'Export Proposals as XLSX', type: 'SUBMISSIONS', icon: FileSpreadsheet },
   ]
+
+  const sendAnnouncementEmails = async () => {
+    if (!announcementStatus?.enabled || sendingAnnouncement) return
+    if (!window.confirm('Send announcement emails now? This will send to all eligible competitor accounts who have not been sent yet.')) return
+
+    setSendingAnnouncement(true)
+    try {
+      const res = await fetch(`${API}/api/v1/admin/announcement-email/send`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ onlyGmail: false }),
+      })
+
+      const payload = await res.json().catch(() => ({})) as {
+        error?: string
+        sentCount?: number
+        failedCount?: number
+        skippedCount?: number
+      }
+
+      if (!res.ok) {
+        showAlert(payload.error || 'Failed to send announcement emails.', 'error')
+        return
+      }
+
+      showAlert(
+        `Announcement emails completed. Sent: ${payload.sentCount ?? 0}, Failed: ${payload.failedCount ?? 0}, Skipped: ${payload.skippedCount ?? 0}`,
+        'info',
+      )
+      await fetchAll()
+    } catch {
+      showAlert('Failed to send announcement emails.', 'error')
+    } finally {
+      setSendingAnnouncement(false)
+    }
+  }
 
   return (
     <div className="mx-auto flex min-h-screen w-full max-w-[1440px] flex-col bg-(--bg-base)">
@@ -522,19 +576,10 @@ function AdminContent() {
                           <button onClick={() => setConfirmAction({ type: 'RESTORE', teamId: t.id, teamName: t.name })} className="rounded border border-(--accent-cyan) bg-transparent px-3 py-1.5 text-[10px] text-(--accent-cyan)">RESTORE TO FINALIST</button>
                         </div>
                       ) : (
-                        <div className="inline-flex gap-3">
-                          <button 
-                            onClick={() => setConfirmAction({ type: 'PROMOTE', teamId: t.id, teamName: t.name })}
-                            className="border border-(--accent-cyan) bg-(--accent-cyan) px-4 py-2 text-[10px] font-semibold tracking-[0.05em] text-black"
-                          >
-                            PROMOTE
-                          </button>
-                          <button 
-                            onClick={() => setConfirmAction({ type: 'DISQUALIFY', teamId: t.id, teamName: t.name })}
-                            className="border border-[rgba(255,23,68,0.4)] bg-transparent px-4 py-2 text-[10px] font-semibold tracking-[0.05em] text-(--text-muted)"
-                          >
-                            DISQUALIFY
-                          </button>
+                        <div className="inline-flex items-center gap-3">
+                          <span className="inline-flex items-center rounded border border-(--border-subtle) bg-(--bg-base) px-3 py-1.5 text-[11px] font-semibold tracking-[0.05em] text-(--text-muted)">
+                            NOT FINALIZED
+                          </span>
                           <button
                             type="button"
                             onClick={() => deleteTeam(t.id, t.name)}
@@ -586,6 +631,28 @@ function AdminContent() {
           {/* Data Extraction */}
           <div>
             <h3 className="mb-4 text-lg font-semibold text-white">Data Extraction</h3>
+            <button
+              type="button"
+              onClick={sendAnnouncementEmails}
+              disabled={!announcementStatus?.enabled || sendingAnnouncement}
+              className="mb-3 flex w-full items-center justify-between border-l-2 border-transparent bg-(--bg-surface) px-5 py-4 text-left transition enabled:hover:border-(--accent-cyan) disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <div>
+                <div className="font-mono mb-1 text-[10px] tracking-[0.1em] text-(--text-muted)">ANNOUNCEMENT MAILER</div>
+                <div className="text-sm font-medium text-white">
+                  {sendingAnnouncement ? 'Sending Emails...' : 'Send Announcement Emails'}
+                </div>
+                <div className="mt-1 text-[11px] text-(--text-muted)">
+                  Available after: {announcementDeadlineText}
+                </div>
+                {announcementStatus && (
+                  <div className="mt-1 text-[11px] text-(--text-muted)">
+                    Sent: {announcementStatus.sentCount} · Failed: {announcementStatus.failedCount}
+                  </div>
+                )}
+              </div>
+              <Mail size={18} className="text-(--accent-cyan)" />
+            </button>
             <div className="flex flex-col gap-3">
               {exportCards.map(exp => (
                 <div 

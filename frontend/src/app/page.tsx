@@ -3,9 +3,14 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { Menu, X, Zap } from 'lucide-react'
-import { getTimeline } from '@/lib/competitionPhase'
+import { useCompetitionPhases } from '@/hooks/useCompetitionPhases'
 
-const DEADLINE = process.env.NEXT_PUBLIC_SUBMISSION_DEADLINE || '2026-04-29T23:59:59+07:00'
+const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
+
+type SessionUser = {
+  fullName?: string
+  email?: string
+}
 
 function useCountdown(targetDate: string) {
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, mins: 0, secs: 0 })
@@ -58,14 +63,14 @@ const tracks = [
 ]
 
 const hostedBy = [
-  { name: 'KMITL', href: 'https://www.kmitl.ac.th/en' },
-  { name: 'ESRI', href: 'https://www.esri.com' },
-  { name: 'GISTDA', href: 'https://www.gistda.or.th' },
-  { name: 'KMUTNB', href: 'https://www.kmutnb.ac.th/en' },
+  { name: 'KMITL', href: 'https://www.kmitl.ac.th/en', logo: '/logos/kmitl.svg' },
+  { name: 'ESRI', href: 'https://www.esri.com', logo: '/logos/esri.svg' },
+  { name: 'GISTDA', href: 'https://www.gistda.or.th', logo: '/logos/gistda.svg' },
+  { name: 'KMUTT', href: 'https://www.kmutt.ac.th/en', logo: '/logos/kmutt.svg' },
 ]
 
 const sponsoredBy = [
-  { name: 'ETDA', href: 'https://www.etda.or.th/en' },
+  { name: 'ETDA', href: 'https://www.etda.or.th/en', logo: '/logos/etda.svg' },
 ]
 
 const navLinks = [
@@ -76,9 +81,34 @@ const navLinks = [
 ]
 
 export default function LandingPage() {
-  const { days, hours, mins, secs } = useCountdown(DEADLINE)
-  const timeline = getTimeline()
+  const { currentPhase, timeline } = useCompetitionPhases()
+  const { days, hours, mins, secs } = useCountdown(currentPhase.date)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [sessionUser, setSessionUser] = useState<SessionUser | null>(null)
+
+  useEffect(() => {
+    let active = true
+
+    const fetchSession = async () => {
+      try {
+        const response = await fetch(`${API}/api/v1/auth/me`, { credentials: 'include' })
+        if (!response.ok) {
+          if (active) setSessionUser(null)
+          return
+        }
+
+        const payload = (await response.json()) as SessionUser
+        if (active) setSessionUser(payload)
+      } catch {
+        if (active) setSessionUser(null)
+      }
+    }
+
+    fetchSession()
+    return () => {
+      active = false
+    }
+  }, [])
 
   return (
     <div className="min-h-screen w-full bg-(--bg-base) overflow-x-hidden">
@@ -100,9 +130,20 @@ export default function LandingPage() {
                 {item.label}
               </Link>
             ))}
-            <Link href="/login" className="px-4 sm:px-6 py-2 sm:py-2.5 bg-(--accent-cyan) text-(--bg-base) rounded font-semibold text-xs sm:text-sm hover:opacity-90 transition-opacity">
-              Register Now
-            </Link>
+            {sessionUser ? (
+              <div className="flex items-center gap-3">
+                <div className="max-w-[220px] truncate rounded border border-(--border-subtle) bg-(--bg-surface) px-3 py-2 text-xs text-(--text-secondary)">
+                  {sessionUser.fullName || sessionUser.email || 'Authenticated User'}
+                </div>
+                <Link href="/dashboard" className="px-4 sm:px-6 py-2 sm:py-2.5 bg-(--accent-cyan) text-(--bg-base) rounded font-semibold text-xs sm:text-sm hover:opacity-90 transition-opacity">
+                  Open Dashboard
+                </Link>
+              </div>
+            ) : (
+              <Link href="/login" className="px-4 sm:px-6 py-2 sm:py-2.5 bg-(--accent-cyan) text-(--bg-base) rounded font-semibold text-xs sm:text-sm hover:opacity-90 transition-opacity">
+                Register Now
+              </Link>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -127,12 +168,26 @@ export default function LandingPage() {
                 {item.label}
               </Link>
             ))}
-            <Link
-              href="/login"
-              className="block px-4 py-2 bg-(--accent-cyan) text-(--bg-base) rounded font-semibold text-sm text-center hover:opacity-90 transition-opacity"
-            >
-              Register Now
-            </Link>
+            {sessionUser ? (
+              <>
+                <div className="px-4 py-2 text-sm text-(--text-secondary)">
+                  Signed in as {sessionUser.fullName || sessionUser.email || 'Authenticated User'}
+                </div>
+                <Link
+                  href="/dashboard"
+                  className="block px-4 py-2 bg-(--accent-cyan) text-(--bg-base) rounded font-semibold text-sm text-center hover:opacity-90 transition-opacity"
+                >
+                  Open Dashboard
+                </Link>
+              </>
+            ) : (
+              <Link
+                href="/login"
+                className="block px-4 py-2 bg-(--accent-cyan) text-(--bg-base) rounded font-semibold text-sm text-center hover:opacity-90 transition-opacity"
+              >
+                Register Now
+              </Link>
+            )}
           </div>
         )}
       </nav>
@@ -171,18 +226,18 @@ export default function LandingPage() {
 
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
             <Link
-              href="/login"
+              href={sessionUser ? '/dashboard' : '/login'}
               className="inline-flex items-center justify-center gap-2 px-6 sm:px-8 py-3 sm:py-3.5 bg-(--accent-cyan) text-(--bg-base) rounded font-semibold text-sm sm:text-base hover:opacity-90 transition-all active:scale-95 w-full sm:w-auto"
             >
               <Zap size={18} />
-              Continue with Google
+              {sessionUser ? 'Go to Dashboard' : 'Continue with Google'}
             </Link>
-            <a
-              href="#timeline"
+            <Link
+              href="/docs"
               className="inline-flex items-center justify-center gap-2 px-6 sm:px-8 py-3 sm:py-3.5 border border-(--border-active) text-(--text-primary) rounded font-semibold text-sm sm:text-base hover:bg-(--bg-surface) transition-colors w-full sm:w-auto"
             >
               View Technical Docs
-            </a>
+            </Link>
           </div>
         </div>
       </section>
@@ -198,9 +253,11 @@ export default function LandingPage() {
                 href={sponsor.href}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="font-display text-base sm:text-lg font-bold text-(--accent-cyan) tracking-widest hover:opacity-80"
+                className="flex items-center gap-2 rounded border border-(--border-subtle) bg-(--bg-surface) px-3 py-2 hover:opacity-80"
               >
-                {sponsor.name}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={sponsor.logo} alt={`${sponsor.name} logo`} className="h-5 w-auto" />
+                <span className="font-display text-base sm:text-lg font-bold text-(--accent-cyan) tracking-widest">{sponsor.name}</span>
               </a>
             ))}
           </div>
@@ -369,9 +426,13 @@ export default function LandingPage() {
                 href={institution.href}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="font-display text-sm sm:text-base md:text-lg font-bold text-(--text-muted) tracking-widest hover:text-(--text-primary) transition-colors"
+                className="flex items-center gap-2 rounded border border-(--border-subtle) bg-(--bg-base) px-3 py-2 hover:border-(--border-active) transition-colors"
               >
-                {institution.name}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={institution.logo} alt={`${institution.name} logo`} className="h-5 w-auto" />
+                <span className="font-display text-sm sm:text-base md:text-lg font-bold text-(--text-muted) tracking-widest hover:text-(--text-primary)">
+                  {institution.name}
+                </span>
               </a>
             ))}
           </div>

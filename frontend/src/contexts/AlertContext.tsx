@@ -89,7 +89,13 @@ export function AlertProvider({ children }: { children: ReactNode }) {
 export function useAlert() {
   const context = useContext(AlertContext);
   if (context === undefined) {
-    throw new Error('useAlert must be used within an AlertProvider');
+    return {
+      showAlert: (message: string) => {
+        if (typeof window !== 'undefined') {
+          window.alert(message)
+        }
+      },
+    }
   }
   return context;
 }

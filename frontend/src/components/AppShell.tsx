@@ -7,6 +7,7 @@ import type { LucideIcon } from 'lucide-react'
 import {
   BookOpen,
   ClipboardCheck,
+  Cog,
   FileText,
   LayoutGrid,
   LifeBuoy,
@@ -21,7 +22,8 @@ import {
   X,
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
-import { formatPhaseDeadline, getCurrentPhase } from '@/lib/competitionPhase'
+import { formatPhaseDeadline } from '@/lib/competitionPhase'
+import { useCompetitionPhases } from '@/hooks/useCompetitionPhases'
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
 
@@ -71,6 +73,7 @@ const baseMenu: NavItem[] = [
   { href: '/dashboard', label: 'Overview', icon: LayoutGrid },
   { href: '/team', label: 'My Team', icon: Users },
   { href: '/submissions', label: 'Submissions', icon: FileText },
+  { href: '/settings', label: 'Settings', icon: Cog },
   { href: '/resources', label: 'Resources', icon: BookOpen, activeColor: 'var(--accent-green)' },
   { href: '/support', label: 'Support', icon: LifeBuoy },
 ]
@@ -81,6 +84,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [savingProfile, setSavingProfile] = useState(false)
   const [profileError, setProfileError] = useState('')
+  const { currentPhase } = useCompetitionPhases()
   const [profileData, setProfileData] = useState({
     firstName: actor?.profile?.firstName || '',
     lastName: actor?.profile?.lastName || '',
@@ -99,6 +103,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     if (!isPrivileged) return [] as NavItem[]
     return [
       { href: '/admin', label: 'Admin Panel', icon: Shield, activeColor: 'var(--accent-green)' },
+      { href: '/admin/deadlines', label: 'Phase Deadlines', icon: Trophy, activeColor: 'var(--accent-green)' },
       { href: '/admin/logs', label: 'Logs', icon: ScrollText, activeColor: 'var(--accent-green)' },
     ]
   }, [isPrivileged])
@@ -115,18 +120,12 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
   const hasElevatedRole = Boolean(actor?.roles?.some((role) => role === 'ADMIN' || role === 'MODERATOR' || role === 'JUDGE'))
   const needsProfileSetup = Boolean(actor?.roles?.includes('COMPETITOR') && !hasElevatedRole && !actor?.profileCompleted)
-  const currentPhase = useMemo(() => getCurrentPhase(), [])
   const phaseDeadline = useMemo(() => formatPhaseDeadline(currentPhase.date), [currentPhase.date])
   const primaryRole = actor?.roles?.[0] || 'GUEST'
 
   const saveProfile = async (event: FormEvent) => {
     event.preventDefault()
     setProfileError('')
-
-    if (!idCardFile && !actor?.profile?.idCardFileUploaded) {
-      setProfileError('Please upload your student ID file.')
-      return
-    }
 
     setSavingProfile(true)
     try {
@@ -222,34 +221,46 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     <div className="min-h-screen flex flex-col bg-(--bg-base)">
       {needsProfileSetup && (
         <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
-          <form onSubmit={saveProfile} className="w-full max-w-2xl rounded-lg border border-(--border-active) bg-(--bg-surface) p-6 sm:p-8">
-            <h2 className="font-display text-xl sm:text-2xl text-(--accent-cyan) mb-2">Complete Competitor Profile</h2>
-            <p className="text-xs sm:text-sm text-(--text-secondary) mb-5">
+          <form onSubmit={saveProfile} className="w-full max-w-3xl rounded-lg border border-(--border-active) bg-(--bg-surface) p-6 shadow-[0_24px_48px_rgba(0,0,0,0.35)] sm:p-8">
+            <div className="mb-4 flex items-center justify-between gap-4">
+              <h2 className="font-display text-xl sm:text-2xl text-(--accent-cyan)">Complete Competitor Profile</h2>
+              <span className="rounded border border-(--accent-cyan) bg-[rgba(0,229,255,0.08)] px-2 py-1 text-[10px] font-semibold tracking-[0.06em] text-(--accent-cyan)">
+                REQUIRED
+              </span>
+            </div>
+            <p className="mb-6 text-xs sm:text-sm text-(--text-secondary)">
               This is required for first-time signup. Your submitted information will be used in Team view and permission letter generation.
             </p>
 
             {profileError && <div className="mb-4 rounded border border-(--accent-red) bg-[rgba(255,23,68,0.08)] px-3 py-2 text-xs text-(--accent-red)">{profileError}</div>}
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
-              <input required placeholder="Name" value={profileData.firstName} onChange={(e) => setProfileData((prev) => ({ ...prev, firstName: e.target.value }))} className="rounded border border-(--border-subtle) bg-(--bg-base) px-3 py-2 text-sm" />
-              <input required placeholder="Surname" value={profileData.lastName} onChange={(e) => setProfileData((prev) => ({ ...prev, lastName: e.target.value }))} className="rounded border border-(--border-subtle) bg-(--bg-base) px-3 py-2 text-sm" />
-              <input required placeholder="University" value={profileData.university} onChange={(e) => setProfileData((prev) => ({ ...prev, university: e.target.value }))} className="rounded border border-(--border-subtle) bg-(--bg-base) px-3 py-2 text-sm" />
-              <input required type="number" min={1} max={12} placeholder="Years" value={profileData.yearOfStudy} onChange={(e) => setProfileData((prev) => ({ ...prev, yearOfStudy: e.target.value }))} className="rounded border border-(--border-subtle) bg-(--bg-base) px-3 py-2 text-sm" />
-              <input required placeholder="Phone Number" value={profileData.phoneNumber} onChange={(e) => setProfileData((prev) => ({ ...prev, phoneNumber: e.target.value }))} className="rounded border border-(--border-subtle) bg-(--bg-base) px-3 py-2 text-sm sm:col-span-2" />
-              <textarea required placeholder="Address" value={profileData.address} onChange={(e) => setProfileData((prev) => ({ ...prev, address: e.target.value }))} className="rounded border border-(--border-subtle) bg-(--bg-base) px-3 py-2 text-sm sm:col-span-2 min-h-20" />
+            <div className="rounded border border-(--border-subtle) bg-(--bg-base) p-4 sm:p-5">
+              <div className="mb-3 text-xs font-semibold tracking-[0.06em] text-(--text-muted)">PROFILE INFORMATION</div>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <input required placeholder="First Name" value={profileData.firstName} onChange={(e) => setProfileData((prev) => ({ ...prev, firstName: e.target.value }))} className="rounded border border-(--border-subtle) bg-(--bg-surface) px-3 py-2 text-sm" />
+                <input required placeholder="Last Name" value={profileData.lastName} onChange={(e) => setProfileData((prev) => ({ ...prev, lastName: e.target.value }))} className="rounded border border-(--border-subtle) bg-(--bg-surface) px-3 py-2 text-sm" />
+                <input required placeholder="University" value={profileData.university} onChange={(e) => setProfileData((prev) => ({ ...prev, university: e.target.value }))} className="rounded border border-(--border-subtle) bg-(--bg-surface) px-3 py-2 text-sm" />
+                <input required type="number" min={1} max={12} placeholder="Year of Study" value={profileData.yearOfStudy} onChange={(e) => setProfileData((prev) => ({ ...prev, yearOfStudy: e.target.value }))} className="rounded border border-(--border-subtle) bg-(--bg-surface) px-3 py-2 text-sm" />
+                <input required placeholder="Phone Number" value={profileData.phoneNumber} onChange={(e) => setProfileData((prev) => ({ ...prev, phoneNumber: e.target.value }))} className="rounded border border-(--border-subtle) bg-(--bg-surface) px-3 py-2 text-sm sm:col-span-2" />
+                <textarea required placeholder="Address" value={profileData.address} onChange={(e) => setProfileData((prev) => ({ ...prev, address: e.target.value }))} className="min-h-24 rounded border border-(--border-subtle) bg-(--bg-surface) px-3 py-2 text-sm sm:col-span-2" />
+              </div>
             </div>
 
-            <div className="mb-5">
-              <label className="block text-xs text-(--text-secondary) mb-2">Upload Student ID (JPG/PNG/PDF, max 5MB)</label>
+            <div className="mb-6 mt-4 rounded border border-(--border-subtle) bg-(--bg-base) p-4 sm:p-5">
+              <div className="mb-2 text-xs font-semibold tracking-[0.06em] text-(--text-muted)">STUDENT ID UPLOAD</div>
+              <label className="mb-2 block text-xs text-(--text-secondary)">Upload Student ID (Optional, JPG/PNG/PDF, max 5MB)</label>
               <input
                 type="file"
                 accept="image/jpeg,image/png,application/pdf"
                 onChange={(e) => setIdCardFile(e.target.files?.[0] || null)}
                 className="block w-full text-xs"
               />
+              <p className="mt-2 text-[11px] text-(--text-muted)">
+                You can continue without uploading now, but every team member must upload Student ID before proposal submission.
+              </p>
             </div>
 
-            <button type="submit" disabled={savingProfile} className="w-full rounded bg-(--accent-cyan) px-4 py-2.5 text-sm font-semibold text-(--bg-base) disabled:opacity-60">
+            <button type="submit" disabled={savingProfile} className="w-full rounded bg-(--accent-cyan) px-4 py-3 text-sm font-semibold text-(--bg-base) disabled:opacity-60">
               {savingProfile ? 'Saving profile...' : 'Save and Continue'}
             </button>
           </form>
@@ -267,9 +278,9 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             >
               {mobileMenuOpen ? <X size={18} /> : <Menu size={18} />}
             </button>
-            <div className="font-display text-sm sm:text-base md:text-lg font-bold tracking-widest text-(--accent-cyan) truncate">
+            <Link href="/" className="font-display text-sm sm:text-base md:text-lg font-bold tracking-widest text-(--accent-cyan) truncate no-underline">
               GEOAI
-            </div>
+            </Link>
             <nav className="hidden lg:flex items-center gap-4 lg:gap-6 text-xs lg:text-sm font-medium">
               {topLinks.map((link) => (
                 <Link
@@ -307,8 +318,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         <div className="fixed inset-0 z-[90] bg-black/50 lg:hidden" onClick={() => setMobileMenuOpen(false)} />
       )}
 
-      <div className="flex h-[calc(100vh-65px)]">
-        <aside className="hidden h-full w-64 shrink-0 flex-col border-r border-(--border-subtle) bg-(--bg-base) pt-8 lg:flex">
+      <div className="flex min-h-[calc(100vh-65px)] items-stretch">
+        <aside className="hidden min-h-[calc(100vh-65px)] w-64 shrink-0 self-stretch flex-col border-r border-(--border-subtle) bg-(--bg-base) pt-8 lg:flex">
           <div className="mb-8 px-6">
             <div className="text-base font-semibold tracking-[0.05em] text-(--accent-cyan)">HACKATHON_v1.0</div>
             <div className="font-mono text-[10px] tracking-[0.1em] text-(--text-muted)">ORBITAL COMMAND</div>
@@ -431,7 +442,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           </div>
         </aside>
 
-        <main className="min-w-0 flex-1 overflow-y-auto">
+        <main className="min-w-0 flex-1 overflow-visible">
           {children}
         </main>
       </div>

@@ -9,7 +9,7 @@ export type CompetitionPhase = {
   date: string
 }
 
-export const COMPETITION_PHASES: CompetitionPhase[] = [
+export const DEFAULT_COMPETITION_PHASES: CompetitionPhase[] = [
   {
     key: 'registration',
     phase: 'PHASE 01',
@@ -56,18 +56,25 @@ export type TimelineItem = CompetitionPhase & {
   status: TimelineStatus
 }
 
-export function getTimeline(now = new Date()): TimelineItem[] {
-  const currentIndex = COMPETITION_PHASES.findIndex((item) => now.getTime() < new Date(item.date).getTime())
-  const activeIndex = currentIndex === -1 ? COMPETITION_PHASES.length - 1 : currentIndex
+export function getTimeline(phases: CompetitionPhase[] = DEFAULT_COMPETITION_PHASES, now = new Date()): TimelineItem[] {
+  if (phases.length === 0) return []
+  const currentIndex = phases.findIndex((item) => now.getTime() < new Date(item.date).getTime())
+  const activeIndex = currentIndex === -1 ? phases.length - 1 : currentIndex
 
-  return COMPETITION_PHASES.map((item, index) => ({
+  return phases.map((item, index) => ({
     ...item,
     status: index < activeIndex ? 'done' : index === activeIndex ? 'active' : 'upcoming',
   }))
 }
 
-export function getCurrentPhase(now = new Date()): TimelineItem {
-  const timeline = getTimeline(now)
+export function getCurrentPhase(phases: CompetitionPhase[] = DEFAULT_COMPETITION_PHASES, now = new Date()): TimelineItem {
+  const timeline = getTimeline(phases, now)
+  if (timeline.length === 0) {
+    return {
+      ...DEFAULT_COMPETITION_PHASES[DEFAULT_COMPETITION_PHASES.length - 1],
+      status: 'active',
+    }
+  }
   return timeline.find((item) => item.status === 'active') || timeline[timeline.length - 1]
 }
 
@@ -81,4 +88,8 @@ export function formatPhaseDeadline(dateIso: string): string {
     minute: '2-digit',
     hour12: false,
   })
+}
+
+export function getPhaseByKey(phases: CompetitionPhase[], key: string): CompetitionPhase | null {
+  return phases.find((phase) => phase.key === key) || null
 }

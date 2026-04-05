@@ -6,11 +6,6 @@ import path from 'path'
 import { fileURLToPath } from 'url'
 
 const DEFAULT_ADMIN_EMAIL_ALLOWLIST = [
-  'jirapoom.bu@kmitl.ac.th',
-  'cegs@kmitl.ac.th',
-  'napat.tongkasem@gmail.com',
-  'pornchai.su@kmitl.ac.th',
-  'pornchai.supnithi@gmail.com',
   'daydedaa@gmail.com',
 ]
 

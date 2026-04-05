@@ -2,9 +2,12 @@
 
 import { useEffect, useMemo, useState, useCallback } from 'react'
 import {
+  ArrowDownUp,
   BarChart3,
   CheckCircle2,
   ClipboardList,
+  Expand,
+  ExternalLink,
   FileText,
   Gauge,
   History,
@@ -16,7 +19,9 @@ import {
 import { AuthProvider, useAuth } from '@/contexts/AuthContext'
 import { useAlert } from '@/contexts/AlertContext'
 import AppShell from '@/components/AppShell'
-import { formatPhaseDeadline, getCurrentPhase } from '@/lib/competitionPhase'
+import { formatPhaseDeadline } from '@/lib/competitionPhase'
+import { useCompetitionPhases } from '@/hooks/useCompetitionPhases'
+import CustomDropdown from '@/components/CustomDropdown'
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
 
@@ -25,6 +30,7 @@ type Tab = 'QUEUE' | 'PAST_REVIEWS' | 'SETTINGS'
 interface Team {
   name: string
   track: string
+  currentStatus?: string
 }
 
 interface FileItem {
@@ -47,6 +53,7 @@ interface ScoreAggregate {
 
 interface Submission {
   id: string
+  displayId?: number | null
   submittedAt: string
   team: Team
   files: FileItem[]
@@ -77,6 +84,7 @@ function JudgeContent() {
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState<Tab>('QUEUE')
   const [activeSubId, setActiveSubId] = useState<string | null>(null)
+  const [pdfModalOpen, setPdfModalOpen] = useState(false)
 
   const [scores, setScores] = useState({
     nationalImpactScore: 0,
@@ -86,7 +94,9 @@ function JudgeContent() {
   })
   const [comments, setComments] = useState('')
   const [saving, setSaving] = useState(false)
-  const currentPhase = getCurrentPhase()
+  const [updatingFinalStatus, setUpdatingFinalStatus] = useState(false)
+  const [sortMode, setSortMode] = useState<'mean_desc' | 'mean_asc' | 'submitted_desc' | 'submitted_asc'>('mean_desc')
+  const { currentPhase } = useCompetitionPhases()
   const phaseDeadline = formatPhaseDeadline(currentPhase.date)
 
   const fetchQueue = useCallback(async () => {
@@ -120,7 +130,30 @@ function JudgeContent() {
     [queue],
   )
 
-  const currentTabQueue = activeTab === 'QUEUE' ? unscoredQueue : scoredQueue
+  const baseTabQueue = activeTab === 'QUEUE' ? unscoredQueue : scoredQueue
+  const currentTabQueue = useMemo(() => {
+    const cloned = [...baseTabQueue]
+    if (sortMode === 'mean_asc' || sortMode === 'mean_desc') {
+      cloned.sort((a, b) => {
+        const aScore = a.scoreAggregate?.totalWeighted ?? (sortMode === 'mean_asc' ? Number.POSITIVE_INFINITY : Number.NEGATIVE_INFINITY)
+        const bScore = b.scoreAggregate?.totalWeighted ?? (sortMode === 'mean_asc' ? Number.POSITIVE_INFINITY : Number.NEGATIVE_INFINITY)
+        if (aScore !== bScore) {
+          return sortMode === 'mean_asc' ? aScore - bScore : bScore - aScore
+        }
+        return new Date(a.submittedAt).getTime() - new Date(b.submittedAt).getTime()
+      })
+      return cloned
+    }
+
+    if (sortMode === 'submitted_desc') {
+      cloned.sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime())
+      return cloned
+    }
+
+    cloned.sort((a, b) => new Date(a.submittedAt).getTime() - new Date(b.submittedAt).getTime())
+    return cloned
+  }, [baseTabQueue, sortMode])
+
   const activeSubmission = currentTabQueue.find((item) => item.id === activeSubId) || null
 
   useEffect(() => {
@@ -158,6 +191,8 @@ function JudgeContent() {
     scores.requirementComplianceScore * 0.15 +
     scores.feasibilityScore * 0.15
 
+  const activePdfUrl = activeSubmission ? `${API}/api/v1/submissions/${activeSubmission.id}/view` : ''
+
   const submitScore = async () => {
     if (!activeSubmission) return
 
@@ -182,6 +217,44 @@ function JudgeContent() {
       showAlert('Unexpected error while saving score.', 'error')
     } finally {
       setSaving(false)
+    }
+  }
+
+  const updateFinalStatus = async (status: 'FINALIST' | 'REJECTED') => {
+    if (!activeSubmission) return
+    setUpdatingFinalStatus(true)
+    try {
+      const res = await fetch(`${API}/api/v1/judge/submissions/${activeSubmission.id}/final-status`, {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status }),
+      })
+
+      if (!res.ok) {
+        const payload = await res.json().catch(() => ({})) as { error?: string }
+        showAlert(payload.error || 'Unable to update final qualification status.', 'warning')
+        return
+      }
+
+      const payload = await res.json().catch(() => ({})) as {
+        votes?: { finalist?: number; disqualified?: number }
+        status?: string
+      }
+
+      const finalistVotes = payload.votes?.finalist ?? 0
+      const disqualifiedVotes = payload.votes?.disqualified ?? 0
+      const appliedStatus = payload.status || 'JUDGED'
+
+      showAlert(
+        `Vote recorded. Finalist ${finalistVotes} · Disqualified ${disqualifiedVotes} · Applied: ${appliedStatus}`,
+        'info',
+      )
+      await fetchQueue()
+    } catch {
+      showAlert('Unexpected error while updating final qualification status.', 'error')
+    } finally {
+      setUpdatingFinalStatus(false)
     }
   }
 
@@ -274,6 +347,27 @@ function JudgeContent() {
               </div>
             ) : (
               <div className="flex max-h-[60vh] flex-col gap-2 overflow-y-auto pr-1">
+                <div className="mb-1 rounded border border-(--border-subtle) bg-(--bg-base) px-3 py-2">
+                  <div className="mb-2 inline-flex items-center gap-1 text-[10px] uppercase tracking-[0.08em] text-(--text-muted)">
+                    <ArrowDownUp size={12} />
+                    Sort Order
+                  </div>
+                  <CustomDropdown
+                    className="w-full"
+                    value={sortMode}
+                    onChange={(value) => setSortMode(value as 'mean_desc' | 'mean_asc' | 'submitted_desc' | 'submitted_asc')}
+                    options={[
+                      { value: 'mean_desc', label: 'Mean Score (High to Low)' },
+                      { value: 'mean_asc', label: 'Mean Score (Low to High)' },
+                      { value: 'submitted_desc', label: 'Submitted (Newest)' },
+                      { value: 'submitted_asc', label: 'Submitted (Earliest First)' },
+                    ]}
+                  />
+                </div>
+                <div className="grid grid-cols-[64px_1fr] gap-2 px-1 text-[10px] uppercase tracking-[0.08em] text-(--text-muted)">
+                  <div>ID</div>
+                  <div>Submission</div>
+                </div>
                 {loading && <div className="text-xs text-(--text-muted)">Loading queue...</div>}
                 {!loading && currentTabQueue.length === 0 && (
                   <div className="text-xs text-(--text-muted)">No submissions in this tab.</div>
@@ -291,12 +385,24 @@ function JudgeContent() {
                           : 'border-(--border-subtle) bg-(--bg-base) hover:border-(--accent-cyan)'
                       }`}
                     >
-                      <div className="text-[10px] uppercase tracking-[0.08em] text-(--text-muted)">
-                        {formatTrackLabel(item.team.track)}
-                      </div>
-                      <div className="mt-1 text-sm font-semibold text-white">{item.team.name}</div>
-                      <div className="mt-1 text-[11px] text-(--text-muted)">
-                        {new Date(item.submittedAt).toLocaleString()}
+                      <div className="grid grid-cols-[64px_1fr] gap-2">
+                        <div className="pt-0.5 text-left text-sm font-semibold text-(--accent-cyan)">
+                          {item.displayId ?? '-'}
+                        </div>
+                        <div>
+                          <div className="text-[10px] uppercase tracking-[0.08em] text-(--text-muted)">
+                            {formatTrackLabel(item.team.track)}
+                          </div>
+                          <div className="mt-1 text-sm font-semibold text-white">{item.team.name}</div>
+                          {item.scoreAggregate && (
+                            <div className="mt-1 text-[11px] text-(--accent-cyan)">
+                              Mean: {item.scoreAggregate.totalWeighted.toFixed(2)}
+                            </div>
+                          )}
+                          <div className="mt-1 text-[11px] text-(--text-muted)">
+                            {new Date(item.submittedAt).toLocaleString()}
+                          </div>
+                        </div>
                       </div>
                     </button>
                   )
@@ -313,6 +419,14 @@ function JudgeContent() {
             ) : (
               <>
                 <div className="mb-4 flex flex-wrap items-center gap-2">
+                  <span className="rounded border border-(--accent-cyan) bg-[rgba(0,229,255,0.08)] px-2.5 py-1 text-[11px] font-semibold text-(--accent-cyan)">
+                    ID {activeSubmission.displayId ?? '-'}
+                  </span>
+                  {activeSubmission.team.currentStatus && (
+                    <span className="rounded border border-(--border-subtle) bg-(--bg-base) px-2.5 py-1 text-[11px] font-semibold text-(--text-secondary)">
+                      TEAM STATUS: {activeSubmission.team.currentStatus}
+                    </span>
+                  )}
                   <span className="rounded border border-(--accent-green) bg-[rgba(0,230,118,0.08)] px-2.5 py-1 text-[11px] font-semibold text-(--accent-green)">
                     {formatTrackLabel(activeSubmission.team.track)}
                   </span>
@@ -329,26 +443,43 @@ function JudgeContent() {
                 <div className="mt-5 rounded border border-(--border-subtle) bg-(--bg-base) p-4">
                   <div className="mb-2 flex items-center gap-2 text-sm text-white">
                     <FileText size={16} className="text-(--accent-cyan)" />
-                    Proposal Document
+                    Proposal Document Viewer
                   </div>
-                  <a
-                    href={`${API}/api/v1/submissions/${activeSubmission.id}/view`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center gap-2 rounded border border-(--accent-cyan) px-3 py-1.5 text-xs text-(--accent-cyan) no-underline"
-                  >
-                    Open PDF
-                  </a>
+                  <div className="mb-3 flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setPdfModalOpen(true)}
+                      className="inline-flex items-center gap-2 rounded border border-(--accent-cyan) px-3 py-1.5 text-xs text-(--accent-cyan)"
+                    >
+                      <Expand size={13} />
+                      Expand to Full Screen
+                    </button>
+                    <a
+                      href={activePdfUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-2 rounded border border-(--border-subtle) px-3 py-1.5 text-xs text-(--text-secondary) no-underline"
+                    >
+                      <ExternalLink size={13} />
+                      View Proposal in New Tab
+                    </a>
+                  </div>
+                  {activePdfUrl ? (
+                    <div className="overflow-hidden rounded border border-(--border-subtle) bg-black/20">
+                      <iframe
+                        title={`Proposal ${activeSubmission.team.name}`}
+                        src={activePdfUrl}
+                        className="h-[560px] w-full"
+                      />
+                    </div>
+                  ) : (
+                    <div className="rounded border border-(--accent-amber) bg-[rgba(255,167,38,0.08)] px-3 py-2 text-xs text-(--accent-amber)">
+                      Proposal PDF is not available for this submission.
+                    </div>
+                  )}
                   {activeSubmission.files[0]?.originalName && (
                     <div className="mt-2 text-xs text-(--text-muted)">{activeSubmission.files[0].originalName}</div>
                   )}
-                </div>
-
-                <div className="mt-5 rounded border border-(--border-subtle) bg-(--bg-base) p-4">
-                  <div className="mb-2 text-xs uppercase tracking-[0.08em] text-(--text-muted)">Abstract</div>
-                  <div className="max-h-[260px] overflow-y-auto whitespace-pre-wrap text-sm leading-6 text-(--text-secondary)">
-                    {activeSubmission.abstract || 'No abstract summary available. Please review the proposal document.'}
-                  </div>
                 </div>
               </>
             )}
@@ -431,6 +562,7 @@ function JudgeContent() {
                   <textarea
                     value={comments}
                     onChange={(event) => setComments(event.target.value)}
+                    rows={6}
                     className="min-h-[120px] w-full rounded border border-(--border-subtle) bg-(--bg-base) p-3 text-sm text-white outline-none"
                     placeholder="Write clear justification for your score."
                   />
@@ -445,11 +577,63 @@ function JudgeContent() {
                   <Save size={16} />
                   {saving ? 'Saving...' : activeTab === 'PAST_REVIEWS' ? 'Update Score' : 'Submit Score'}
                 </button>
+
+                {activeTab === 'PAST_REVIEWS' && (
+                  <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                    <button
+                      type="button"
+                      onClick={() => updateFinalStatus('FINALIST')}
+                      disabled={updatingFinalStatus}
+                      className="rounded border border-(--accent-green) bg-[rgba(0,230,118,0.1)] px-3 py-2 text-xs font-semibold text-(--accent-green) disabled:opacity-60"
+                    >
+                      {updatingFinalStatus ? 'Updating...' : 'Mark as Finalist'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => updateFinalStatus('REJECTED')}
+                      disabled={updatingFinalStatus}
+                      className="rounded border border-(--accent-red) bg-[rgba(255,23,68,0.1)] px-3 py-2 text-xs font-semibold text-(--accent-red) disabled:opacity-60"
+                    >
+                      {updatingFinalStatus ? 'Updating...' : 'Mark as Disqualified'}
+                    </button>
+                  </div>
+                )}
               </>
             )}
           </section>
         </div>
       </div>
+
+      {pdfModalOpen && activeSubmission && (
+        <div className="fixed inset-0 z-[140] bg-black/80 p-3 sm:p-6">
+          <div className="mx-auto flex h-full w-full max-w-[1400px] flex-col overflow-hidden rounded-lg border border-(--border-subtle) bg-(--bg-surface)">
+            <div className="flex items-center justify-between border-b border-(--border-subtle) px-4 py-3">
+              <div className="inline-flex items-center gap-2 text-sm font-semibold text-white">
+                <FileText size={15} className="text-(--accent-cyan)" />
+                {activeSubmission.team.name} Proposal
+              </div>
+              <button
+                type="button"
+                onClick={() => setPdfModalOpen(false)}
+                className="rounded border border-(--border-subtle) px-3 py-1 text-xs text-(--text-secondary)"
+              >
+                Close
+              </button>
+            </div>
+            {activePdfUrl ? (
+              <iframe
+                title={`Full screen proposal ${activeSubmission.team.name}`}
+                src={activePdfUrl}
+                className="h-full w-full"
+              />
+            ) : (
+              <div className="m-4 rounded border border-(--accent-amber) bg-[rgba(255,167,38,0.08)] px-3 py-2 text-xs text-(--accent-amber)">
+                Proposal PDF is not available for this submission.
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

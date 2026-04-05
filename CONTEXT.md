@@ -131,7 +131,7 @@ Acceptance:
 2. Generated PDF contains complete member list and event metadata.
 
 ### 4.8 Public Pages and Resources
-1. FR-070: Landing page includes sponsor section: KMITL, ESRI, GISTDA, KMUTNB, ETDA.
+1. FR-070: Landing page includes sponsor section: KMITL, ESRI, GISTDA, KMUTT, ETDA.
 2. FR-071: Landing page includes two competition tracks.
 3. FR-072: Landing page includes full timeline and final pitching round of 15 minutes.
 4. FR-073: Logged-in resources portal includes GISTDA Sphere base map guide/API links.

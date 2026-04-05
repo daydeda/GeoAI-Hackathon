@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { AuthProvider } from '@/contexts/AuthContext'
 import NavRail from '@/components/NavRail'
 import { useAuth } from '@/contexts/AuthContext'
-import { Eye, Lock, Download, CheckCircle2 } from 'lucide-react'
+import { Eye, Lock, Download, CheckCircle2, UserCircle } from 'lucide-react'
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
 
@@ -59,7 +59,9 @@ function DocumentVaultContent() {
           <div className="py-12 sm:py-16 lg:py-20 text-center text-(--text-muted) text-sm sm:text-base">Loading…</div>
         ) : !isFinalist ? (
           <div className="mt-6 sm:mt-8 lg:mt-12 text-center py-12 sm:py-16 lg:py-20">
-            <div className="text-4xl sm:text-5xl lg:text-6xl mb-4 opacity-30">🔒</div>
+            <div className="mb-4 flex items-center justify-center opacity-40">
+              <Lock size={52} className="text-(--text-muted)" />
+            </div>
             <div className="font-display text-lg sm:text-xl lg:text-2xl text-(--text-muted) mb-2 sm:mb-3">FINALIST STATUS REQUIRED</div>
             <div className="text-xs sm:text-sm lg:text-base text-(--text-muted)">Your team has not yet reached Finalist status. Documents will be unlocked upon promotion.</div>
           </div>
@@ -79,7 +81,10 @@ function DocumentVaultContent() {
               <div className="text-left sm:text-right border-t sm:border-t-0 sm:border-l border-(--border-subtle) pt-4 sm:pt-0 sm:pl-4 lg:pl-6">
                 <div className="text-[8px] sm:text-xs lg:text-sm text-(--text-muted)">ACTIVE TEAM</div>
                 <div className="font-display text-base sm:text-lg lg:text-xl mt-1 text-white truncate">{team?.name}</div>
-                <div className="text-[8px] sm:text-xs lg:text-sm text-(--text-muted) mt-1">👥 {team?.members?.length ?? 0} Members</div>
+                <div className="inline-flex items-center gap-1 text-[8px] sm:text-xs lg:text-sm text-(--text-muted) mt-1">
+                  <UserCircle size={14} />
+                  <span>{team?.members?.length ?? 0} Members</span>
+                </div>
               </div>
             </div>
 
@@ -93,7 +98,7 @@ function DocumentVaultContent() {
               {(team?.members ?? []).map((member, i) => (
                 <div key={i} className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 p-3 sm:p-4 lg:p-5 bg-(--bg-surface) border border-(--border-subtle) rounded-lg hover:border-(--border-active) transition-colors">
                   <div className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 rounded-full bg-(--bg-elevated) flex items-center justify-center text-sm sm:text-base lg:text-lg flex-shrink-0">
-                    👤
+                    <UserCircle size={22} className="text-(--accent-cyan)" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="font-semibold text-xs sm:text-sm lg:text-base text-white truncate">{member.fullName}</div>

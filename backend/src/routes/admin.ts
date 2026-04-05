@@ -10,12 +10,223 @@ import { exportData } from '../services/exporter.js'
 import { generatePermissionLetter } from '../services/pdfGenerator.js'
 import { minioClient, BUCKET } from '../services/storage.js'
 import { Prisma, TeamStatus, ExportType } from '@prisma/client'
+import { getPhaseByKey } from '../services/phaseConfig.js'
+import { sendAnnouncementEmail } from '../services/announcementMailer.js'
 
 const AssignRoleSchema = z.object({ role: z.enum(['COMPETITOR', 'MODERATOR', 'JUDGE', 'ADMIN']) })
 const TeamStatusSchema = z.object({ status: z.nativeEnum(TeamStatus), note: z.string().optional() })
 const ExportSchema = z.object({ type: z.nativeEnum(ExportType) })
+const SendAnnouncementSchema = z.object({
+  projectName: z.string().trim().min(1).max(120).optional(),
+  onlyGmail: z.boolean().optional(),
+})
+
+function getFinalResultStatus(status: TeamStatus): TeamStatus {
+  return status === 'FINALIST' ? 'FINALIST' : 'REJECTED'
+}
 
 export async function adminRoutes(app: FastifyInstance) {
+  // GET /api/v1/admin/announcement-email/status
+  app.get('/announcement-email/status', { preHandler: [requireRole('ADMIN')] }, async (_request, reply) => {
+    const announcementPhase = await getPhaseByKey('announcement')
+    if (!announcementPhase) {
+      return reply.status(500).send({ error: 'Announcement phase is not configured' })
+    }
+
+    const announcementDate = new Date(announcementPhase.date)
+    if (Number.isNaN(announcementDate.getTime())) {
+      return reply.status(500).send({ error: 'Announcement phase date is invalid' })
+    }
+
+    const now = new Date()
+    const [sentCount, failedCount] = await Promise.all([
+      prisma.announcementEmailLog.count({
+        where: { announcementDate, status: 'SENT' },
+      }),
+      prisma.announcementEmailLog.count({
+        where: { announcementDate, status: 'FAILED' },
+      }),
+    ])
+
+    return {
+      announcementDate: announcementDate.toISOString(),
+      enabled: now.getTime() >= announcementDate.getTime(),
+      sentCount,
+      failedCount,
+    }
+  })
+
+  // POST /api/v1/admin/announcement-email/send
+  app.post('/announcement-email/send', { preHandler: [requireRole('ADMIN')] }, async (request, reply) => {
+    const actor = request.user as JwtPayload
+    const parsedBody = SendAnnouncementSchema.safeParse(request.body ?? {})
+    if (!parsedBody.success) return reply.status(400).send({ error: parsedBody.error.flatten() })
+
+    const onlyGmail = parsedBody.data.onlyGmail ?? false
+    const projectName = parsedBody.data.projectName || 'GeoAI Hackathon'
+
+    const announcementPhase = await getPhaseByKey('announcement')
+    if (!announcementPhase) {
+      return reply.status(500).send({ error: 'Announcement phase is not configured' })
+    }
+
+    const announcementDate = new Date(announcementPhase.date)
+    if (Number.isNaN(announcementDate.getTime())) {
+      return reply.status(500).send({ error: 'Announcement phase date is invalid' })
+    }
+
+    if (Date.now() < announcementDate.getTime()) {
+      return reply.status(400).send({
+        error: 'Announcement email is not available yet',
+        announcementDate: announcementDate.toISOString(),
+      })
+    }
+
+    const competitors = await prisma.user.findMany({
+      where: {
+        // Send to all users who are actually in a team, regardless of their current role.
+        // Some members may have ADMIN/MODERATOR/JUDGE roles and would be skipped if we filter COMPETITOR only.
+        teamMembers: { some: {} },
+        announcementSent: false,
+      },
+      include: {
+        teamMembers: {
+          include: {
+            team: {
+              select: { id: true, name: true, currentStatus: true },
+            },
+          },
+          orderBy: { joinedAt: 'asc' },
+        },
+      },
+    })
+
+    let sentCount = 0
+    let failedCount = 0
+    let skippedCount = 0
+    const failures: Array<{ email: string; reason: string }> = []
+
+    for (const competitor of competitors) {
+      const email = competitor.email.trim().toLowerCase()
+      const team = competitor.teamMembers[0]?.team
+
+      if (!team) {
+        skippedCount += 1
+        continue
+      }
+
+      if (onlyGmail && !email.endsWith('@gmail.com')) {
+        skippedCount += 1
+        continue
+      }
+
+      const finalStatus = getFinalResultStatus(team.currentStatus)
+      const result = finalStatus === 'FINALIST' ? 'QUALIFIED' : 'DISQUALIFIED'
+
+      try {
+        await sendAnnouncementEmail({
+          to: email,
+          recipientName: competitor.fullName,
+          teamName: team.name,
+          projectName,
+          result,
+        })
+
+        await prisma.announcementEmailLog.upsert({
+          where: {
+            announcementDate_recipientEmail: {
+              announcementDate,
+              recipientEmail: email,
+            },
+          },
+          update: {
+            recipientUserId: competitor.id,
+            teamId: team.id,
+            teamName: team.name,
+            result: finalStatus,
+            status: 'SENT',
+            errorMessage: null,
+            sentAt: new Date(),
+          },
+          create: {
+            announcementDate,
+            recipientUserId: competitor.id,
+            recipientEmail: email,
+            teamId: team.id,
+            teamName: team.name,
+            result: finalStatus,
+            status: 'SENT',
+            sentAt: new Date(),
+          },
+        })
+
+        await prisma.user.update({
+          where: { id: competitor.id },
+          data: { announcementSent: true },
+        })
+
+        sentCount += 1
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown email send error'
+
+        await prisma.announcementEmailLog.upsert({
+          where: {
+            announcementDate_recipientEmail: {
+              announcementDate,
+              recipientEmail: email,
+            },
+          },
+          update: {
+            recipientUserId: competitor.id,
+            teamId: team.id,
+            teamName: team.name,
+            result: finalStatus,
+            status: 'FAILED',
+            errorMessage,
+            sentAt: new Date(),
+          },
+          create: {
+            announcementDate,
+            recipientUserId: competitor.id,
+            recipientEmail: email,
+            teamId: team.id,
+            teamName: team.name,
+            result: finalStatus,
+            status: 'FAILED',
+            errorMessage,
+            sentAt: new Date(),
+          },
+        })
+
+        failedCount += 1
+        failures.push({ email, reason: errorMessage })
+      }
+    }
+
+    await writeAuditLog({
+      actorId: actor.userId,
+      action: 'SUBMISSION_ANNOUNCEMENT_SENT',
+      entityType: 'announcement',
+      entityId: announcementDate.toISOString(),
+      metadata: {
+        sentCount,
+        failedCount,
+        skippedCount,
+        onlyGmail,
+        projectName,
+      },
+    })
+
+    return {
+      message: 'Announcement email task completed',
+      announcementDate: announcementDate.toISOString(),
+      sentCount,
+      failedCount,
+      skippedCount,
+      failures,
+    }
+  })
+
   // GET /api/v1/admin/users — list all users with roles
   app.get('/users', { preHandler: [requireRole('ADMIN', 'MODERATOR')] }, async (request, reply) => {
     const { search, page = '1', limit = '50' } = request.query as Record<string, string>

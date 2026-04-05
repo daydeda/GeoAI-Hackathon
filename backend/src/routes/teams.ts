@@ -5,6 +5,7 @@ import { prisma } from '../plugins/prisma.js'
 import { authenticate, JwtPayload } from '../middleware/auth.js'
 import { writeAuditLog } from '../services/auditLog.js'
 import { Track } from '@prisma/client'
+import { getPhaseByKey } from '../services/phaseConfig.js'
 
 const MAX_TEAM_SIZE = Number(process.env.MAX_TEAM_SIZE) || 4
 
@@ -152,6 +153,12 @@ export async function teamRoutes(app: FastifyInstance) {
 
     const { code } = request.params as { code: string }
 
+    const proposalPhase = await getPhaseByKey('proposal-submission')
+    const proposalDeadline = proposalPhase?.date || process.env.SUBMISSION_DEADLINE_ISO || '2026-04-29T23:59:59+07:00'
+    if (Date.now() > new Date(proposalDeadline).getTime()) {
+      return reply.status(423).send({ error: 'Team join is closed because the proposal submission phase has ended' })
+    }
+
     const invite = await prisma.invite.findUnique({ where: { code }, include: { team: true } })
     if (!invite || invite.revoked) return reply.status(404).send({ error: 'Invite not found or revoked' })
     if (invite.expiresAt && invite.expiresAt < new Date()) return reply.status(410).send({ error: 'Invite expired' })
@@ -178,6 +185,12 @@ export async function teamRoutes(app: FastifyInstance) {
     if (!profileCheck.ok) return reply.status((profileCheck as { code?: number }).code || 400).send({ error: profileCheck.error })
 
     const { inviteCode } = request.body as { inviteCode: string }
+
+    const proposalPhase = await getPhaseByKey('proposal-submission')
+    const proposalDeadline = proposalPhase?.date || process.env.SUBMISSION_DEADLINE_ISO || '2026-04-29T23:59:59+07:00'
+    if (Date.now() > new Date(proposalDeadline).getTime()) {
+      return reply.status(423).send({ error: 'Team join is closed because the proposal submission phase has ended' })
+    }
 
     if (!inviteCode) return reply.status(400).send({ error: 'Invite code required' })
 

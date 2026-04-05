@@ -1,9 +1,9 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
-import { AuthProvider, useAuth } from '@/contexts/AuthContext'
+import { AuthProvider } from '@/contexts/AuthContext'
 import AppShell from '@/components/AppShell'
-import { Check, X, RefreshCw } from 'lucide-react'
+import { Check, X, RefreshCw, FileText, ExternalLink } from 'lucide-react'
 import CustomDropdown from '@/components/CustomDropdown'
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
@@ -23,15 +23,13 @@ function formatTrackLabel(track: string) {
 }
 
 function ModeratorContent() {
-  const { user } = useAuth()
   const [submissions, setSubmissions] = useState<Submission[]>([])
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
   const [trackFilter, setTrackFilter] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
   const [search, setSearch] = useState('')
-  const [announcementOpen, setAnnouncementOpen] = useState(false)
-  const [sendingAnnouncementId, setSendingAnnouncementId] = useState<string | null>(null)
+  const [previewSubmissionId, setPreviewSubmissionId] = useState<string | null>(null)
 
   const fetchSubmissions = useCallback(async () => {
     setLoading(true)
@@ -45,7 +43,6 @@ function ModeratorContent() {
         const d = await res.json()
         setSubmissions(d.data || [])
         setTotal(d.total || 0)
-        setAnnouncementOpen(Boolean(d.announcementOpen))
       }
     } finally {
       setLoading(false)
@@ -64,25 +61,14 @@ function ModeratorContent() {
     } catch (e) { console.error('Review error:', e) }
   }
 
-  const sendAnnouncement = async (submissionId: string) => {
-    setSendingAnnouncementId(submissionId)
-    try {
-      const res = await fetch(`${API}/api/v1/mod/submissions/${submissionId}/announcement`, {
-        method: 'POST',
-        credentials: 'include',
-      })
-      const data = await res.json().catch(() => ({}))
-      if (!res.ok) throw new Error(data.error || 'Failed to send announcement')
-      const recipients = Array.isArray(data.recipients) ? data.recipients.length : 0
-      window.alert(`Announcement sent to ${recipients} competitor(s).`)
-    } catch (error) {
-      window.alert(error instanceof Error ? error.message : 'Failed to send announcement')
-    } finally {
-      setSendingAnnouncementId(null)
-    }
-  }
+  const visibleSubmissions = submissions.filter((sub) => {
+    if (!search.trim()) return true
+    const q = search.trim().toLowerCase()
+    return sub.team.name.toLowerCase().includes(q)
+  })
 
-  const canSendAnnouncements = Boolean(announcementOpen && user?.roles?.some((r) => r === 'ADMIN' || r === 'MODERATOR'))
+  const previewSubmission = visibleSubmissions.find((sub) => sub.id === previewSubmissionId) || null
+  const previewUrl = previewSubmission ? `${API}/api/v1/submissions/${previewSubmission.id}/view` : ''
 
   return (
     <div className="flex flex-col min-h-screen bg-(--bg-base)">
@@ -91,7 +77,7 @@ function ModeratorContent() {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
           <div>
             <h1 className="font-display text-xl sm:text-2xl lg:text-3xl text-white font-bold">Content Moderation</h1>
-            <p className="text-xs sm:text-sm text-(--text-secondary) mt-1 sm:mt-2">Review and approve submissions</p>
+            <p className="text-xs sm:text-sm text-(--text-secondary) mt-1 sm:mt-2">Pre-screen submissions before they move to Judge scoring.</p>
           </div>
           <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm">
             {loading && <span className="text-(--text-muted)">Loading...</span>}
@@ -103,10 +89,10 @@ function ModeratorContent() {
       {/* Stats Grid */}
       <div className="border-b border-(--border-subtle) bg-[rgba(255,255,255,0.01)] px-4 sm:px-6 lg:px-8 py-3 sm:py-4">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3">
-          {[
-            { label: 'PENDING', value: submissions.filter(s => !s.moderatorReview).length, color: 'text-(--accent-amber)' },
-            { label: 'APPROVED', value: submissions.filter(s => s.moderatorReview?.status === 'PASS').length, color: 'text-(--accent-green)' },
-            { label: 'DISQUALIFIED', value: submissions.filter(s => s.moderatorReview?.status === 'DISQUALIFIED').length, color: 'text-[#ff6275]' },
+            {[
+            { label: 'PENDING', value: visibleSubmissions.filter(s => !s.moderatorReview).length, color: 'text-(--accent-amber)' },
+            { label: 'APPROVED', value: visibleSubmissions.filter(s => s.moderatorReview?.status === 'PASS').length, color: 'text-(--accent-green)' },
+            { label: 'DISQUALIFIED', value: visibleSubmissions.filter(s => s.moderatorReview?.status === 'DISQUALIFIED').length, color: 'text-[#ff6275]' },
             { label: 'TOTAL', value: total, color: 'text-white' },
           ].map((stat, i) => (
             <div key={i} className="bg-(--bg-base) p-2 sm:p-3 lg:p-4 rounded border border-(--border-subtle)">
@@ -164,7 +150,7 @@ function ModeratorContent() {
             </tr>
           </thead>
           <tbody>
-            {submissions.map(sub => (
+            {visibleSubmissions.map(sub => (
               <tr key={sub.id} className="border-b border-[rgba(255,255,255,0.02)] hover:bg-[rgba(255,255,255,0.01)] transition">
                 <td className="py-2 sm:py-3 px-2 sm:px-3 font-semibold text-xs sm:text-sm text-white truncate">{sub.team.name}</td>
                 <td className="py-2 sm:py-3 px-2 sm:px-3 text-(--text-secondary) hidden sm:table-cell truncate text-xs sm:text-sm">{formatTrackLabel(sub.team.track)}</td>
@@ -180,6 +166,13 @@ function ModeratorContent() {
                 </td>
                 <td className="py-2 sm:py-3 px-2 sm:px-3 text-right">
                   <div className="inline-flex items-center gap-1 sm:gap-2">
+                    <button
+                      onClick={() => setPreviewSubmissionId(sub.id)}
+                      className="p-1 sm:p-1.5 bg-[rgba(0,229,255,0.1)] border border-(--accent-cyan) text-(--accent-cyan) rounded hover:bg-[rgba(0,229,255,0.2)] transition"
+                      title="Preview PDF"
+                    >
+                      <FileText size={14} />
+                    </button>
                     <button onClick={() => submitReview(sub.id, 'PASS')} className="p-1 sm:p-1.5 bg-[rgba(0,230,118,0.1)] border border-(--accent-green) text-(--accent-green) rounded hover:bg-[rgba(0,230,118,0.2)] transition" title={sub.moderatorReview ? 'Re-review and approve' : 'Approve'}>
                       <Check size={14} />
                     </button>
@@ -190,21 +183,55 @@ function ModeratorContent() {
                       <span className="ml-1 text-[9px] sm:text-[10px] text-(--text-muted)">Re-review</span>
                     )}
                   </div>
-                  {sub.moderatorReview && canSendAnnouncements && (
-                    <button
-                      onClick={() => sendAnnouncement(sub.id)}
-                      disabled={sendingAnnouncementId === sub.id}
-                      className="ml-2 px-2 sm:px-3 py-1 text-[10px] sm:text-xs border border-(--accent-cyan) text-(--accent-cyan) rounded hover:bg-[rgba(0,229,255,0.1)] disabled:opacity-50"
-                    >
-                      {sendingAnnouncementId === sub.id ? 'Sending...' : 'Send Announcement'}
-                    </button>
-                  )}
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+
+      {previewSubmission && (
+        <div className="fixed inset-0 z-[140] bg-black/80 p-3 sm:p-6">
+          <div className="mx-auto flex h-full w-full max-w-[1400px] flex-col overflow-hidden rounded-lg border border-(--border-subtle) bg-(--bg-surface)">
+            <div className="flex items-center justify-between border-b border-(--border-subtle) px-4 py-3">
+              <div className="inline-flex items-center gap-2 text-sm font-semibold text-white">
+                <FileText size={15} className="text-(--accent-cyan)" />
+                {previewSubmission.team.name} Proposal
+              </div>
+              <div className="inline-flex items-center gap-2">
+                <a
+                  href={previewUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1 rounded border border-(--border-subtle) px-3 py-1 text-xs text-(--text-secondary) no-underline"
+                >
+                  <ExternalLink size={13} />
+                  New Tab
+                </a>
+                <button
+                  type="button"
+                  onClick={() => setPreviewSubmissionId(null)}
+                  className="rounded border border-(--border-subtle) px-3 py-1 text-xs text-(--text-secondary)"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+
+            {previewUrl ? (
+              <iframe
+                title={`Preview ${previewSubmission.team.name}`}
+                src={previewUrl}
+                className="h-full w-full"
+              />
+            ) : (
+              <div className="m-4 rounded border border-(--accent-amber) bg-[rgba(255,167,38,0.08)] px-3 py-2 text-xs text-(--accent-amber)">
+                Proposal PDF is not available for this submission.
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

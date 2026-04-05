@@ -5,8 +5,10 @@ import { AuthProvider } from '@/contexts/AuthContext'
 import AppShell from '@/components/AppShell'
 import { useAuth, TeamInfo } from '@/contexts/AuthContext'
 import CustomDropdown from '@/components/CustomDropdown'
+import { AlertTriangle } from 'lucide-react'
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
+const LIVE_REFRESH_MS = 8000
 
 interface Member { fullName: string; email: string; isLeader: boolean; userId: string }
 interface TeamData extends TeamInfo { institution: string; memberCount: number; members: Member[]; inviteCode: string }
@@ -34,7 +36,34 @@ function TeamContent() {
     }
   }, [])
 
-  useEffect(() => { fetchTeam() }, [fetchTeam])
+  useEffect(() => {
+    void fetchTeam()
+
+    const intervalId = window.setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        void fetchTeam()
+      }
+    }, LIVE_REFRESH_MS)
+
+    const onFocus = () => {
+      void fetchTeam()
+    }
+
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        void fetchTeam()
+      }
+    }
+
+    window.addEventListener('focus', onFocus)
+    document.addEventListener('visibilitychange', onVisibilityChange)
+
+    return () => {
+      window.clearInterval(intervalId)
+      window.removeEventListener('focus', onFocus)
+      document.removeEventListener('visibilitychange', onVisibilityChange)
+    }
+  }, [fetchTeam])
 
   const createTeam = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -107,7 +136,7 @@ function TeamContent() {
 
         {error && (
           <div className="mb-4 sm:mb-6 p-3 sm:p-4 rounded-md bg-[rgba(255,23,68,0.1)] border border-(--accent-red) text-(--accent-red) text-xs sm:text-sm flex items-start gap-2 sm:gap-3">
-            <span className="text-base flex-shrink-0">⚠️</span>
+            <AlertTriangle size={16} className="mt-0.5 flex-shrink-0" />
             <span>{error}</span>
           </div>
         )}
@@ -144,7 +173,7 @@ function TeamContent() {
                     value={track}
                     onChange={setTrack}
                     options={[
-                      { value: 'SMART_AGRICULTURE', label: 'Smart Agriculture (Primary)' },
+                      { value: 'SMART_AGRICULTURE', label: 'Smart Agriculture' },
                       { value: 'DISASTER_FLOOD_RESPONSE', label: 'Disaster & Flood Response' },
                     ]}
                     buttonClassName="text-xs sm:text-sm"

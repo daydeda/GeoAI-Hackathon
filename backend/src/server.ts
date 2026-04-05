@@ -14,6 +14,7 @@ import { moderatorRoutes } from './routes/moderator.js'
 import { judgeRoutes } from './routes/judge.js'
 import { adminRoutes } from './routes/admin.js'
 import { documentRoutes } from './routes/documents.js'
+import { phaseRoutes } from './routes/phases.js'
 import { ensureBucket } from './services/storage.js'
 import { globalErrorHandler } from './middleware/error.js'
 import fastifyStatic from '@fastify/static'
@@ -59,6 +60,8 @@ export async function buildServer() {
   // ── Security ───────────────────────────────────────────────
   await app.register(fastifyHelmet, {
     contentSecurityPolicy: false, // handled by Next.js frontend
+    frameguard: false,
+    crossOriginResourcePolicy: false,
   })
 
   await app.register(fastifyCors, {
@@ -122,6 +125,7 @@ export async function buildServer() {
   await app.register(judgeRoutes, { prefix: '/api/v1/judge' })
   await app.register(adminRoutes, { prefix: '/api/v1/admin' })
   await app.register(documentRoutes, { prefix: '/api/v1' })
+  await app.register(phaseRoutes, { prefix: '/api/v1' })
 
   return app
 }

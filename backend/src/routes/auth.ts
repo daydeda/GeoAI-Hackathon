@@ -109,17 +109,21 @@ async function syncUserProfileSafely(input: {
   const emailOwner = await prisma.user.findUnique({ where: { email } })
   const canSetEmail = !emailOwner || emailOwner.id === userId
   const existingUser = await prisma.user.findUnique({ where: { id: userId } }) as {
+    fullName?: string | null
     profileCompleted?: boolean
     firstName?: string | null
     lastName?: string | null
   } | null
   const shouldKeepCustomName = Boolean(existingUser?.profileCompleted && existingUser?.firstName && existingUser?.lastName)
+  const persistedProfileName = shouldKeepCustomName
+    ? `${existingUser?.firstName ?? ''} ${existingUser?.lastName ?? ''}`.trim()
+    : null
 
   return prisma.user.update({
     where: { id: userId },
     data: {
       ...(canSetEmail ? { email } : {}),
-      ...(shouldKeepCustomName ? {} : { fullName }),
+      fullName: persistedProfileName || existingUser?.fullName || fullName,
       avatarUrl,
       oauthProvider: 'google',
     },
@@ -327,10 +331,6 @@ export async function authRoutes(app: FastifyInstance) {
 
     const parsed = ProfileSchema.safeParse(rawProfileBody)
     if (!parsed.success) return reply.status(400).send({ error: parsed.error.flatten() })
-
-    if (!uploadedFile && !existingUser.idCardFileKey) {
-      return reply.status(400).send({ error: 'Student ID file is required for first-time profile setup' })
-    }
 
     let idCardFileKey = existingUser.idCardFileKey
     let idCardFileName = existingUser.idCardFileName
