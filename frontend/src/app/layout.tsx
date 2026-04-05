@@ -1,6 +1,10 @@
 import type { Metadata, Viewport } from 'next'
 import './globals.css'
 
+const rawBasePath = process.env.NEXT_PUBLIC_BASE_PATH?.trim() || ''
+const basePath = rawBasePath.startsWith('/') ? rawBasePath : ''
+const iconPath = `${basePath}/geoAI-logo.svg`
+
 export const dynamic = 'force-dynamic'
 
 export const metadata: Metadata = {
@@ -8,9 +12,9 @@ export const metadata: Metadata = {
   description: 'Harnessing hyperscaled AI data and orbital intelligence to build resilient agricultural ecosystems and rapid disaster response protocols.',
   keywords: ['GEOAI', 'hackathon', 'agriculture', 'disaster response', 'AI', 'GISTDA'],
   icons: {
-    icon: '/geoAI-logo.svg',
-    shortcut: '/geoAI-logo.svg',
-    apple: '/geoAI-logo.svg',
+    icon: iconPath,
+    shortcut: iconPath,
+    apple: iconPath,
   },
   openGraph: {
     title: 'GEOAI Hackathon — AGRI-DISASTER AI',

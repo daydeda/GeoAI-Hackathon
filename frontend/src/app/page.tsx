@@ -6,6 +6,10 @@ import { Menu, X, Zap } from 'lucide-react'
 import { useCompetitionPhases } from '@/hooks/useCompetitionPhases'
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
+const RAW_BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH?.trim() || ''
+const BASE_PATH = RAW_BASE_PATH.startsWith('/') ? RAW_BASE_PATH : ''
+
+const withBasePath = (assetPath: string) => `${BASE_PATH}${assetPath}`
 
 type SessionUser = {
   fullName?: string
@@ -63,14 +67,14 @@ const tracks = [
 ]
 
 const hostedBy = [
-  { name: 'KMITL', href: 'https://www.kmitl.ac.th/en', logo: '/logos/kmitl.svg' },
-  { name: 'ESRI', href: 'https://www.esri.com', logo: '/logos/esri.svg' },
-  { name: 'GISTDA', href: 'https://www.gistda.or.th', logo: '/logos/gistda.svg' },
-  { name: 'KMUTT', href: 'https://www.kmutt.ac.th/en', logo: '/logos/kmutt.svg' },
+  { name: 'KMITL', href: 'https://www.kmitl.ac.th/en', logo: withBasePath('/logos/kmitl.svg') },
+  { name: 'ESRI', href: 'https://www.esri.com', logo: withBasePath('/logos/esri.svg') },
+  { name: 'GISTDA', href: 'https://www.gistda.or.th', logo: withBasePath('/logos/gistda.svg') },
+  { name: 'KMUTT', href: 'https://www.kmutt.ac.th/en', logo: withBasePath('/logos/kmutt.svg') },
 ]
 
 const sponsoredBy = [
-  { name: 'ETDA', href: 'https://www.etda.or.th/en', logo: '/logos/etda.svg' },
+  { name: 'ETDA', href: 'https://www.etda.or.th/en', logo: withBasePath('/logos/etda.svg') },
 ]
 
 const navLinks = [
