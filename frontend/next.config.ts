@@ -7,6 +7,7 @@ const basePath = rawBasePath.startsWith("/") ? rawBasePath : "";
 const projectRoot = path.dirname(fileURLToPath(import.meta.url));
 
 const nextConfig: NextConfig = {
+  output: "standalone",
   reactCompiler: false,
   turbopack: {
     root: projectRoot,
