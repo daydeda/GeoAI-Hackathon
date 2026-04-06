@@ -35,6 +35,20 @@ function withBasePath(path: string) {
   return `${APP_BASE_PATH}${path}`
 }
 
+function getHostFallbackOpsLinks(): OpsLinks {
+  if (typeof window === 'undefined') {
+    return {
+      prismaStudio: withBasePath('/admin/prisma-studio'),
+      minioConsole: withBasePath('/admin/minio'),
+    }
+  }
+
+  return {
+    prismaStudio: `${window.location.origin}${withBasePath('/admin/prisma-studio')}`,
+    minioConsole: `${window.location.origin}${withBasePath('/admin/minio')}`,
+  }
+}
+
 interface UserRow {
   id: string
   email: string
@@ -117,6 +131,7 @@ function AdminContent() {
   const announcementPhase = phases.find((phase) => phase.key === 'announcement')
   const announcementDeadlineText = announcementPhase ? formatPhaseDeadline(announcementPhase.date) : '-'
   const [opsLinks, setOpsLinks] = useState<OpsLinks | null>(null)
+  const fallbackOpsLinks = useMemo(() => getHostFallbackOpsLinks(), [])
   const canAccessManagementTools = hasRole('ADMIN') || hasRole('MODERATOR')
 
   useEffect(() => {
@@ -325,25 +340,27 @@ function AdminContent() {
   ]
 
   const verificationLinks: Array<{ label: string; title: string; href: string; icon: LucideIcon }> = useMemo(() => {
-    if (!opsLinks || !canAccessManagementTools) {
+    if (!canAccessManagementTools) {
       return []
     }
+
+    const resolvedOpsLinks = opsLinks ?? fallbackOpsLinks
 
     return [
       {
         label: 'DATABASE ACCESS',
         title: 'Browse Database',
-        href: opsLinks.prismaStudio,
+        href: resolvedOpsLinks.prismaStudio,
         icon: Database,
       },
       {
         label: 'OBJECT STORAGE ACCESS',
         title: 'Manage File Bucket',
-        href: opsLinks.minioConsole,
+        href: resolvedOpsLinks.minioConsole,
         icon: FolderOpen,
       },
     ]
-  }, [canAccessManagementTools, opsLinks])
+  }, [canAccessManagementTools, fallbackOpsLinks, opsLinks])
 
   const sendAnnouncementEmails = async () => {
     if (!announcementStatus?.enabled || sendingAnnouncement) return
