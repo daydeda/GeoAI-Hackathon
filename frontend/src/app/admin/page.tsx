@@ -26,6 +26,31 @@ const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
 const PRISMA_STUDIO_URL = process.env.NEXT_PUBLIC_PRISMA_STUDIO_URL
 const MINIO_CONSOLE_URL = process.env.NEXT_PUBLIC_MINIO_CONSOLE_URL
 
+function getDefaultOpsLinks() {
+  if (typeof window === 'undefined') {
+    return {
+      prismaStudio: 'http://127.0.0.1:5566',
+      minioConsole: 'http://127.0.0.1:9001',
+    }
+  }
+
+  const isLocalHost =
+    window.location.hostname === 'localhost' ||
+    window.location.hostname === '127.0.0.1'
+
+  if (isLocalHost) {
+    return {
+      prismaStudio: 'http://127.0.0.1:5566',
+      minioConsole: 'http://127.0.0.1:9001',
+    }
+  }
+
+  return {
+    prismaStudio: `${window.location.origin}/prisma-studio`,
+    minioConsole: `${window.location.origin}/minio`,
+  }
+}
+
 interface UserRow {
   id: string
   email: string
@@ -106,15 +131,17 @@ function AdminContent() {
   const phaseDeadline = formatPhaseDeadline(currentPhase.date)
   const announcementPhase = phases.find((phase) => phase.key === 'announcement')
   const announcementDeadlineText = announcementPhase ? formatPhaseDeadline(announcementPhase.date) : '-'
+  const defaultOpsLinks = getDefaultOpsLinks()
   const [opsLinks, setOpsLinks] = useState({
-    prismaStudio: PRISMA_STUDIO_URL || 'http://127.0.0.1:5566',
-    minioConsole: MINIO_CONSOLE_URL || 'http://127.0.0.1:9001',
+    prismaStudio: PRISMA_STUDIO_URL || defaultOpsLinks.prismaStudio,
+    minioConsole: MINIO_CONSOLE_URL || defaultOpsLinks.minioConsole,
   })
 
   useEffect(() => {
+    const defaults = getDefaultOpsLinks()
     setOpsLinks({
-      prismaStudio: PRISMA_STUDIO_URL || 'http://127.0.0.1:5566',
-      minioConsole: MINIO_CONSOLE_URL || 'http://127.0.0.1:9001',
+      prismaStudio: PRISMA_STUDIO_URL || defaults.prismaStudio,
+      minioConsole: MINIO_CONSOLE_URL || defaults.minioConsole,
     })
   }, [])
 
