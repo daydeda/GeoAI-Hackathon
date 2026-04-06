@@ -81,7 +81,7 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/geoai
     command: ["sh", "-lc", "npm run db:studio:ssh"]
     ports:
-      - "127.0.0.1:5555:5555" # Prisma Studio via SSH tunnel
+      - "127.0.0.1:5566:5555" # Prisma Studio via SSH tunnel
     depends_on:
       db:
         condition: service_healthy
