@@ -46,8 +46,8 @@ function getDefaultOpsLinks() {
   }
 
   return {
-    prismaStudio: `${window.location.origin}/prisma-studio`,
-    minioConsole: `${window.location.origin}/minio`,
+    prismaStudio: `${window.location.origin}/geoai-2026/admin/prisma-studio`,
+    minioConsole: `${window.location.origin}/geoai-2026/admin/minio`,
   }
 }
 

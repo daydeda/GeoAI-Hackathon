@@ -40,15 +40,15 @@ nano .env.production
 For Admin quick-access links in the UI, also set:
 
 ```bash
-NEXT_PUBLIC_PRISMA_STUDIO_URL=/prisma-studio
-NEXT_PUBLIC_MINIO_CONSOLE_URL=/minio
+NEXT_PUBLIC_PRISMA_STUDIO_URL=https://cegs.kmitl.ac.th/geoai-2026/admin/prisma-studio
+NEXT_PUBLIC_MINIO_CONSOLE_URL=https://cegs.kmitl.ac.th/geoai-2026/admin/minio
 ```
 
 If you rely on SSH tunneling instead of domain routes, use local tunnel URLs such as `http://127.0.0.1:5566` and `http://127.0.0.1:9001`.
 
 ### Role protection for Prisma/MinIO routes
 
-`/prisma-studio` and `/minio` are protected via Nginx `auth_request` calling backend endpoint `/api/v1/admin/tools-access`.
+`/geoai-2026/admin/prisma-studio` and `/geoai-2026/admin/minio` are protected via Nginx `auth_request` calling backend endpoint `/api/v1/admin/tools-access`.
 Only users with `ADMIN` or `MODERATOR` role can access these routes.
 
 ### Step 2: Deployment Script (`deploy.sh`)
