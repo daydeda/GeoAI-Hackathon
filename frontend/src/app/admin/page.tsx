@@ -107,17 +107,14 @@ function AdminContent() {
   const announcementPhase = phases.find((phase) => phase.key === 'announcement')
   const announcementDeadlineText = announcementPhase ? formatPhaseDeadline(announcementPhase.date) : '-'
   const [opsLinks, setOpsLinks] = useState({
-    prismaStudio: PRISMA_STUDIO_URL || 'http://localhost:5555',
-    minioConsole: MINIO_CONSOLE_URL || 'http://localhost:9001',
+    prismaStudio: PRISMA_STUDIO_URL || 'http://127.0.0.1:5566',
+    minioConsole: MINIO_CONSOLE_URL || 'http://127.0.0.1:9001',
   })
 
   useEffect(() => {
-    if (typeof window === 'undefined') return
-
-    const hostBase = `${window.location.protocol}//${window.location.hostname}`
     setOpsLinks({
-      prismaStudio: PRISMA_STUDIO_URL || `${hostBase}:5555`,
-      minioConsole: MINIO_CONSOLE_URL || `${hostBase}:9001`,
+      prismaStudio: PRISMA_STUDIO_URL || 'http://127.0.0.1:5566',
+      minioConsole: MINIO_CONSOLE_URL || 'http://127.0.0.1:9001',
     })
   }, [])
 
