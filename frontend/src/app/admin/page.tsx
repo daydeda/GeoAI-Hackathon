@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useMemo, useState, useCallback } from 'react'
 import { AuthProvider } from '@/contexts/AuthContext'
 import { useAlert } from '@/contexts/AlertContext'
 import Link from 'next/link'
@@ -8,7 +8,9 @@ import type { LucideIcon } from 'lucide-react'
 import {
   Activity,
   Check,
+  Database,
   Download,
+  FolderOpen,
   FileSpreadsheet,
   Mail,
   Search,
@@ -16,10 +18,13 @@ import {
   X,
 } from 'lucide-react'
 import { formatPhaseDeadline } from '@/lib/competitionPhase'
+import { formatAuditLogTimestamp } from '@/lib/auditLogTime'
 import CustomDropdown from '@/components/CustomDropdown'
 import { useCompetitionPhases } from '@/hooks/useCompetitionPhases'
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
+const PRISMA_STUDIO_URL = process.env.NEXT_PUBLIC_PRISMA_STUDIO_URL
+const MINIO_CONSOLE_URL = process.env.NEXT_PUBLIC_MINIO_CONSOLE_URL
 
 interface UserRow {
   id: string
@@ -101,6 +106,20 @@ function AdminContent() {
   const phaseDeadline = formatPhaseDeadline(currentPhase.date)
   const announcementPhase = phases.find((phase) => phase.key === 'announcement')
   const announcementDeadlineText = announcementPhase ? formatPhaseDeadline(announcementPhase.date) : '-'
+  const [opsLinks, setOpsLinks] = useState({
+    prismaStudio: PRISMA_STUDIO_URL || 'http://localhost:5555',
+    minioConsole: MINIO_CONSOLE_URL || 'http://localhost:9001',
+  })
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+
+    const hostBase = `${window.location.protocol}//${window.location.hostname}`
+    setOpsLinks({
+      prismaStudio: PRISMA_STUDIO_URL || `${hostBase}:5555`,
+      minioConsole: MINIO_CONSOLE_URL || `${hostBase}:9001`,
+    })
+  }, [])
 
   const totalUserPages = Math.max(1, Math.ceil(totalUsers / userLimit))
   const userFrom = totalUsers === 0 ? 0 : (userPage - 1) * userLimit + 1
@@ -272,6 +291,21 @@ function AdminContent() {
     { label: 'TEAMS REGISTRY', title: 'Export Teams as CSV', type: 'TEAMS', icon: Download },
     { label: 'PROPOSAL BUNDLE', title: 'Export Proposals as XLSX', type: 'SUBMISSIONS', icon: FileSpreadsheet },
   ]
+
+  const verificationLinks: Array<{ label: string; title: string; href: string; icon: LucideIcon }> = useMemo(() => [
+    {
+      label: 'DATABASE ACCESS',
+      title: 'Browse Database',
+      href: opsLinks.prismaStudio,
+      icon: Database,
+    },
+    {
+      label: 'OBJECT STORAGE ACCESS',
+      title: 'Manage File Bucket',
+      href: opsLinks.minioConsole,
+      icon: FolderOpen,
+    },
+  ], [opsLinks.minioConsole, opsLinks.prismaStudio])
 
   const sendAnnouncementEmails = async () => {
     if (!announcementStatus?.enabled || sendingAnnouncement) return
@@ -667,6 +701,21 @@ function AdminContent() {
                   <exp.icon size={18} className="text-(--accent-cyan)" />
                 </div>
               ))}
+              {verificationLinks.map((item) => (
+                <a
+                  key={item.title}
+                  href={item.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-between border-l-2 border-transparent bg-(--bg-surface) px-5 py-4 no-underline transition hover:border-(--accent-cyan)"
+                >
+                  <div>
+                    <div className="font-mono mb-1 text-[10px] tracking-[0.1em] text-(--text-muted)">{item.label}</div>
+                    <div className="text-sm font-medium text-white">{item.title}</div>
+                  </div>
+                  <item.icon size={18} className="text-(--accent-cyan)" />
+                </a>
+              ))}
             </div>
           </div>
 
@@ -682,7 +731,7 @@ function AdminContent() {
                 <div key={log.id} className="bg-(--bg-surface) p-4">
                   <div className="mb-2 flex justify-between gap-3">
                     <span className="font-mono text-[10px] text-(--text-muted)">LOG_ID: {log.entityId}</span>
-                    <span className="font-mono text-[10px] text-(--text-muted)">{new Date(log.createdAt).toISOString().split('T')[1].substring(0,8)} UTC</span>
+                    <span className="font-mono text-[10px] text-(--text-muted)">{formatAuditLogTimestamp(log.createdAt).timeLabel} UTC</span>
                   </div>
                   <div className="text-xs leading-relaxed text-(--text-secondary)">
                     {log.action.includes('Warning') ? (

@@ -37,6 +37,15 @@ nano .env.production
 
 *Fill in your real secrets (Google OAuth, JWT, Minio keys).*
 
+For Admin quick-access links in the UI, also set:
+
+```bash
+NEXT_PUBLIC_PRISMA_STUDIO_URL=https://your-domain.example/prisma-studio
+NEXT_PUBLIC_MINIO_CONSOLE_URL=https://your-domain.example/minio
+```
+
+If you rely on SSH tunneling instead of public routes, use local tunnel URLs such as `http://localhost:5555` and `http://localhost:9001`.
+
 ### Step 2: Deployment Script (`deploy.sh`)
 
 Use `./deploy.sh` in your local project root for one-click updates:

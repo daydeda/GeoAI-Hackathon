@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { AuthProvider } from '@/contexts/AuthContext'
 import AppShell from '@/components/AppShell'
+import { formatAuditLogTimestamp } from '@/lib/auditLogTime'
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
 
@@ -52,8 +53,8 @@ function LogsContent() {
               {logs.map(log => (
                 <tr key={log.id} className="border-b border-[rgba(255,255,255,0.02)] hover:bg-[rgba(255,255,255,0.01)] transition">
                   <td className="py-3 sm:py-4 px-2 sm:px-3 min-w-max">
-                    <div className="font-semibold text-xs sm:text-sm text-white">{new Date(log.createdAt).toLocaleDateString()}</div>
-                    <div className="font-mono text-[8px] sm:text-xs text-(--text-muted)">{new Date(log.createdAt).toLocaleTimeString()} UTC</div>
+                    <div className="font-semibold text-xs sm:text-sm text-white">{formatAuditLogTimestamp(log.createdAt).dateLabel}</div>
+                    <div className="font-mono text-[8px] sm:text-xs text-(--text-muted)">{formatAuditLogTimestamp(log.createdAt).timeLabel} UTC</div>
                   </td>
                   <td className="py-3 sm:py-4 px-2 sm:px-3 min-w-max hidden sm:table-cell">
                     <div className="text-xs sm:text-sm text-(--accent-cyan) truncate">{log.actor?.email ?? 'SYSTEM'}</div>
