@@ -91,16 +91,14 @@ services:
       target: runner
       args:
         NEXT_PUBLIC_API_URL: http://localhost:4000
-        NEXT_PUBLIC_PRISMA_STUDIO_URL: ${NEXT_PUBLIC_PRISMA_STUDIO_URL}
-        NEXT_PUBLIC_MINIO_CONSOLE_URL: ${NEXT_PUBLIC_MINIO_CONSOLE_URL}
     container_name: geoai_frontend
     restart: unless-stopped
     env_file: ./frontend/.env
     environment:
       NODE_ENV: production
       NEXT_PUBLIC_API_URL: http://localhost:4000
-      NEXT_PUBLIC_PRISMA_STUDIO_URL: ${NEXT_PUBLIC_PRISMA_STUDIO_URL}
-      NEXT_PUBLIC_MINIO_CONSOLE_URL: ${NEXT_PUBLIC_MINIO_CONSOLE_URL}
+      DATABASE_MANAGEMENT_URL: ${DATABASE_MANAGEMENT_URL}
+      STORAGE_MANAGEMENT_URL: ${STORAGE_MANAGEMENT_URL}
     ports:
       - "3000:3000"
     depends_on:

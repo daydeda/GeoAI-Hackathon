@@ -37,14 +37,33 @@ nano .env.production
 
 *Fill in your real secrets (Google OAuth, JWT, Minio keys).*
 
-For Admin quick-access links in the UI, also set:
+For Admin quick-access links in the UI, set server-side management URLs (not `NEXT_PUBLIC_*`):
 
 ```bash
-NEXT_PUBLIC_PRISMA_STUDIO_URL=https://cegs.kmitl.ac.th/geoai-2026/admin/prisma-studio
-NEXT_PUBLIC_MINIO_CONSOLE_URL=https://cegs.kmitl.ac.th/geoai-2026/admin/minio
+DATABASE_MANAGEMENT_URL=https://cegs.kmitl.ac.th/geoai-2026/admin/prisma-studio
+STORAGE_MANAGEMENT_URL=https://cegs.kmitl.ac.th/geoai-2026/admin/minio
 ```
 
-If you rely on SSH tunneling instead of domain routes, use local tunnel URLs such as `http://127.0.0.1:5566` and `http://127.0.0.1:9001`.
+`STORAGE_MANAGEMENT_URL` must point to MinIO Console (`:9001`) and not MinIO API (`:9000`).
+
+### Prisma Studio service alignment (SSH jump server)
+
+Run Prisma Studio as a persistent background service on production (Docker Compose service or PM2).
+
+Docker Compose option (recommended in this repo):
+
+```bash
+sudo docker compose --env-file .env.production -f docker-compose.prod.yml up -d prisma-studio
+```
+
+PM2 option (if running outside Docker):
+
+```bash
+pm2 start "npm run db:studio:ssh" --name prisma-studio --cwd ~/geoai/backend
+pm2 save
+```
+
+If you rely on SSH tunneling instead of public domain routes, terminate tunnels on the jump host and expose them via your reverse proxy path, then set `DATABASE_MANAGEMENT_URL` and `STORAGE_MANAGEMENT_URL` to those proxied URLs.
 
 ### Role protection for Prisma/MinIO routes
 

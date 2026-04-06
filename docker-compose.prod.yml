@@ -95,8 +95,6 @@ services:
       args:
         NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
         NEXT_PUBLIC_BASE_PATH: ${NEXT_PUBLIC_BASE_PATH}
-        NEXT_PUBLIC_PRISMA_STUDIO_URL: ${NEXT_PUBLIC_PRISMA_STUDIO_URL}
-        NEXT_PUBLIC_MINIO_CONSOLE_URL: ${NEXT_PUBLIC_MINIO_CONSOLE_URL}
     container_name: geoai_frontend_prod
     restart: always
     env_file: .env.production
@@ -104,8 +102,8 @@ services:
       NODE_ENV: production
       NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
       NEXT_PUBLIC_BASE_PATH: ${NEXT_PUBLIC_BASE_PATH}
-      NEXT_PUBLIC_PRISMA_STUDIO_URL: ${NEXT_PUBLIC_PRISMA_STUDIO_URL}
-      NEXT_PUBLIC_MINIO_CONSOLE_URL: ${NEXT_PUBLIC_MINIO_CONSOLE_URL}
+      DATABASE_MANAGEMENT_URL: ${DATABASE_MANAGEMENT_URL}
+      STORAGE_MANAGEMENT_URL: ${STORAGE_MANAGEMENT_URL}
     ports:
       - "3000:3000" # Mount directly or use Nginx/Traefik
     depends_on:

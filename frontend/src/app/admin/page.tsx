@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState, useCallback } from 'react'
-import { AuthProvider } from '@/contexts/AuthContext'
+import { AuthProvider, useAuth } from '@/contexts/AuthContext'
 import { useAlert } from '@/contexts/AlertContext'
 import Link from 'next/link'
 import type { LucideIcon } from 'lucide-react'
@@ -23,32 +23,16 @@ import CustomDropdown from '@/components/CustomDropdown'
 import { useCompetitionPhases } from '@/hooks/useCompetitionPhases'
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
-const PRISMA_STUDIO_URL = process.env.NEXT_PUBLIC_PRISMA_STUDIO_URL
-const MINIO_CONSOLE_URL = process.env.NEXT_PUBLIC_MINIO_CONSOLE_URL
+const APP_BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH || ''
 
-function getDefaultOpsLinks() {
-  if (typeof window === 'undefined') {
-    return {
-      prismaStudio: 'http://127.0.0.1:5566',
-      minioConsole: 'http://127.0.0.1:9001',
-    }
-  }
+interface OpsLinks {
+  prismaStudio: string
+  minioConsole: string
+}
 
-  const isLocalHost =
-    window.location.hostname === 'localhost' ||
-    window.location.hostname === '127.0.0.1'
-
-  if (isLocalHost) {
-    return {
-      prismaStudio: 'http://127.0.0.1:5566',
-      minioConsole: 'http://127.0.0.1:9001',
-    }
-  }
-
-  return {
-    prismaStudio: `${window.location.origin}/geoai-2026/admin/prisma-studio`,
-    minioConsole: `${window.location.origin}/geoai-2026/admin/minio`,
-  }
+function withBasePath(path: string) {
+  if (!APP_BASE_PATH) return path
+  return `${APP_BASE_PATH}${path}`
 }
 
 interface UserRow {
@@ -112,6 +96,7 @@ export default function AdminPage() {
 }
 
 function AdminContent() {
+  const { hasRole, loading: authLoading } = useAuth()
   const { showAlert } = useAlert()
   const [users, setUsers] = useState<UserRow[]>([])
   const [totalUsers, setTotalUsers] = useState(0)
@@ -131,19 +116,42 @@ function AdminContent() {
   const phaseDeadline = formatPhaseDeadline(currentPhase.date)
   const announcementPhase = phases.find((phase) => phase.key === 'announcement')
   const announcementDeadlineText = announcementPhase ? formatPhaseDeadline(announcementPhase.date) : '-'
-  const defaultOpsLinks = getDefaultOpsLinks()
-  const [opsLinks, setOpsLinks] = useState({
-    prismaStudio: PRISMA_STUDIO_URL || defaultOpsLinks.prismaStudio,
-    minioConsole: MINIO_CONSOLE_URL || defaultOpsLinks.minioConsole,
-  })
+  const [opsLinks, setOpsLinks] = useState<OpsLinks | null>(null)
+  const canAccessManagementTools = hasRole('ADMIN') || hasRole('MODERATOR')
 
   useEffect(() => {
-    const defaults = getDefaultOpsLinks()
-    setOpsLinks({
-      prismaStudio: PRISMA_STUDIO_URL || defaults.prismaStudio,
-      minioConsole: MINIO_CONSOLE_URL || defaults.minioConsole,
-    })
-  }, [])
+    if (authLoading || !canAccessManagementTools) {
+      setOpsLinks(null)
+      return
+    }
+
+    const controller = new AbortController()
+    const loadLinks = async () => {
+      try {
+        const res = await fetch(withBasePath('/api/admin/management-links'), {
+          credentials: 'include',
+          signal: controller.signal,
+          cache: 'no-store',
+        })
+
+        if (!res.ok) {
+          setOpsLinks(null)
+          return
+        }
+
+        const data = (await res.json()) as OpsLinks
+        setOpsLinks(data)
+      } catch {
+        setOpsLinks(null)
+      }
+    }
+
+    loadLinks()
+
+    return () => {
+      controller.abort()
+    }
+  }, [authLoading, canAccessManagementTools])
 
   const totalUserPages = Math.max(1, Math.ceil(totalUsers / userLimit))
   const userFrom = totalUsers === 0 ? 0 : (userPage - 1) * userLimit + 1
@@ -316,20 +324,26 @@ function AdminContent() {
     { label: 'PROPOSAL BUNDLE', title: 'Export Proposals as XLSX', type: 'SUBMISSIONS', icon: FileSpreadsheet },
   ]
 
-  const verificationLinks: Array<{ label: string; title: string; href: string; icon: LucideIcon }> = useMemo(() => [
-    {
-      label: 'DATABASE ACCESS',
-      title: 'Browse Database',
-      href: opsLinks.prismaStudio,
-      icon: Database,
-    },
-    {
-      label: 'OBJECT STORAGE ACCESS',
-      title: 'Manage File Bucket',
-      href: opsLinks.minioConsole,
-      icon: FolderOpen,
-    },
-  ], [opsLinks.minioConsole, opsLinks.prismaStudio])
+  const verificationLinks: Array<{ label: string; title: string; href: string; icon: LucideIcon }> = useMemo(() => {
+    if (!opsLinks || !canAccessManagementTools) {
+      return []
+    }
+
+    return [
+      {
+        label: 'DATABASE ACCESS',
+        title: 'Browse Database',
+        href: opsLinks.prismaStudio,
+        icon: Database,
+      },
+      {
+        label: 'OBJECT STORAGE ACCESS',
+        title: 'Manage File Bucket',
+        href: opsLinks.minioConsole,
+        icon: FolderOpen,
+      },
+    ]
+  }, [canAccessManagementTools, opsLinks])
 
   const sendAnnouncementEmails = async () => {
     if (!announcementStatus?.enabled || sendingAnnouncement) return
