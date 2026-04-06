@@ -54,7 +54,6 @@ services:
       MINIO_PORT: "9000"
     ports:
       - "4000:4000"
-      - "5566:5555"
     depends_on:
       db:
         condition: service_healthy
@@ -79,7 +78,7 @@ services:
       DATABASE_URL: postgresql://geoai:geoai@db:5432/geoai
     command: ["sh", "-lc", "npm run db:studio:ssh"]
     ports:
-      - "5555:5555"
+      - "5566:5555"
     depends_on:
       db:
         condition: service_healthy
