@@ -12,6 +12,12 @@ function withBasePath(basePath: string, path: string) {
 export function middleware(request: NextRequest) {
   const token = request.cookies.get('geoai_token')
   const { pathname, basePath } = request.nextUrl
+  const host = request.headers.get('host')?.split(':')[0] || ''
+
+  if (host === 'cegs.kmitl.ac.th' && pathname === '/') {
+    return NextResponse.redirect(new URL('https://iono-gnss.kmitl.ac.th'))
+  }
+
   const normalizedPath = basePath && pathname.startsWith(basePath)
     ? pathname.slice(basePath.length) || '/'
     : pathname
