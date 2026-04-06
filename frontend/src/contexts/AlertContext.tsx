@@ -1,6 +1,6 @@
 'use client'
 
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useCallback, useContext, useMemo, useState, ReactNode } from 'react';
 
 interface CustomAlertProps {
   isOpen: boolean;
@@ -72,16 +72,22 @@ export function AlertProvider({ children }: { children: ReactNode }) {
   const [message, setMessage] = useState('');
   const [type, setType] = useState<'error' | 'warning' | 'info'>('error');
 
-  const showAlert = (msg: string, alertType: 'error' | 'warning' | 'info' = 'error') => {
+  const showAlert = useCallback((msg: string, alertType: 'error' | 'warning' | 'info' = 'error') => {
     setMessage(msg);
     setType(alertType);
     setIsOpen(true);
-  };
+  }, []);
+
+  const closeAlert = useCallback(() => {
+    setIsOpen(false)
+  }, [])
+
+  const value = useMemo(() => ({ showAlert }), [showAlert])
 
   return (
-    <AlertContext.Provider value={{ showAlert }}>
+    <AlertContext.Provider value={value}>
       {children}
-      <CustomAlert isOpen={isOpen} message={message} type={type} onClose={() => setIsOpen(false)} />
+      <CustomAlert isOpen={isOpen} message={message} type={type} onClose={closeAlert} />
     </AlertContext.Provider>
   );
 }

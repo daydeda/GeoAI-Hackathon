@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState, useCallback } from 'react'
+import { useEffect, useMemo, useState, useCallback, useRef } from 'react'
 import {
   ArrowDownUp,
   BarChart3,
@@ -94,6 +94,8 @@ function getTeamOutcomeClass(status?: string) {
 function JudgeContent() {
   const { user, logout } = useAuth()
   const { showAlert } = useAlert()
+  const showAlertRef = useRef(showAlert)
+  const fetchInFlightRef = useRef(false)
 
   const [queue, setQueue] = useState<Submission[]>([])
   const [loading, setLoading] = useState(true)
@@ -116,20 +118,27 @@ function JudgeContent() {
   const phaseDeadline = formatPhaseDeadline(currentPhase.date)
 
   const fetchQueue = useCallback(async () => {
+    if (fetchInFlightRef.current) return
+    fetchInFlightRef.current = true
     setLoading(true)
     try {
       const res = await fetch(`${API}/api/v1/judge/submissions?limit=50`, { credentials: 'include' })
       if (!res.ok) {
-        showAlert('Failed to load evaluation queue', 'warning')
+        showAlertRef.current('Failed to load evaluation queue', 'warning')
         return
       }
       const data = await res.json()
       setQueue(data.data || [])
     } catch {
-      showAlert('Failed to load evaluation queue', 'error')
+      showAlertRef.current('Failed to load evaluation queue', 'error')
     } finally {
       setLoading(false)
+      fetchInFlightRef.current = false
     }
+  }, [])
+
+  useEffect(() => {
+    showAlertRef.current = showAlert
   }, [showAlert])
 
   useEffect(() => {

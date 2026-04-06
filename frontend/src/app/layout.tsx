@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next'
 import './globals.css'
+import { AlertProvider } from '@/contexts/AlertContext'
 
 const rawBasePath = process.env.NEXT_PUBLIC_BASE_PATH?.trim() || ''
 const basePath = rawBasePath.startsWith('/') ? rawBasePath : ''
@@ -33,7 +34,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <body className="bg-(--bg-base) text-(--text-primary)">
-        {children}
+        <AlertProvider>{children}</AlertProvider>
       </body>
     </html>
   )
