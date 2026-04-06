@@ -42,7 +42,7 @@ export async function judgeRoutes(app: FastifyInstance) {
     const orderedForDisplay = await prisma.submission.findMany({
       where: {
         isActive: true,
-        moderatorReview: { status: 'PASS' },
+        moderatorReview: { is: { status: 'PASS' } },
       },
       select: { id: true },
       orderBy: [
@@ -58,7 +58,7 @@ export async function judgeRoutes(app: FastifyInstance) {
     const submissions = await prisma.submission.findMany({
       where: {
         isActive: true,
-        moderatorReview: { status: 'PASS' },
+        moderatorReview: { is: { status: 'PASS' } },
       },
       include: {
         team: true,
@@ -80,7 +80,7 @@ export async function judgeRoutes(app: FastifyInstance) {
     }))
 
     const total = await prisma.submission.count({
-      where: { isActive: true, moderatorReview: { status: 'PASS' } },
+      where: { isActive: true, moderatorReview: { is: { status: 'PASS' } } },
     })
 
     return { data: latestPerTeam, total, page: Number(page), limit: Number(limit) }

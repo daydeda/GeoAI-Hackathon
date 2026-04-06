@@ -26,6 +26,7 @@ import CustomDropdown from '@/components/CustomDropdown'
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
 
 type Tab = 'QUEUE' | 'PAST_REVIEWS' | 'SETTINGS'
+type StatusFilter = 'ALL' | 'QUALIFIED' | 'DISQUALIFIED' | 'PENDING'
 
 interface Team {
   name: string
@@ -76,6 +77,20 @@ function clampScore(value: number) {
   return Math.max(0, Math.min(100, value))
 }
 
+function getTeamOutcomeLabel(status?: string) {
+  if (!status) return 'PENDING'
+  if (status === 'FINALIST') return 'QUALIFIED'
+  if (status === 'REJECTED') return 'DISQUALIFIED'
+  return status
+}
+
+function getTeamOutcomeClass(status?: string) {
+  const label = getTeamOutcomeLabel(status)
+  if (label === 'QUALIFIED') return 'border-(--accent-green) text-(--accent-green) bg-[rgba(0,230,118,0.08)]'
+  if (label === 'DISQUALIFIED') return 'border-(--accent-red) text-(--accent-red) bg-[rgba(255,23,68,0.08)]'
+  return 'border-(--border-subtle) text-(--text-secondary) bg-(--bg-base)'
+}
+
 function JudgeContent() {
   const { user, logout } = useAuth()
   const { showAlert } = useAlert()
@@ -96,6 +111,7 @@ function JudgeContent() {
   const [saving, setSaving] = useState(false)
   const [updatingFinalStatus, setUpdatingFinalStatus] = useState(false)
   const [sortMode, setSortMode] = useState<'mean_desc' | 'mean_asc' | 'submitted_desc' | 'submitted_asc'>('mean_desc')
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('ALL')
   const { currentPhase } = useCompetitionPhases()
   const phaseDeadline = formatPhaseDeadline(currentPhase.date)
 
@@ -131,8 +147,13 @@ function JudgeContent() {
   )
 
   const baseTabQueue = activeTab === 'QUEUE' ? unscoredQueue : scoredQueue
+  const filteredTabQueue = useMemo(() => {
+    if (statusFilter === 'ALL') return baseTabQueue
+    return baseTabQueue.filter((item) => getTeamOutcomeLabel(item.team.currentStatus) === statusFilter)
+  }, [baseTabQueue, statusFilter])
+
   const currentTabQueue = useMemo(() => {
-    const cloned = [...baseTabQueue]
+    const cloned = [...filteredTabQueue]
     if (sortMode === 'mean_asc' || sortMode === 'mean_desc') {
       cloned.sort((a, b) => {
         const aScore = a.scoreAggregate?.totalWeighted ?? (sortMode === 'mean_asc' ? Number.POSITIVE_INFINITY : Number.NEGATIVE_INFINITY)
@@ -152,7 +173,7 @@ function JudgeContent() {
 
     cloned.sort((a, b) => new Date(a.submittedAt).getTime() - new Date(b.submittedAt).getTime())
     return cloned
-  }, [baseTabQueue, sortMode])
+  }, [filteredTabQueue, sortMode])
 
   const activeSubmission = currentTabQueue.find((item) => item.id === activeSubId) || null
 
@@ -364,6 +385,23 @@ function JudgeContent() {
                     ]}
                   />
                 </div>
+                <div className="mb-1 rounded border border-(--border-subtle) bg-(--bg-base) px-3 py-2">
+                  <div className="mb-2 inline-flex items-center gap-1 text-[10px] uppercase tracking-[0.08em] text-(--text-muted)">
+                    <ShieldCheck size={12} />
+                    Status Filter
+                  </div>
+                  <CustomDropdown
+                    className="w-full"
+                    value={statusFilter}
+                    onChange={(value) => setStatusFilter(value as StatusFilter)}
+                    options={[
+                      { value: 'ALL', label: 'All Statuses' },
+                      { value: 'QUALIFIED', label: 'Qualified' },
+                      { value: 'DISQUALIFIED', label: 'Disqualified' },
+                      { value: 'PENDING', label: 'Pending' },
+                    ]}
+                  />
+                </div>
                 <div className="grid grid-cols-[64px_1fr] gap-2 px-1 text-[10px] uppercase tracking-[0.08em] text-(--text-muted)">
                   <div>ID</div>
                   <div>Submission</div>
@@ -399,6 +437,11 @@ function JudgeContent() {
                               Mean: {item.scoreAggregate.totalWeighted.toFixed(2)}
                             </div>
                           )}
+                          <div className="mt-1">
+                            <span className={`rounded border px-2 py-0.5 text-[10px] font-semibold ${getTeamOutcomeClass(item.team.currentStatus)}`}>
+                              {getTeamOutcomeLabel(item.team.currentStatus)}
+                            </span>
+                          </div>
                           <div className="mt-1 text-[11px] text-(--text-muted)">
                             {new Date(item.submittedAt).toLocaleString()}
                           </div>
@@ -423,8 +466,8 @@ function JudgeContent() {
                     ID {activeSubmission.displayId ?? '-'}
                   </span>
                   {activeSubmission.team.currentStatus && (
-                    <span className="rounded border border-(--border-subtle) bg-(--bg-base) px-2.5 py-1 text-[11px] font-semibold text-(--text-secondary)">
-                      TEAM STATUS: {activeSubmission.team.currentStatus}
+                    <span className={`rounded border px-2.5 py-1 text-[11px] font-semibold ${getTeamOutcomeClass(activeSubmission.team.currentStatus)}`}>
+                      TEAM STATUS: {getTeamOutcomeLabel(activeSubmission.team.currentStatus)}
                     </span>
                   )}
                   <span className="rounded border border-(--accent-green) bg-[rgba(0,230,118,0.08)] px-2.5 py-1 text-[11px] font-semibold text-(--accent-green)">

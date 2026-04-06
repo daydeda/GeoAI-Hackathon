@@ -70,6 +70,15 @@ async function getMembersMissingStudentId(teamId: string): Promise<Array<{ userI
 }
 
 export async function submissionRoutes(app: FastifyInstance) {
+  const parseGistdaDeclaration = (body: unknown): boolean => {
+    const value = (body as Record<string, unknown> | undefined)?.gistdaDeclared
+      ?? (body as Record<string, unknown> | undefined)?.gistda_declared
+
+    if (typeof value === 'boolean') return value
+    if (typeof value === 'string') return value.trim().toLowerCase() === 'true'
+    return false
+  }
+
   // GET /api/v1/submissions — get current team submission history
   app.get('/submissions', { preHandler: [authenticate] }, async (request, reply) => {
     const actor = request.user as JwtPayload
@@ -146,7 +155,7 @@ export async function submissionRoutes(app: FastifyInstance) {
     if (!data) return reply.status(400).send({ error: 'No file uploaded' })
     if (data.mimetype !== 'application/pdf') return reply.status(415).send({ error: 'Only PDF accepted' })
 
-    const gistdaDeclared = (request.body as Record<string, string>)?.gistdaDeclared === 'true'
+    const gistdaDeclared = parseGistdaDeclaration(request.body)
 
     const last = await prisma.submission.findFirst({ where: { teamId: membership.teamId }, orderBy: { version: 'desc' } })
     const nextVersion = (last?.version ?? 0) + 1
@@ -217,7 +226,7 @@ export async function submissionRoutes(app: FastifyInstance) {
     }
 
     // GISTDA declaration
-    const gistdaDeclared = (request.body as Record<string, string>)?.gistda_declared === 'true'
+    const gistdaDeclared = parseGistdaDeclaration(request.body)
 
     // Get current version
     const lastSubmission = await prisma.submission.findFirst({
