@@ -140,6 +140,39 @@ jobs:
 3. **Backups**: Set up a cron job to backup the `postgres_data_prod` volume.
 4. **Minio API**: Ensure port `9000` is protected or restricted to the frontend/backend bridge.
 
+## 🌐 Nginx Root-Domain Redirect (cegs -> iono)
+
+If `https://cegs.kmitl.ac.th` shows the Nginx welcome page, requests are being handled by Nginx before Next.js middleware. Configure redirect at Nginx level.
+
+1. Copy the provided site config template from this repo:
+  - `nginx/cegs.kmitl.ac.th.conf`
+
+2. Install and enable it on server:
+
+```bash
+sudo cp ~/geoai/nginx/cegs.kmitl.ac.th.conf /etc/nginx/sites-available/cegs.kmitl.ac.th.conf
+sudo ln -sf /etc/nginx/sites-available/cegs.kmitl.ac.th.conf /etc/nginx/sites-enabled/cegs.kmitl.ac.th.conf
+sudo rm -f /etc/nginx/sites-enabled/default
+```
+
+3. Validate and reload Nginx:
+
+```bash
+sudo nginx -t
+sudo systemctl reload nginx
+```
+
+4. Verify behavior:
+
+```bash
+curl -I https://cegs.kmitl.ac.th/
+curl -I https://cegs.kmitl.ac.th/geoai-2026
+```
+
+Expected:
+- `/` returns `301` to `https://iono-gnss.kmitl.ac.th/`
+- `/geoai-2026` stays served by GeoAI app
+
 ---
 
 > [!TIP]
