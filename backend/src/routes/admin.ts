@@ -26,6 +26,12 @@ function getFinalResultStatus(status: TeamStatus): TeamStatus {
 }
 
 export async function adminRoutes(app: FastifyInstance) {
+  // GET /api/v1/admin/tools-access
+  // Used by Nginx auth_request to protect Prisma Studio / MinIO routes.
+  app.get('/tools-access', { preHandler: [requireRole('ADMIN', 'MODERATOR')] }, async (_request, reply) => {
+    return reply.code(204).send()
+  })
+
   // GET /api/v1/admin/announcement-email/status
   app.get('/announcement-email/status', { preHandler: [requireRole('ADMIN')] }, async (_request, reply) => {
     const announcementPhase = await getPhaseByKey('announcement')
