@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { AuthProvider, useAuth } from '@/contexts/AuthContext'
 import { useAlert } from '@/contexts/AlertContext'
 import Link from 'next/link'
@@ -8,9 +8,7 @@ import type { LucideIcon } from 'lucide-react'
 import {
   Activity,
   Check,
-  Database,
   Download,
-  FolderOpen,
   FileSpreadsheet,
   Mail,
   Search,
@@ -23,31 +21,9 @@ import CustomDropdown from '@/components/CustomDropdown'
 import { useCompetitionPhases } from '@/hooks/useCompetitionPhases'
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
-const APP_BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH || ''
+// app base path is available via NEXT_PUBLIC_BASE_PATH when needed
 
-interface OpsLinks {
-  prismaStudio: string
-  minioConsole: string
-}
-
-function withBasePath(path: string) {
-  if (!APP_BASE_PATH) return path
-  return `${APP_BASE_PATH}${path}`
-}
-
-function getHostFallbackOpsLinks(): OpsLinks {
-  if (typeof window === 'undefined') {
-    return {
-      prismaStudio: withBasePath('/admin/prisma-studio'),
-      minioConsole: withBasePath('/admin/minio'),
-    }
-  }
-
-  return {
-    prismaStudio: `${window.location.origin}${withBasePath('/admin/prisma-studio')}`,
-    minioConsole: `${window.location.origin}${withBasePath('/admin/minio')}`,
-  }
-}
+// base path helper retained for future use
 
 interface UserRow {
   id: string
@@ -130,42 +106,11 @@ function AdminContent() {
   const phaseDeadline = formatPhaseDeadline(currentPhase.date)
   const announcementPhase = phases.find((phase) => phase.key === 'announcement')
   const announcementDeadlineText = announcementPhase ? formatPhaseDeadline(announcementPhase.date) : '-'
-  const [opsLinks, setOpsLinks] = useState<OpsLinks | null>(null)
-  const fallbackOpsLinks = useMemo(() => getHostFallbackOpsLinks(), [])
+  // Management links removed per request
   const canAccessManagementTools = hasRole('ADMIN') || hasRole('MODERATOR')
 
   useEffect(() => {
-    if (authLoading || !canAccessManagementTools) {
-      setOpsLinks(null)
-      return
-    }
-
-    const controller = new AbortController()
-    const loadLinks = async () => {
-      try {
-        const res = await fetch(withBasePath('/api/admin/management-links'), {
-          credentials: 'include',
-          signal: controller.signal,
-          cache: 'no-store',
-        })
-
-        if (!res.ok) {
-          setOpsLinks(null)
-          return
-        }
-
-        const data = (await res.json()) as OpsLinks
-        setOpsLinks(data)
-      } catch {
-        setOpsLinks(null)
-      }
-    }
-
-    loadLinks()
-
-    return () => {
-      controller.abort()
-    }
+    // management-links fetch removed
   }, [authLoading, canAccessManagementTools])
 
   const totalUserPages = Math.max(1, Math.ceil(totalUsers / userLimit))
@@ -339,28 +284,7 @@ function AdminContent() {
     { label: 'PROPOSAL BUNDLE', title: 'Export Proposals as XLSX', type: 'SUBMISSIONS', icon: FileSpreadsheet },
   ]
 
-  const verificationLinks: Array<{ label: string; title: string; href: string; icon: LucideIcon }> = useMemo(() => {
-    if (!canAccessManagementTools) {
-      return []
-    }
-
-    const resolvedOpsLinks = opsLinks ?? fallbackOpsLinks
-
-    return [
-      {
-        label: 'DATABASE ACCESS',
-        title: 'Browse Database',
-        href: resolvedOpsLinks.prismaStudio,
-        icon: Database,
-      },
-      {
-        label: 'OBJECT STORAGE ACCESS',
-        title: 'Manage File Bucket',
-        href: resolvedOpsLinks.minioConsole,
-        icon: FolderOpen,
-      },
-    ]
-  }, [canAccessManagementTools, fallbackOpsLinks, opsLinks])
+  // Management links removed per request
 
   const sendAnnouncementEmails = async () => {
     if (!announcementStatus?.enabled || sendingAnnouncement) return
@@ -756,21 +680,7 @@ function AdminContent() {
                   <exp.icon size={18} className="text-(--accent-cyan)" />
                 </div>
               ))}
-              {verificationLinks.map((item) => (
-                <a
-                  key={item.title}
-                  href={item.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center justify-between border-l-2 border-transparent bg-(--bg-surface) px-5 py-4 no-underline transition hover:border-(--accent-cyan)"
-                >
-                  <div>
-                    <div className="font-mono mb-1 text-[10px] tracking-[0.1em] text-(--text-muted)">{item.label}</div>
-                    <div className="text-sm font-medium text-white">{item.title}</div>
-                  </div>
-                  <item.icon size={18} className="text-(--accent-cyan)" />
-                </a>
-              ))}
+              {/* Management cards removed */}
             </div>
           </div>
 
