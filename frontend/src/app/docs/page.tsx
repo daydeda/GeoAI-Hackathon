@@ -112,8 +112,9 @@ const rubricItems = [
 ]
 
 const RUBRIC_TOTAL = 50
-const TEMPLATE_PROPOSAL_URL = '/Proposal_Hackathon_2026_Apr_07.docx'
-const GEO_AI_POSTER_URL = '/GeoAIPoster.png'
+const basePath = process.env.NEXT_PUBLIC_BASE_PATH?.trim() || ''
+const TEMPLATE_PROPOSAL_URL = `${basePath}/Proposal_Hackathon_2026_Apr_07.docx`
+const GEO_AI_POSTER_URL = `${basePath}/GeoAIPoster.png`
 
 const rewardThemes = [
   {
