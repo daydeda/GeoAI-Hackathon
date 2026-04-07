@@ -7,6 +7,15 @@ import { getPhaseByKey } from '../services/phaseConfig.js'
 
 const MAX_SUBMISSION_UPLOAD_BYTES = Number(process.env.MAX_SUBMISSION_UPLOAD_BYTES) || 20 * 1024 * 1024
 
+function buildSubmissionViewUrl(submissionId: string): string {
+  const rawBasePath = (process.env.NEXT_PUBLIC_BASE_PATH || '').trim()
+  const normalizedBasePath = rawBasePath
+    ? (rawBasePath.startsWith('/') ? rawBasePath : `/${rawBasePath}`).replace(/\/+$/, '')
+    : ''
+
+  return `${normalizedBasePath}/api/v1/submissions/${submissionId}/view`
+}
+
 function isPdfUpload(mimetype: string, filename?: string): boolean {
   const normalizedMime = (mimetype || '').toLowerCase().trim()
   const normalizedName = (filename || '').toLowerCase().trim()
@@ -358,7 +367,7 @@ export async function submissionRoutes(app: FastifyInstance) {
     let signedUrl: string | null = null
     if (file) {
       // Return a backend-proxied URL instead of a direct MinIO link
-      signedUrl = `${process.env.BACKEND_URL || 'http://localhost:4000'}/api/v1/submissions/${submissionId}/view`
+      signedUrl = buildSubmissionViewUrl(submissionId)
     }
 
     return { ...submission, signedUrl }
@@ -381,7 +390,7 @@ export async function submissionRoutes(app: FastifyInstance) {
     const file = submission.files[0]
     if (!file) return reply.status(404).send({ error: 'File not found' })
 
-    const url = `${process.env.BACKEND_URL || 'http://localhost:4000'}/api/v1/submissions/${submissionId}/view`
+    const url = buildSubmissionViewUrl(submissionId)
     return { url }
   })
 
