@@ -16,44 +16,46 @@ const DEFAULT_PHASES: PhaseConfigItem[] = [
   {
     key: 'registration',
     phase: 'PHASE 01',
-    dateLabel: '',
+    dateLabel: '31 MAR',
     title: 'Registration',
-    desc: 'Team registration window closed on 29 April.',
+    desc: 'Team registration window closed on 27 April.',
     date: '2026-03-31T23:59:59+07:00',
   },
   {
     key: 'proposal-submission',
     phase: 'PHASE 02',
-    dateLabel: '29 APR',
+    dateLabel: '27 APR',
     title: 'Proposal Submission',
-    desc: 'Proposal submission deadline is April 29 (PDF, max 20 MB).',
-    date: '2026-04-29T23:59:59+07:00',
+    desc: 'Proposal submission deadline is April 27 (PDF, max 20 MB).',
+    date: '2026-04-27T16:00:00+07:00',
   },
   {
     key: 'announcement',
     phase: 'PHASE 03',
-    dateLabel: '08 MAY',
+    dateLabel: '09 MAY',
     title: 'Announcement',
-    desc: 'Announcement will be released on 8 May.',
-    date: '2026-05-08T00:00:00+07:00',
+    desc: 'Announcement will be released on 9 May.',
+    date: '2026-05-09T00:00:00+07:00',
   },
   {
     key: 'development',
     phase: 'PHASE 04',
     dateLabel: '15 MAY',
-    title: 'Development',
-    desc: 'Mockup date: 15 May (adjustable).',
+    title: 'Prototype Development',
+    desc: '',
     date: '2026-05-15T09:00:00+07:00',
   },
   {
     key: 'final-pitching',
     phase: 'PHASE 05',
-    dateLabel: '22 MAY',
+    dateLabel: '04 JUN',
     title: 'Final Pitching',
-    desc: 'Mockup date: 22 May (adjustable).',
-    date: '2026-05-22T09:00:00+07:00',
+    desc: '',
+    date: '2026-06-04T09:00:00+07:00',
   },
 ]
+
+const DEFAULT_PHASE_BY_KEY = new Map(DEFAULT_PHASES.map((phase) => [phase.key, phase]))
 
 const CANDIDATE_CONFIG_PATHS = [
   process.env.PHASE_CONFIG_PATH,
@@ -137,10 +139,13 @@ export async function getPhaseConfig(): Promise<PhaseConfigItem[]> {
     const raw = await readFile(configPath, 'utf-8')
     const parsed = JSON.parse(raw) as { phases?: PhaseConfigItem[] }
     const phases = Array.isArray(parsed.phases) && parsed.phases.length > 0 ? parsed.phases : DEFAULT_PHASES
+    const dateByKey = new Map(
+      phases.map((phase) => [phase.key, toValidIso(phase.date) || phase.date]),
+    )
 
-    const normalized = phases.map((phase) => ({
+    const normalized = DEFAULT_PHASES.map((phase) => ({
       ...phase,
-      date: toValidIso(phase.date) || phase.date,
+      date: dateByKey.get(phase.key) || (toValidIso(phase.date) || phase.date),
     }))
 
     return applyDateLabel(normalized)
@@ -161,7 +166,7 @@ export async function updatePhaseDates(nextDates: Record<string, string>): Promi
     const normalizedIso = toValidIso(next)
     if (!normalizedIso) return phase
     return {
-      ...phase,
+      ...(DEFAULT_PHASE_BY_KEY.get(phase.key) || phase),
       date: normalizedIso,
     }
   })

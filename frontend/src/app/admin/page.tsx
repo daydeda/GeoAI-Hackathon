@@ -15,7 +15,7 @@ import {
   Trash2,
   X,
 } from 'lucide-react'
-import { formatPhaseDeadline } from '@/lib/competitionPhase'
+import { formatPhaseDeadline } from '@/lib/phaseDeadline'
 import { formatAuditLogTimestamp } from '@/lib/auditLogTime'
 import CustomDropdown from '@/components/CustomDropdown'
 import { useCompetitionPhases } from '@/hooks/useCompetitionPhases'

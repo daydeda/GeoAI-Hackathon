@@ -19,7 +19,7 @@ import {
 import { AuthProvider, useAuth } from '@/contexts/AuthContext'
 import { useAlert } from '@/contexts/AlertContext'
 import AppShell from '@/components/AppShell'
-import { formatPhaseDeadline } from '@/lib/competitionPhase'
+import { formatPhaseDeadline } from '@/lib/phaseDeadline'
 import { useCompetitionPhases } from '@/hooks/useCompetitionPhases'
 import CustomDropdown from '@/components/CustomDropdown'
 

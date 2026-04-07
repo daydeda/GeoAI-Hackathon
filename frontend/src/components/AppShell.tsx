@@ -22,7 +22,7 @@ import {
   X,
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
-import { formatPhaseDeadline } from '@/lib/competitionPhase'
+import { formatPhaseDeadline } from '@/lib/phaseDeadline'
 import { useCompetitionPhases } from '@/hooks/useCompetitionPhases'
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
