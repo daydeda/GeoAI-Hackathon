@@ -3,7 +3,6 @@
 import { AuthProvider } from '@/contexts/AuthContext'
 import AppShell from '@/components/AppShell'
 import { Kanit } from 'next/font/google'
-import Link from 'next/link'
 
 const kanit = Kanit({
   subsets: ['thai', 'latin'],
@@ -174,13 +173,13 @@ function DocsContent({ enhancedRewards = true }: { enhancedRewards?: boolean }) 
             โจทย์สามารถนำเสนอแนวคิดใหม่ได้ แต่ต้องเกี่ยวข้องกับการเกษตร หรือภัยพิบัติ และการใช้ข้อมูลเชิงพื้นที่เพื่อการตัดสินใจ
           </p>
           <div className="mt-5 flex flex-wrap gap-3">
-            <Link
+            <a
               href={TEMPLATE_PROPOSAL_URL}
-              download
+              download="Proposal_Hackathon_2026_Apr_07.docx"
               className="inline-flex items-center justify-center rounded border border-[rgba(255,165,0,0.45)] bg-[#FFA500] px-4 py-2 text-sm font-semibold text-black transition-opacity hover:opacity-90"
             >
               Download Template Proposal
-            </Link>
+            </a>
           </div>
           <div className="mt-6 overflow-hidden rounded-lg border border-(--border-subtle) bg-(--bg-base)">
             {/* eslint-disable-next-line @next/next/no-img-element */}
