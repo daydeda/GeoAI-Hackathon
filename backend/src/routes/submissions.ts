@@ -7,6 +7,29 @@ import { getPhaseByKey } from '../services/phaseConfig.js'
 
 const MAX_SUBMISSION_UPLOAD_BYTES = Number(process.env.MAX_SUBMISSION_UPLOAD_BYTES) || 20 * 1024 * 1024
 
+function isPdfUpload(mimetype: string, filename?: string): boolean {
+  const normalizedMime = (mimetype || '').toLowerCase().trim()
+  const normalizedName = (filename || '').toLowerCase().trim()
+  const hasPdfExt = normalizedName.endsWith('.pdf')
+
+  if (normalizedMime === 'application/pdf') return true
+
+  const knownPdfMimes = new Set([
+    'application/x-pdf',
+    'application/acrobat',
+    'applications/vnd.pdf',
+    'text/pdf',
+    'text/x-pdf',
+  ])
+
+  if (knownPdfMimes.has(normalizedMime)) return true
+
+  // Some clients send octet-stream for PDFs; allow only with .pdf extension.
+  if (normalizedMime === 'application/octet-stream' && hasPdfExt) return true
+
+  return false
+}
+
 async function isDeadlinePassed(): Promise<boolean> {
   const phase = await getPhaseByKey('proposal-submission')
   const deadline = phase?.date || process.env.SUBMISSION_DEADLINE_ISO || '2026-04-29T23:59:59+07:00'
@@ -166,7 +189,7 @@ export async function submissionRoutes(app: FastifyInstance) {
     // Reuse logic below or implement
     const data = await request.file()
     if (!data) return reply.status(400).send({ error: 'No file uploaded' })
-    if (data.mimetype !== 'application/pdf') return reply.status(415).send({ error: 'Only PDF accepted' })
+    if (!isPdfUpload(data.mimetype, data.filename)) return reply.status(415).send({ error: 'Only PDF accepted' })
 
     const gistdaDeclared = parseGistdaDeclaration(request.body, data.fields)
 
@@ -237,7 +260,7 @@ export async function submissionRoutes(app: FastifyInstance) {
     if (!data) return reply.status(400).send({ error: 'No file uploaded' })
 
     // MIME validation
-    if (data.mimetype !== 'application/pdf') {
+    if (!isPdfUpload(data.mimetype, data.filename)) {
       return reply.status(415).send({ error: 'Only PDF files are accepted' })
     }
 

@@ -135,6 +135,17 @@ function SubmissionsContent() {
       })
       if (res.ok) { setFile(null); setGistda(false); fetchHistory() }
       else {
+        if (res.status === 413) {
+          setError('File too large. Maximum allowed size is 20MB.')
+          return
+        }
+
+        const contentType = res.headers.get('content-type') || ''
+        if (!contentType.includes('application/json')) {
+          setError(`Upload failed (${res.status}). Please try again.`)
+          return
+        }
+
         const d = (await res.json().catch(() => ({}))) as UploadErrorPayload
         if (Array.isArray(d.missingMembers) && d.missingMembers.length > 0) {
           const names = d.missingMembers
