@@ -25,6 +25,24 @@ function safeFileName(name: string) {
   return name.replace(/[^a-zA-Z0-9._-]/g, '_')
 }
 
+function hasRequiredProfileFields(input: {
+  firstName?: string | null
+  lastName?: string | null
+  university?: string | null
+  yearOfStudy?: number | null
+  phoneNumber?: string | null
+  address?: string | null
+}) {
+  return Boolean(
+    input.firstName?.trim() &&
+    input.lastName?.trim() &&
+    input.university?.trim() &&
+    typeof input.yearOfStudy === 'number' && input.yearOfStudy >= 1 &&
+    input.phoneNumber?.trim() &&
+    input.address?.trim(),
+  )
+}
+
 function getOAuth2Client() {
   return new google.auth.OAuth2(
     process.env.GOOGLE_CLIENT_ID,
@@ -242,7 +260,7 @@ export async function authRoutes(app: FastifyInstance) {
       })
       const roles = userRoles.map(ur => ur.role.name as RoleType)
 
-      const profileCompleted = Boolean(user.profileCompleted && user.idCardFileKey)
+      const profileCompleted = Boolean(user.profileCompleted || hasRequiredProfileFields(user))
       const isCompetitorOnboardingRequired = Boolean(roles.includes('COMPETITOR') && !profileCompleted)
 
       const payload: JwtPayload = {
@@ -353,7 +371,8 @@ export async function authRoutes(app: FastifyInstance) {
     const profile = parsed.data
     const fullName = `${profile.firstName} ${profile.lastName}`.trim()
 
-    const profileCompleted = Boolean(idCardFileKey)
+    // Profile completion is based on required profile fields; ID upload is optional at onboarding.
+    const profileCompleted = true
 
     const updatedUser = await prisma.user.update({
       where: { id: actor.userId },
@@ -422,7 +441,7 @@ export async function authRoutes(app: FastifyInstance) {
     const u = user as any
     const teamMembership = u.teamMembers[0] ?? null
 
-    const profileCompleted = Boolean(u.profileCompleted && u.idCardFileKey)
+    const profileCompleted = Boolean(u.profileCompleted || hasRequiredProfileFields(u))
 
     return {
       id: u.id,

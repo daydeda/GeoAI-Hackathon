@@ -285,7 +285,7 @@ export async function adminRoutes(app: FastifyInstance) {
       yearOfStudy: u.yearOfStudy,
       phoneNumber: u.phoneNumber,
       address: u.address,
-      profileCompleted: Boolean(u.profileCompleted && u.idCardFileKey),
+      profileCompleted: Boolean(u.profileCompleted),
       idCardUploaded: Boolean(u.idCardFileKey),
       roles: u.userRoles.map(ur => ur.role.name), createdAt: u.createdAt,
     })), total }
