@@ -240,7 +240,7 @@ export default function LandingPage() {
               href="/docs"
               className="inline-flex items-center justify-center gap-2 px-6 sm:px-8 py-3 sm:py-3.5 rounded font-semibold text-sm sm:text-base bg-[#FFA500] text-black hover:opacity-90 transition-colors w-full sm:w-auto"
             >
-              รายละเอียด การแข่งขัน
+              รายละเอียดการแข่งขัน
             </Link>
           </div>
         </div>
