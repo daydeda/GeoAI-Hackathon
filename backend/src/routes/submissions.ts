@@ -5,6 +5,8 @@ import { writeAuditLog } from '../services/auditLog.js'
 import { minioClient, BUCKET } from '../services/storage.js'
 import { getPhaseByKey } from '../services/phaseConfig.js'
 
+const MAX_SUBMISSION_UPLOAD_BYTES = Number(process.env.MAX_SUBMISSION_UPLOAD_BYTES) || 20 * 1024 * 1024
+
 async function isDeadlinePassed(): Promise<boolean> {
   const phase = await getPhaseByKey('proposal-submission')
   const deadline = phase?.date || process.env.SUBMISSION_DEADLINE_ISO || '2026-04-29T23:59:59+07:00'
@@ -177,6 +179,9 @@ export async function submissionRoutes(app: FastifyInstance) {
     let totalSize = 0
     for await (const chunk of data.file) {
       totalSize += chunk.length
+      if (totalSize > MAX_SUBMISSION_UPLOAD_BYTES) {
+        return reply.status(413).send({ error: 'File too large (max 20 MB)' })
+      }
       buffers.push(chunk)
     }
 
@@ -252,11 +257,10 @@ export async function submissionRoutes(app: FastifyInstance) {
     // Read file into buffer
     const buffers: Buffer[] = []
     let totalSize = 0
-    const MAX = Number(process.env.MAX_UPLOAD_BYTES) || 20 * 1024 * 1024
 
     for await (const chunk of data.file) {
       totalSize += chunk.length
-      if (totalSize > MAX) {
+      if (totalSize > MAX_SUBMISSION_UPLOAD_BYTES) {
         return reply.status(413).send({ error: 'File too large (max 20 MB)' })
       }
       buffers.push(chunk)

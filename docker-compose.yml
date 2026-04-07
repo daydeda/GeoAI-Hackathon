@@ -52,6 +52,7 @@ services:
       DATABASE_URL: postgresql://geoai:geoai@db:5432/geoai
       MINIO_ENDPOINT: storage
       MINIO_PORT: "9000"
+      MAX_SUBMISSION_UPLOAD_BYTES: "20971520"
     ports:
       - "4000:4000"
     depends_on:

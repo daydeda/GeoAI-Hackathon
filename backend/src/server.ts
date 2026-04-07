@@ -90,7 +90,7 @@ export async function buildServer() {
   // ── File Uploads ───────────────────────────────────────────
   await app.register(fastifyMultipart, {
     limits: {
-      fileSize: Number(process.env.MAX_UPLOAD_BYTES) || 20 * 1024 * 1024, // 20 MB
+      fileSize: Number(process.env.MAX_SUBMISSION_UPLOAD_BYTES) || 20 * 1024 * 1024, // 20 MB for proposal uploads
       files: 1,
     },
   })
