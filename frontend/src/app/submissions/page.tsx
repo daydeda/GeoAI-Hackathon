@@ -174,7 +174,7 @@ function SubmissionsContent() {
         <p className="text-sm sm:text-base text-(--text-secondary) mb-6 sm:mb-8">
           You must create or join a team before submitting.
         </p>
-        <a href="/team" className="inline-block px-6 sm:px-8 py-2.5 sm:py-3 bg-(--accent-cyan) text-(--bg-base) rounded font-semibold text-sm sm:text-base hover:opacity-90 transition-opacity no-underline">
+        <a href={`${basePath}/team`} className="inline-block px-6 sm:px-8 py-2.5 sm:py-3 bg-(--accent-cyan) text-(--bg-base) rounded font-semibold text-sm sm:text-base hover:opacity-90 transition-opacity no-underline">
           GO TO TEAM TERMINAL
         </a>
       </div>

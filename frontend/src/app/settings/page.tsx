@@ -60,6 +60,8 @@ function SettingsContent() {
   })
 
   const hasProfile = useMemo(() => Boolean(user?.profileCompleted), [user?.profileCompleted])
+  const hasStudentId = useMemo(() => Boolean(user?.profile?.idCardFileUploaded), [user?.profile?.idCardFileUploaded])
+  const settingsProfileCompleted = hasProfile && hasStudentId
 
   const onSubmit = async (event: FormEvent) => {
     event.preventDefault()
@@ -109,8 +111,8 @@ function SettingsContent() {
         </div>
         <div className="rounded border border-(--border-subtle) bg-(--bg-surface) px-3 py-2 text-xs text-(--text-secondary)">
           Profile Status:{' '}
-          <span className={hasProfile ? 'text-(--accent-green)' : 'text-(--accent-amber)'}>
-            {hasProfile ? 'Completed' : 'Pending'}
+          <span className={settingsProfileCompleted ? 'text-(--accent-green)' : 'text-(--accent-amber)'}>
+            {settingsProfileCompleted ? 'Completed' : 'Pending'}
           </span>
         </div>
       </div>
