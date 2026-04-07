@@ -66,7 +66,7 @@ const topLinks = [
   { href: '/team', label: 'Challenges' },
   { href: '/team', label: 'Leaderboard' },
   { href: '/docs', label: 'Docs' },
-  { href: '/support', label: 'Support' },
+  { href: '/support', label: 'Contact Us' },
 ]
 
 const baseMenu: NavItem[] = [
@@ -75,7 +75,7 @@ const baseMenu: NavItem[] = [
   { href: '/submissions', label: 'Submissions', icon: FileText },
   { href: '/settings', label: 'Settings', icon: Cog },
   { href: '/resources', label: 'Resources', icon: BookOpen, activeColor: 'var(--accent-green)' },
-  { href: '/support', label: 'Support', icon: LifeBuoy },
+  { href: '/support', label: 'Contact Us', icon: LifeBuoy },
 ]
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
@@ -461,7 +461,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         className="fixed bottom-4 left-4 z-40 hidden items-center gap-2 rounded-full border border-(--border-subtle) bg-(--bg-surface) px-3 py-2 text-xs text-(--text-secondary) shadow-lg sm:inline-flex lg:hidden"
       >
         <LifeBuoy size={14} />
-        Support
+        Contact Us
       </Link>
     </div>
   )

@@ -13,6 +13,7 @@ function ResourcesContent() {
     tag2?: string;
     linkText: string;
     linkColor: string;
+      linkUrl?: string;
     linkIcon?: string;
     isExternal?: boolean;
   }
@@ -30,7 +31,7 @@ function ResourcesContent() {
       icon: 'SYSTEM',
       color: 'var(--accent-green)',
       items: [
-        { title: 'GISTDA Sphere Platform', desc: 'Core integration portal for real-time satellite data streams. Required for real-time inference tasks.', icon: '🛰️', tag1: 'API', tag2: 'REQUIRED', linkText: 'portal.gistda.or.th', linkColor: 'var(--accent-green)', isExternal: true },
+      { title: 'GISTDA Sphere Platform', desc: 'Core integration portal for real-time satellite data streams. Required for real-time inference tasks.', icon: '🛰️', tag1: 'API', tag2: 'REQUIRED', linkText: 'sphere.gistda.or.th', linkColor: 'var(--accent-green)', linkUrl: 'https://sphere.gistda.or.th/', isExternal: true },
         { title: 'Spatial DB Connection', desc: 'Credentials and documentation for accessing the read-only PostgreSQL/PostGIS cluster.', icon: '📡', tag1: 'DOCS', linkText: 'ACCESS CREDENTIALS', linkColor: 'var(--text-secondary)' },
       ]
     },
@@ -117,13 +118,28 @@ function ResourcesContent() {
                 <h3 className="font-display text-base sm:text-lg text-white mb-2 sm:mb-3">{item.title}</h3>
                 <p className="text-[8px] sm:text-xs lg:text-sm text-(--text-secondary) leading-relaxed mb-4 sm:mb-6 flex-1">{item.desc}</p>
                 
-                <div className="border-t border-[rgba(255,255,255,0.05)] pt-3 sm:pt-4 flex items-center gap-2 cursor-pointer hover:text-(--accent-cyan) transition">
-                  {item.linkIcon && <span className="text-lg">{item.linkIcon}</span>}
-                  <div className="text-[8px] sm:text-xs font-bold tracking-widest" style={{ color: item.linkColor }}>
-                    {item.linkText}
+                {item.linkUrl ? (
+                  <a
+                    href={item.linkUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="border-t border-[rgba(255,255,255,0.05)] pt-3 sm:pt-4 flex items-center gap-2 hover:text-(--accent-cyan) transition"
+                  >
+                    {item.linkIcon && <span className="text-lg">{item.linkIcon}</span>}
+                    <div className="text-[8px] sm:text-xs font-bold tracking-widest" style={{ color: item.linkColor }}>
+                      {item.linkText}
+                    </div>
+                    {item.isExternal && <ExternalLink size={12} />}
+                  </a>
+                ) : (
+                  <div className="border-t border-[rgba(255,255,255,0.05)] pt-3 sm:pt-4 flex items-center gap-2 cursor-pointer hover:text-(--accent-cyan) transition">
+                    {item.linkIcon && <span className="text-lg">{item.linkIcon}</span>}
+                    <div className="text-[8px] sm:text-xs font-bold tracking-widest" style={{ color: item.linkColor }}>
+                      {item.linkText}
+                    </div>
+                    {item.isExternal && <ExternalLink size={12} />}
                   </div>
-                  {item.isExternal && <ExternalLink size={12} />}
-                </div>
+                )}
               </div>
             ))}
           </div>
@@ -132,7 +148,7 @@ function ResourcesContent() {
       
       {/* Footer */}
       <footer className="border-t border-[rgba(255,255,255,0.05)] pt-4 sm:pt-6 text-center text-[8px] sm:text-xs text-(--text-muted) tracking-wide">
-        <div className="mb-2">© 2024 GEOAI HACKATHON | PRECISION LENS UI</div>
+        <div className="mb-2">© 2026 GEOAI HACKATHON | PRECISION LENS UI</div>
         <div className="flex flex-wrap justify-center gap-4 sm:gap-6">
           <span>PRIVACY POLICY</span>
           <span>TERMS OF SERVICE</span>
