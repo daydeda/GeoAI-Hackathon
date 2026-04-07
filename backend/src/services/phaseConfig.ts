@@ -69,6 +69,23 @@ async function getConfigPath() {
   for (const candidate of CANDIDATE_CONFIG_PATHS) {
     try {
       await mkdir(path.dirname(candidate), { recursive: true })
+
+      // Guard against directories/files that exist but are not writable
+      // for the current runtime user (common with bind mounts).
+      let fileExists = false
+      try {
+        await access(candidate, fsConstants.F_OK)
+        fileExists = true
+      } catch {
+        fileExists = false
+      }
+
+      if (fileExists) {
+        await access(candidate, fsConstants.W_OK)
+      } else {
+        await access(path.dirname(candidate), fsConstants.W_OK)
+      }
+
       resolvedConfigPath = candidate
       return candidate
     } catch {

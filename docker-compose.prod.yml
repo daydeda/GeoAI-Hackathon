@@ -68,7 +68,7 @@ services:
       retries: 5
       start_period: 30s
     volumes:
-      - ./data:/app/data
+      - backend_data_prod:/app/data
 
   # ── Prisma Studio (Admin DB Browser) ─────────────────────
   prisma-studio:
@@ -116,4 +116,6 @@ volumes:
   postgres_data_prod:
     driver: local
   minio_data_prod:
+    driver: local
+  backend_data_prod:
     driver: local

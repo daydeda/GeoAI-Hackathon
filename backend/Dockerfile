@@ -28,7 +28,7 @@ COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/fonts ./fonts
 
 # Prisma Studio may need to write engine artifacts at runtime.
-RUN chown -R geoai:geoai /app
+RUN mkdir -p /app/data && chown -R geoai:geoai /app
 
 USER geoai
 
