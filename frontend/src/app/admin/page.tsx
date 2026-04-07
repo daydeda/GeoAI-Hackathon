@@ -98,6 +98,9 @@ function AdminContent() {
   const [teamLimit] = useState(10)
   const [logs, setLogs] = useState<LogRow[]>([])
   const [search, setSearch] = useState('')
+  const [userRoleFilter, setUserRoleFilter] = useState('ALL')
+  const [teamTrackFilter, setTeamTrackFilter] = useState('ALL')
+  const [teamSearch, setTeamSearch] = useState('')
   const [loading, setLoading] = useState(true)
   const [sendingAnnouncement, setSendingAnnouncement] = useState(false)
   const [announcementStatus, setAnnouncementStatus] = useState<AnnouncementEmailStatus | null>(null)
@@ -137,10 +140,14 @@ function AdminContent() {
       })
       const trimmedSearch = search.trim()
       if (trimmedSearch) userParams.set('search', trimmedSearch)
+      if (userRoleFilter !== 'ALL') userParams.set('role', userRoleFilter)
       const teamParams = new URLSearchParams({
         page: String(teamPage),
         limit: String(teamLimit),
       })
+      if (teamTrackFilter !== 'ALL') teamParams.set('track', teamTrackFilter)
+      const trimmedTeamSearch = teamSearch.trim()
+      if (trimmedTeamSearch) teamParams.set('search', trimmedTeamSearch)
 
       const [usersRes, teamsRes, logsRes, announcementRes] = await Promise.all([
         fetch(`${API}/api/v1/admin/users?${userParams.toString()}`, opts),
@@ -175,7 +182,7 @@ function AdminContent() {
     } finally {
       setLoading(false)
     }
-  }, [search, userLimit, userPage, teamLimit, teamPage])
+  }, [search, userRoleFilter, userLimit, userPage, teamTrackFilter, teamSearch, teamLimit, teamPage])
 
   useEffect(() => {
     let active = true;
@@ -393,17 +400,35 @@ function AdminContent() {
                 <h2 className="mb-1 text-xl font-semibold text-white sm:text-2xl">User Management</h2>
                 <div className="text-xs tracking-[0.05em] text-(--text-muted)">REGISTRY CONTROL & ROLE ASSIGNMENT</div>
               </div>
-              <div className="relative w-full md:w-auto">
-                <Search size={14} className="pointer-events-none absolute left-3 top-2.5 text-(--text-muted)" />
-                <input
-                  placeholder="SEARCH UUID / EMAIL"
-                  value={search}
-                  onChange={e => {
-                    setSearch(e.target.value)
-                    setUserPage(1)
-                  }}
-                  className="w-full rounded border border-(--border-subtle) bg-(--bg-base) px-3 py-2 pl-9 text-xs tracking-[0.05em] text-white outline-none md:w-[260px]"
-                />
+              <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center md:w-auto">
+                <div className="w-full sm:w-[190px]">
+                  <CustomDropdown
+                    value={userRoleFilter}
+                    onChange={(nextRole) => {
+                      setUserRoleFilter(nextRole)
+                      setUserPage(1)
+                    }}
+                    options={[
+                      { value: 'ALL', label: 'ALL ROLES' },
+                      { value: 'COMPETITOR', label: 'COMPETITOR' },
+                      { value: 'MODERATOR', label: 'MODERATOR' },
+                      { value: 'JUDGE', label: 'JUDGE' },
+                      { value: 'ADMIN', label: 'ADMIN' },
+                    ]}
+                  />
+                </div>
+                <div className="relative w-full md:w-auto">
+                  <Search size={14} className="pointer-events-none absolute left-3 top-2.5 text-(--text-muted)" />
+                  <input
+                    placeholder="UUID / EMAIL / NAME"
+                    value={search}
+                    onChange={e => {
+                      setSearch(e.target.value)
+                      setUserPage(1)
+                    }}
+                    className="w-full rounded border border-(--border-subtle) bg-(--bg-base) px-3 py-2 pl-9 text-xs tracking-[0.05em] text-white outline-none md:w-[280px]"
+                  />
+                </div>
               </div>
             </div>
 
@@ -528,7 +553,37 @@ function AdminContent() {
 
           {/* Team Management */}
           <div className="border-t border-white/5 bg-(--bg-surface) p-4 sm:p-6 lg:p-8">
-            <h2 className="mb-5 text-xl font-semibold text-white sm:text-2xl">Team Management</h2>
+            <div className="mb-5 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+              <h2 className="text-xl font-semibold text-white sm:text-2xl">Team Management</h2>
+              <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center md:w-auto">
+                <div className="w-full sm:w-[230px]">
+                  <CustomDropdown
+                    value={teamTrackFilter}
+                    onChange={(nextTrack) => {
+                      setTeamTrackFilter(nextTrack)
+                      setTeamPage(1)
+                    }}
+                    options={[
+                      { value: 'ALL', label: 'ALL TRACKS' },
+                      { value: 'SMART_AGRICULTURE', label: 'SMART AGRICULTURE' },
+                      { value: 'DISASTER_FLOOD_RESPONSE', label: 'DISASTER FLOOD RESPONSE' },
+                    ]}
+                  />
+                </div>
+                <div className="relative w-full md:w-auto">
+                  <Search size={14} className="pointer-events-none absolute left-3 top-2.5 text-(--text-muted)" />
+                  <input
+                    placeholder="SEARCH TEAM NAME"
+                    value={teamSearch}
+                    onChange={e => {
+                      setTeamSearch(e.target.value)
+                      setTeamPage(1)
+                    }}
+                    className="w-full rounded border border-(--border-subtle) bg-(--bg-base) px-3 py-2 pl-9 text-xs tracking-[0.05em] text-white outline-none md:w-[260px]"
+                  />
+                </div>
+              </div>
+            </div>
             <div className="overflow-x-auto">
             <table className="min-w-[760px] w-full border-collapse">
               <thead>

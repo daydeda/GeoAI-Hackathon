@@ -235,14 +235,36 @@ export async function adminRoutes(app: FastifyInstance) {
 
   // GET /api/v1/admin/users — list all users with roles
   app.get('/users', { preHandler: [requireRole('ADMIN', 'MODERATOR')] }, async (request, reply) => {
-    const { search, page = '1', limit = '50' } = request.query as Record<string, string>
+    const { search, role, page = '1', limit = '50' } = request.query as Record<string, string>
 
-    const where = search ? {
-      OR: [
-        { email: { contains: search, mode: 'insensitive' as const } },
-        { fullName: { contains: search, mode: 'insensitive' as const } },
-      ],
-    } : {}
+    const normalizedSearch = search?.trim()
+    const normalizedRole = role?.trim().toUpperCase()
+    const allowedRoles = new Set(['COMPETITOR', 'MODERATOR', 'JUDGE', 'ADMIN'])
+    const roleFilter = normalizedRole && allowedRoles.has(normalizedRole) ? normalizedRole : null
+    const looksLikeUuid = Boolean(normalizedSearch && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(normalizedSearch))
+
+    const where: Prisma.UserWhereInput = {
+      ...(normalizedSearch
+        ? {
+            OR: [
+              { email: { contains: normalizedSearch, mode: 'insensitive' as const } },
+              { fullName: { contains: normalizedSearch, mode: 'insensitive' as const } },
+              ...(looksLikeUuid ? [{ id: normalizedSearch }] : []),
+            ],
+          }
+        : {}),
+      ...(roleFilter
+        ? {
+            userRoles: {
+              some: {
+                role: {
+                  name: roleFilter as never,
+                },
+              },
+            },
+          }
+        : {}),
+    }
 
     const [users, total] = await Promise.all([
       prisma.user.findMany({
@@ -263,7 +285,7 @@ export async function adminRoutes(app: FastifyInstance) {
       yearOfStudy: u.yearOfStudy,
       phoneNumber: u.phoneNumber,
       address: u.address,
-      profileCompleted: u.profileCompleted,
+      profileCompleted: Boolean(u.profileCompleted && u.idCardFileKey),
       idCardUploaded: Boolean(u.idCardFileKey),
       roles: u.userRoles.map(ur => ur.role.name), createdAt: u.createdAt,
     })), total }
@@ -349,11 +371,32 @@ export async function adminRoutes(app: FastifyInstance) {
 
   // GET /api/v1/admin/teams — list all teams with scores
   app.get('/teams', { preHandler: [requireRole('ADMIN', 'MODERATOR')] }, async (request, reply) => {
-    const { page = '1', limit = '20' } = request.query as Record<string, string>
+    const { page = '1', limit = '20', track, search } = request.query as Record<string, string>
     const take = Math.min(100, Math.max(1, Number(limit) || 20))
     const currentPage = Math.max(1, Number(page) || 1)
 
+    const normalizedTrack = track?.trim().toUpperCase()
+    const allowedTracks = new Set(['SMART_AGRICULTURE', 'DISASTER_FLOOD_RESPONSE'])
+    const trackFilter = normalizedTrack && allowedTracks.has(normalizedTrack) ? normalizedTrack : null
+    const normalizedSearch = search?.trim()
+    const where: Prisma.TeamWhereInput = {
+      ...(trackFilter
+        ? {
+            track: trackFilter as never,
+          }
+        : {}),
+      ...(normalizedSearch
+        ? {
+            name: {
+              contains: normalizedSearch,
+              mode: 'insensitive' as const,
+            },
+          }
+        : {}),
+    }
+
     const teams = await prisma.team.findMany({
+      where,
       include: {
         leader: { select: { id: true, email: true, fullName: true, avatarUrl: true, idCardFileKey: true } },
         members: { include: { user: { select: { id: true, email: true, fullName: true, avatarUrl: true, idCardFileKey: true } } } },
@@ -364,7 +407,7 @@ export async function adminRoutes(app: FastifyInstance) {
       take,
     })
 
-    const total = await prisma.team.count()
+    const total = await prisma.team.count({ where })
 
     return {
       data: teams.map((team) => ({

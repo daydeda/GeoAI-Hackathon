@@ -242,13 +242,14 @@ export async function authRoutes(app: FastifyInstance) {
       })
       const roles = userRoles.map(ur => ur.role.name as RoleType)
 
-      const isCompetitorOnboardingRequired = Boolean(roles.includes('COMPETITOR') && !user.profileCompleted)
+      const profileCompleted = Boolean(user.profileCompleted && user.idCardFileKey)
+      const isCompetitorOnboardingRequired = Boolean(roles.includes('COMPETITOR') && !profileCompleted)
 
       const payload: JwtPayload = {
         userId: user.id,
         email: user.email,
         roles,
-        profileCompleted: Boolean(user.profileCompleted),
+        profileCompleted,
       }
       const token = await reply.jwtSign(payload)
 
@@ -352,6 +353,8 @@ export async function authRoutes(app: FastifyInstance) {
     const profile = parsed.data
     const fullName = `${profile.firstName} ${profile.lastName}`.trim()
 
+    const profileCompleted = Boolean(idCardFileKey)
+
     const updatedUser = await prisma.user.update({
       where: { id: actor.userId },
       data: {
@@ -364,7 +367,7 @@ export async function authRoutes(app: FastifyInstance) {
         idCardFileKey,
         idCardFileName,
         fullName,
-        profileCompleted: true,
+        profileCompleted,
       },
     }) as {
       university?: string | null
@@ -384,8 +387,10 @@ export async function authRoutes(app: FastifyInstance) {
     })
 
     return {
-      message: existingUser.profileCompleted ? 'Profile updated' : 'Profile completed',
-      profileCompleted: true,
+      message: profileCompleted
+        ? (existingUser.profileCompleted ? 'Profile updated' : 'Profile completed')
+        : 'Profile saved. Upload Student ID to complete your profile.',
+      profileCompleted,
     }
   })
 
@@ -417,13 +422,15 @@ export async function authRoutes(app: FastifyInstance) {
     const u = user as any
     const teamMembership = u.teamMembers[0] ?? null
 
+    const profileCompleted = Boolean(u.profileCompleted && u.idCardFileKey)
+
     return {
       id: u.id,
       email: u.email,
       fullName: u.fullName,
       avatarUrl: u.avatarUrl,
       roles: u.userRoles.map((ur: any) => ur.role.name),
-      profileCompleted: u.profileCompleted,
+      profileCompleted,
       profile: {
         firstName: u.firstName,
         lastName: u.lastName,
