@@ -23,6 +23,7 @@
 
   --glow-cyan:       0 0 20px rgba(0, 229, 255, 0.3);
   --glow-cyan-sm:    0 0 8px rgba(0, 229, 255, 0.2);
+  --font-thai:       var(--font-kanit), 'Kanit', sans-serif;
 }
 
 /* ─── Base Reset ─────────────────────────────────────────── */
@@ -60,6 +61,19 @@ button:not(:disabled):hover {
 .font-mono    { font-family: 'JetBrains Mono', monospace; }
 
 h1, h2, h3 { font-family: 'Rajdhani', sans-serif; font-weight: 700; letter-spacing: 0.02em; }
+
+/* Global Thai fallback when language metadata is present. */
+:lang(th),
+:lang(th) * {
+  font-family: var(--font-thai);
+  letter-spacing: normal;
+}
+
+/* Runtime Thai detection class applied by ThaiAutoFont component. */
+.thai-auto {
+  font-family: var(--font-thai) !important;
+  letter-spacing: normal;
+}
 
 /* Keep Kanit headings on Docs/Knowledge pages despite global heading styles. */
 .docs-kanit h1,

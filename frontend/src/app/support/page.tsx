@@ -4,78 +4,12 @@ import Link from 'next/link'
 import { AuthProvider } from '@/contexts/AuthContext'
 import AppShell from '@/components/AppShell'
 
-type ContactPerson = {
-  fullName: string
-  nickname: string
-  email: string
-  workingHours: string
-}
-
 type FaqItem = {
   question: string
   answer: string
 }
 
-// Map วันในสัปดาห์ (0 = Sunday, 1 = Monday, ..., 6 = Saturday)
-// ไปหา array ของ ContactPerson — เพิ่มหลายคนในวันเดียวกันได้เลย
-const CONTACT_BY_DAY: Record<number, ContactPerson[]> = {
-  1: [
-    {
-      fullName: 'Puri Sangnawakit',
-      nickname: 'Guy',
-      email: 'puri_s@cmu.ac.th',
-      workingHours: '10:00 - 18:00',
-    },
-  ],
-  2: [
-    {
-      fullName: 'Puri Sangnawakit',
-      nickname: 'Guy',
-      email: 'puri_s@cmu.ac.th',
-      workingHours: '10:00 - 18:00',
-    },
-  ],
-  3: [
-    {
-      fullName: 'Puri Sangnawakit',
-      nickname: 'Guy',
-      email: 'puri_s@cmu.ac.th',
-      workingHours: '10:00 - 18:00',
-    },
-  ],
-  4: [
-    {
-      fullName: 'Puri Sangnawakit',
-      nickname: 'Guy',
-      email: 'puri_s@cmu.ac.th',
-      workingHours: '10:00 - 18:00',
-    },
-  ],
-  5: [
-    {
-      fullName: 'Puri Sangnawakit',
-      nickname: 'Guy',
-      email: 'puri_s@cmu.ac.th',
-      workingHours: '10:00 - 18:00',
-    },
-  ],
-  6: [
-    {
-      fullName: 'Puri Sangnawakit',
-      nickname: 'Guy',
-      email: 'puri_s@cmu.ac.th',
-      workingHours: '10:00 - 18:00',
-    },
-  ],
-  0: [
-    {
-      fullName: 'Puri Sangnawakit',
-      nickname: 'Guy',
-      email: 'puri_s@cmu.ac.th',
-      workingHours: '10:00 - 18:00',
-    },
-  ],
-}
+const CONTACT_EMAIL = 'cegs@kmitl.ac.th'
 
 const FAQ_ITEMS: FaqItem[] = [
   {
@@ -98,21 +32,11 @@ const FAQ_ITEMS: FaqItem[] = [
   {
     question: 'Where should we report urgent technical issues?',
     answer:
-      'Please contact the assigned support person of the day by email and include screenshots or error details.',
+      'Please contact cegs@kmitl.ac.th and include screenshots or error details.',
   },
 ]
 
-const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
-
-function getContactsForDay(day: number): ContactPerson[] {
-  return CONTACT_BY_DAY[day] ?? []
-}
-
 function SupportContent() {
-  const today = new Date()
-  const todayLabel = DAY_NAMES[today.getDay()]
-  const contacts = getContactsForDay(today.getDay())
-
   return (
     <div className="min-h-screen bg-(--bg-base) px-4 py-6 sm:px-6 lg:px-8">
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
@@ -121,7 +45,7 @@ function SupportContent() {
         <section className="rounded-lg border border-(--border-subtle) bg-(--bg-surface) p-5 sm:p-7">
           <p className="text-xs tracking-[0.1em] text-(--text-muted)">PUBLIC SUPPORT CENTER</p>
           <h1 className="mt-2 text-2xl font-semibold text-(--text-primary) sm:text-3xl">
-            Support & FAQ
+            Contact Us
           </h1>
           <p className="mt-3 max-w-2xl text-sm leading-relaxed text-(--text-secondary)">
             Need help with registration, submissions, or platform access? Use the contact
@@ -129,53 +53,39 @@ function SupportContent() {
           </p>
           <div className="mt-5 inline-flex items-center gap-2 rounded-full border border-(--border-active) bg-[rgba(0,229,255,0.08)] px-3 py-1.5 text-xs text-(--accent-cyan)">
             <span className="h-2 w-2 rounded-full bg-(--accent-cyan)" />
-            Active contact{contacts.length > 1 ? 's' : ''} for {todayLabel}
+            Universal support email: {CONTACT_EMAIL}
           </div>
         </section>
 
         {/* Contact Cards + Immediate Help */}
         <section className="grid grid-cols-1 gap-6 lg:grid-cols-2">
 
-          {/* Contact Person Of The Day */}
+          {/* Contact Us */}
           <article className="rounded-lg border border-(--border-subtle) bg-(--bg-surface) p-5 sm:p-6">
             <h2 className="text-lg font-semibold text-(--text-primary)">
-              Contact Person{contacts.length > 1 ? 's' : ''} Of The Day
+              Contact Us
             </h2>
             <p className="mt-2 text-sm text-(--text-secondary)">
-              {contacts.length > 1
-                ? 'Multiple contacts are available today. Reach out to either person below.'
-                : 'Contact rotates by weekday. Monday shows the first person, Tuesday the second, and continues in order.'}
+              A single support mailbox is available for all days and all support slots.
             </p>
 
             <div className="mt-5 flex flex-col gap-4">
-              {contacts.map((contact) => (
-                <div
-                  key={contact.email}
-                  className="rounded-lg border border-(--border-subtle) bg-(--bg-base) p-4"
+              <div className="rounded-lg border border-(--border-subtle) bg-(--bg-base) p-4">
+                <p className="text-xs uppercase tracking-[0.08em] text-(--text-muted)">
+                  Email
+                </p>
+                <a
+                  className="mt-1 block text-sm text-(--accent-cyan) hover:underline"
+                  href={`mailto:${CONTACT_EMAIL}`}
                 >
-                  <p className="text-xs uppercase tracking-[0.08em] text-(--text-muted)">
-                    Full Name
-                  </p>
-                  <p className="mt-1 text-base font-semibold text-(--text-primary)">
-                    {contact.fullName}
-                  </p>
+                  {CONTACT_EMAIL}
+                </a>
 
-                  <p className="mt-4 text-xs uppercase tracking-[0.08em] text-(--text-muted)">
-                    Email
-                  </p>
-                  <a
-                    className="mt-1 block text-sm text-(--accent-cyan) hover:underline"
-                    href={`mailto:${contact.email}`}
-                  >
-                    {contact.email}
-                  </a>
-
-                  <p className="mt-4 text-xs uppercase tracking-[0.08em] text-(--text-muted)">
-                    Working Hours
-                  </p>
-                  <p className="mt-1 text-sm text-(--text-secondary)">{contact.workingHours}</p>
-                </div>
-              ))}
+                <p className="mt-4 text-xs uppercase tracking-[0.08em] text-(--text-muted)">
+                  Availability
+                </p>
+                <p className="mt-1 text-sm text-(--text-secondary)">10:00 - 19:30</p>
+              </div>
             </div>
           </article>
 
@@ -187,15 +97,12 @@ function SupportContent() {
               so we can triage quickly.
             </p>
             <div className="mt-5 flex flex-col gap-3">
-              {contacts.map((contact) => (
-                <a
-                  key={contact.email}
-                  href={`mailto:${contact.email}?subject=GeoAI Support Request`}
-                  className="inline-flex items-center justify-center rounded border border-(--border-active) bg-[rgba(0,229,255,0.12)] px-4 py-2 text-sm font-medium text-(--accent-cyan) hover:bg-[rgba(0,229,255,0.18)]"
-                >
-                  Email {contact.fullName.split(' ')[0]}
-                </a>
-              ))}
+              <a
+                href={`mailto:${CONTACT_EMAIL}?subject=GeoAI Support Request`}
+                className="inline-flex items-center justify-center rounded border border-(--border-active) bg-[rgba(0,229,255,0.12)] px-4 py-2 text-sm font-medium text-(--accent-cyan) hover:bg-[rgba(0,229,255,0.18)]"
+              >
+                Email Support Team
+              </a>
               <Link
                 href="/docs"
                 className="inline-flex items-center justify-center rounded border border-(--border-subtle) px-4 py-2 text-sm font-medium text-(--text-secondary) hover:text-(--text-primary)"

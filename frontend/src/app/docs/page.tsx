@@ -3,6 +3,7 @@
 import { AuthProvider } from '@/contexts/AuthContext'
 import AppShell from '@/components/AppShell'
 import { Kanit } from 'next/font/google'
+import Link from 'next/link'
 
 const kanit = Kanit({
   subsets: ['thai', 'latin'],
@@ -111,6 +112,8 @@ const rubricItems = [
 ]
 
 const RUBRIC_TOTAL = 50
+const TEMPLATE_PROPOSAL_URL = '/Proposal_Hackathon_2026_Apr_07.docx'
+const GEO_AI_POSTER_URL = '/GeoAIPoster.png'
 
 const rewardThemes = [
   {
@@ -165,10 +168,29 @@ function DocsContent({ enhancedRewards = true }: { enhancedRewards?: boolean }) 
     <div className={`${kanit.className} docs-kanit min-h-screen bg-(--bg-base) px-4 py-6 sm:px-6 lg:px-8`} style={{ fontFamily: kanit.style.fontFamily }}>
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-8">
         <section className="rounded-lg border border-(--border-subtle) bg-(--bg-surface) p-5 sm:p-7">
-          <h1 className="text-2xl font-semibold text-white sm:text-3xl" style={{ fontFamily: kanit.style.fontFamily }}>เอกสารการแข่งขัน</h1>
+          <h1 className="text-2xl font-semibold text-white sm:text-3xl" style={{ fontFamily: kanit.style.fontFamily }}>รายละเอียดการแข่งขัน</h1>
           <p className="mt-3 text-sm leading-relaxed text-(--text-secondary)">
             โจทย์สามารถนำเสนอแนวคิดใหม่ได้ แต่ต้องเกี่ยวข้องกับการเกษตร หรือภัยพิบัติ และการใช้ข้อมูลเชิงพื้นที่เพื่อการตัดสินใจ
           </p>
+          <div className="mt-5 flex flex-wrap gap-3">
+            <Link
+              href={TEMPLATE_PROPOSAL_URL}
+              download
+              className="inline-flex items-center justify-center rounded border border-[rgba(255,165,0,0.45)] bg-[#FFA500] px-4 py-2 text-sm font-semibold text-black transition-opacity hover:opacity-90"
+            >
+              Download Template Proposal
+            </Link>
+          </div>
+          <div className="mt-6 overflow-hidden rounded-lg border border-(--border-subtle) bg-(--bg-base)">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={GEO_AI_POSTER_URL} alt="GEO Hackathon Poster" className="mx-auto w-full max-w-md" />
+          </div>
+        </section>
+
+        <section className="rounded-lg border border-(--border-subtle) bg-(--bg-surface) p-5 sm:p-6">
+          <h2 className="text-lg font-semibold text-(--text-primary) sm:text-xl" style={{ fontFamily: kanit.style.fontFamily }}>
+            ตัวอย่างโจทย์ GEO Hackathon (สามารถนำเสนอโจทย์ที่อยากแก้ไขเองได้)
+          </h2>
         </section>
 
         <section className="grid grid-cols-1 gap-6 lg:grid-cols-2">

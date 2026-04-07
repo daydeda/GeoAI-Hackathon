@@ -9,6 +9,7 @@ import { AlertTriangle, CheckSquare, FileText, Square, UploadCloud } from 'lucid
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
 const LIVE_REFRESH_MS = 8000
+const TEMPLATE_PROPOSAL_URL = '/Proposal_Hackathon_2026_Apr_07.docx'
 
 interface Submission {
   id: string
@@ -205,6 +206,16 @@ function SubmissionsContent() {
         <p className="text-xs sm:text-sm text-(--text-secondary) mb-6 sm:mb-8">
           Upload your technical proposal. Subsequent uploads will version your submission.
         </p>
+
+        <div className="mb-4 sm:mb-6">
+          <a
+            href={TEMPLATE_PROPOSAL_URL}
+            download
+            className="inline-flex items-center justify-center rounded border border-[rgba(255,165,0,0.45)] bg-[#FFA500] px-4 py-2 text-sm font-semibold text-black transition-opacity hover:opacity-90"
+          >
+            Download Template Proposal
+          </a>
+        </div>
 
         {error && (
           <div className="mb-4 sm:mb-6 p-3 sm:p-4 rounded-md bg-[rgba(255,23,68,0.1)] border border-(--accent-red) text-(--accent-red) text-xs sm:text-sm flex items-start gap-2 sm:gap-3">

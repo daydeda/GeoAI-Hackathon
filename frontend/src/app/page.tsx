@@ -238,9 +238,9 @@ export default function LandingPage() {
             </Link>
             <Link
               href="/docs"
-              className="inline-flex items-center justify-center gap-2 px-6 sm:px-8 py-3 sm:py-3.5 border border-(--border-active) text-(--text-primary) rounded font-semibold text-sm sm:text-base hover:bg-(--bg-surface) transition-colors w-full sm:w-auto"
+              className="inline-flex items-center justify-center gap-2 px-6 sm:px-8 py-3 sm:py-3.5 rounded font-semibold text-sm sm:text-base bg-[#FFA500] text-black hover:opacity-90 transition-colors w-full sm:w-auto"
             >
-              View Technical Docs
+              รายละเอียด การแข่งขัน
             </Link>
           </div>
         </div>
