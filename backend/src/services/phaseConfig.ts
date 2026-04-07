@@ -16,7 +16,7 @@ const DEFAULT_PHASES: PhaseConfigItem[] = [
   {
     key: 'registration',
     phase: 'PHASE 01',
-    dateLabel: '31 MAR',
+    dateLabel: '',
     title: 'Registration',
     desc: 'Team registration window closed on 27 April.',
     date: '2026-03-31T23:59:59+07:00',
@@ -26,7 +26,7 @@ const DEFAULT_PHASES: PhaseConfigItem[] = [
     phase: 'PHASE 02',
     dateLabel: '27 APR',
     title: 'Proposal Submission',
-    desc: 'Proposal submission deadline is April 27 (PDF, max 20 MB).',
+    desc: 'Proposal submission deadline is April 27 (PDF, max 20 MB), at 16:00.',
     date: '2026-04-27T16:00:00+07:00',
   },
   {
@@ -34,7 +34,7 @@ const DEFAULT_PHASES: PhaseConfigItem[] = [
     phase: 'PHASE 03',
     dateLabel: '09 MAY',
     title: 'Announcement',
-    desc: 'Announcement will be released on 9 May.',
+    desc: '',
     date: '2026-05-09T00:00:00+07:00',
   },
   {
