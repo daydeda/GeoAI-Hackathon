@@ -220,8 +220,15 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen flex flex-col bg-(--bg-base)">
       {needsProfileSetup && (
-        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
-          <form onSubmit={saveProfile} className="w-full max-w-3xl rounded-lg border border-(--border-active) bg-(--bg-surface) p-6 shadow-[0_24px_48px_rgba(0,0,0,0.35)] sm:p-8">
+        <div
+          className="fixed inset-0 z-[120] flex items-start justify-center overflow-y-auto bg-black/70 p-3 pt-[max(0.75rem,env(safe-area-inset-top))] pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur-sm sm:items-center sm:p-4"
+          data-testid="profile-setup-overlay"
+        >
+          <form
+            onSubmit={saveProfile}
+            className="flex max-h-[calc(100dvh-1.5rem)] w-full max-w-3xl flex-col overflow-y-auto rounded-lg border border-(--border-active) bg-(--bg-surface) p-5 shadow-[0_24px_48px_rgba(0,0,0,0.35)] sm:max-h-[calc(100dvh-2rem)] sm:p-8"
+            data-testid="profile-setup-form"
+          >
             <div className="mb-4 flex items-center justify-between gap-4">
               <h2 className="font-display text-xl sm:text-2xl text-(--accent-cyan)">Complete Competitor Profile</h2>
               <span className="rounded border border-(--accent-cyan) bg-[rgba(0,229,255,0.08)] px-2 py-1 text-[10px] font-semibold tracking-[0.06em] text-(--accent-cyan)">
@@ -260,9 +267,15 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               </p>
             </div>
 
-            <button type="submit" disabled={savingProfile} className="w-full rounded bg-(--accent-cyan) px-4 py-3 text-sm font-semibold text-(--bg-base) disabled:opacity-60">
-              {savingProfile ? 'Saving profile...' : 'Save and Continue'}
-            </button>
+            <div className="sticky bottom-0 -mx-5 mt-5 border-t border-(--border-subtle) bg-(--bg-surface)/95 px-5 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))] backdrop-blur sm:-mx-8 sm:px-8">
+              <button
+                type="submit"
+                disabled={savingProfile}
+                className="w-full rounded bg-(--accent-cyan) px-4 py-3 text-sm font-semibold text-(--bg-base) disabled:opacity-60"
+              >
+                {savingProfile ? 'Saving profile...' : 'Save and Continue'}
+              </button>
+            </div>
           </form>
         </div>
       )}
