@@ -217,10 +217,10 @@ export default function LandingPage() {
           </div>
 
           <h1 className="font-display text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold leading-tight mb-4 sm:mb-6 text-(--text-primary)">
-            AGRI-DISASTER
+            GEOSPTIAL INTELLIGENCE <br /> FOR RESILIENCE
             <br />
             <span className="text-(--accent-cyan)" style={{ textShadow: 'var(--glow-cyan)' }}>
-              AI HACKATHON
+              HACKATHON
             </span>
           </h1>
 
