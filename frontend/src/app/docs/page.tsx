@@ -167,24 +167,32 @@ function DocsContent({ enhancedRewards = true }: { enhancedRewards?: boolean }) 
   return (
     <div className={`${kanit.className} docs-kanit min-h-screen bg-(--bg-base) px-4 py-6 sm:px-6 lg:px-8`} style={{ fontFamily: kanit.style.fontFamily }}>
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-8">
-        <section className="rounded-lg border border-(--border-subtle) bg-(--bg-surface) p-5 sm:p-7">
-          <h1 className="text-2xl font-semibold text-white sm:text-3xl" style={{ fontFamily: kanit.style.fontFamily }}>รายละเอียดการแข่งขัน</h1>
-          <p className="mt-3 text-sm leading-relaxed text-(--text-secondary)">
-            โจทย์สามารถนำเสนอแนวคิดใหม่ได้ แต่ต้องเกี่ยวข้องกับการเกษตร หรือภัยพิบัติ และการใช้ข้อมูลเชิงพื้นที่เพื่อการตัดสินใจ
-          </p>
-          <div className="mt-5 flex flex-wrap gap-3">
-            <a
-              href={TEMPLATE_PROPOSAL_URL}
-              download="Proposal_Hackathon_2026_Apr_07.docx"
-              className="inline-flex items-center justify-center rounded border border-[rgba(255,165,0,0.45)] bg-[#FFA500] px-4 py-2 text-sm font-semibold text-black transition-opacity hover:opacity-90"
-            >
-              Download Template Proposal
-            </a>
-          </div>
-          <div className="mt-6 overflow-hidden rounded-lg border border-(--border-subtle) bg-(--bg-base)">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={GEO_AI_POSTER_URL} alt="GEO Hackathon Poster" className="mx-auto w-full max-w-md" />
-          </div>
+          <section className="rounded-lg border border-(--border-subtle) bg-(--bg-surface) p-5 sm:p-7">
+            <h1 className="text-2xl font-semibold text-white sm:text-3xl" style={{ fontFamily: kanit.style.fontFamily }}>รายละเอียดการแข่งขัน</h1>
+            
+            {/* เปลี่ยนจาก <p> เดี่ยวๆ เป็น <div> ครอบ แล้วใช้ text-justify เพื่อให้ข้อความเท่ากัน และ space-y-4 เพื่อเว้นระยะย่อหน้า */}
+            <div className="mt-4 space-y-4 text-sm leading-relaxed text-(--text-secondary) text-justify">
+              <p>
+                โครงการ GeoAI Hackathon 2026 เกิดขึ้นจากความร่วมมือทางวิชาการและการผลักดันนวัตกรรมระหว่าง คณะวิศวกรรมศาสตร์ สจล. (KMITL), มจธ. (KMUTT), GISTDA และ ESRI (Thailand) โดยได้รับงบประมาณสนับสนุนหลักจาก สำนักงานพัฒนาธุรกรรมทางอิเล็กทรอนิกส์ (ETDA) ภายใต้พันธกิจในการสร้างระบบนิเวศดิจิทัลที่ปลอดภัยและเข้มแข็งให้กับประเทศ
+              </p>
+              <p>
+                เป้าหมายสำคัญของการแข่งขันในครั้งนี้ คือการเฟ้นหาสุดยอดไอเดียจากนิสิตนักศึกษาในการประยุกต์ใช้เทคโนโลยี Generative AI (เช่น LLMs, Multi-modal AI หรือเทคนิคการสร้างข้อมูลจำลอง) มาบูรณาการร่วมกับ ข้อมูลภูมิสารสนเทศ (Geospatial Data) เพื่อสร้างสรรค์โซลูชันหรือระบบอัจฉริยะที่สามารถแก้ไขปัญหาเชิงพื้นที่ (Spatial Problems) ได้อย่างมีประสิทธิภาพ ไม่ว่าจะเป็นด้านสิ่งแวดล้อม การผังเมือง การบริหารจัดการทรัพยากร หรือความปลอดภัยในสังคม เพื่อยกระดับขีดความสามารถทางการแข่งขันด้านเทคโนโลยีของประเทศไทยให้ทัดเทียมระดับสากล
+              </p>
+            </div>
+
+            <div className="mt-5 flex flex-wrap gap-3">
+              <a
+                href={TEMPLATE_PROPOSAL_URL}
+                download="Proposal_Hackathon_2026_Apr_07.docx"
+                className="inline-flex items-center justify-center rounded border border-[rgba(255,165,0,0.45)] bg-[#FFA500] px-4 py-2 text-sm font-semibold text-black transition-opacity hover:opacity-90"
+              >
+                Download Template Proposal
+              </a>
+            </div>
+            <div className="mt-6 overflow-hidden rounded-lg border border-(--border-subtle) bg-(--bg-base)">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={GEO_AI_POSTER_URL} alt="GEO Hackathon Poster" className="mx-auto w-full max-w-md" />
+            </div>
         </section>
 
         <section className="rounded-lg border border-(--border-subtle) bg-(--bg-surface) p-5 sm:p-6">
@@ -261,50 +269,25 @@ function DocsContent({ enhancedRewards = true }: { enhancedRewards?: boolean }) 
         </section>
 
         <section className="rounded-lg border border-(--border-subtle) bg-(--bg-surface) p-5 sm:p-7">
-          <h2 className="text-xl font-semibold text-white sm:text-2xl" style={{ fontFamily: kanit.style.fontFamily }}>เกณฑ์การตัดสินรอบแรก</h2>
+          <h2 className="text-xl font-semibold text-white sm:text-2xl" style={{ fontFamily: kanit.style.fontFamily }}>
+            เกณฑ์การตัดสินรอบแรก
+          </h2>
           <div className="mt-4 rounded-xl border border-(--border-subtle) bg-(--bg-base) p-4 sm:p-5">
-            <div className="mb-4 flex items-center justify-between rounded-lg border border-[rgba(0,229,255,0.25)] bg-[rgba(0,229,255,0.08)] px-3 py-2">
-              <span className="text-sm font-medium text-(--text-primary)">คะแนนรวม</span>
-              <span className="text-xl font-bold text-(--accent-cyan)">{RUBRIC_TOTAL}</span>
-            </div>
-
             <div className="space-y-3">
-              {rubricItems.map((item, idx) => {
-                const percentage = (item.score / RUBRIC_TOTAL) * 100
-                return (
-                  <article
-                    key={item.title}
-                    className="rounded-lg border border-(--border-subtle) bg-(--bg-surface) p-3 transition-all duration-300 hover:border-(--border-active)"
-                  >
-                    <div className="mb-2 flex items-start justify-between gap-3">
-                      <div>
-                        <p className="text-xs text-(--text-muted)">หัวข้อที่ {idx + 1}</p>
-                        <h3 className="text-sm font-medium text-(--text-primary)">{item.title}</h3>
-                      </div>
-                      <div
-                        className="rounded-md px-2 py-1 text-sm font-semibold"
-                        style={{ color: item.color, background: `${item.color}1a` }}
-                      >
-                        {item.score} คะแนน
-                      </div>
+              {rubricItems.map((item, idx) => (
+                <article
+                  key={item.title}
+                  className="rounded-lg border border-(--border-subtle) bg-(--bg-surface) p-3 transition-all duration-300 hover:border-(--border-active)"
+                >
+                  <div className="flex items-start gap-3">
+                    <div>
+                      <p className="text-xs text-(--text-muted)">หัวข้อที่ {idx + 1}</p>
+                      <h3 className="text-sm font-medium text-(--text-primary)">{item.title}</h3>
                     </div>
-
-                    <div className="h-2 overflow-hidden rounded-full bg-[rgba(255,255,255,0.08)]">
-                      <div
-                        className="h-full rounded-full transition-all duration-700"
-                        style={{
-                          width: `${percentage}%`,
-                          background: `linear-gradient(90deg, ${item.color}, ${item.color}aa)`,
-                          boxShadow: `0 0 10px ${item.color}66`,
-                        }}
-                      />
-                    </div>
-                  </article>
-                )
-              })}
+                  </div>
+                </article>
+              ))}
             </div>
-
-            <p className="mt-4 text-xs text-(--text-muted)">สัดส่วนคะแนนถูกแสดงเป็นเปอร์เซ็นต์เทียบกับคะแนนรวม 50 คะแนน</p>
           </div>
         </section>
       </div>
