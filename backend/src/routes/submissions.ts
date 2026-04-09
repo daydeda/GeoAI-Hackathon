@@ -414,8 +414,9 @@ export async function submissionRoutes(app: FastifyInstance) {
     // Fetch from MinIO and stream to response
     const stream = await minioClient.getObject(BUCKET, file.fileKey)
     
+    const encodedName = encodeURIComponent(file.originalName)
     reply.header('Content-Type', 'application/pdf')
-    reply.header('Content-Disposition', `inline; filename="${file.originalName}"`)
+    reply.header('Content-Disposition', `inline; filename*=UTF-8''${encodedName}`)
     
     return reply.send(stream)
   })

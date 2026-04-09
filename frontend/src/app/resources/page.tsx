@@ -32,7 +32,7 @@ function ResourcesContent() {
       color: 'var(--accent-green)',
       items: [
       { title: 'GISTDA Sphere Platform', desc: 'Core integration portal for real-time satellite data streams. Required for real-time inference tasks.', icon: '🛰️', tag1: 'API', tag2: 'REQUIRED', linkText: 'sphere.gistda.or.th', linkColor: 'var(--accent-green)', linkUrl: 'https://sphere.gistda.or.th/', isExternal: true },
-        { title: 'Spatial DB Connection', desc: 'Credentials and documentation for accessing the read-only PostgreSQL/PostGIS cluster.', icon: '📡', tag1: 'DOCS', linkText: 'ACCESS CREDENTIALS', linkColor: 'var(--text-secondary)' },
+        // { title: 'Spatial DB Connection', desc: 'Credentials and documentation for accessing the read-only PostgreSQL/PostGIS cluster.', icon: '📡', tag1: 'DOCS', linkText: 'ACCESS CREDENTIALS', linkColor: 'var(--text-secondary)' },
       ]
     },
     {
@@ -40,19 +40,19 @@ function ResourcesContent() {
       icon: 'DATA',
       color: 'var(--accent-cyan)',
       items: [
-        { title: 'Synthetic Radar (SAR)', desc: 'Calibrated backscatter examples for flood area delineation during monsoon season simulations.', icon: '🌊', tag1: 'DATAINFO', tag2: '500MB', linkText: 'DOWNLOAD (.ZIP)', linkColor: 'white' },
-        { title: 'Multispectral Crop Init', desc: 'VHR satellite mosaics covering training fields in Ayutthaya. Bands include RGB, NIR, SWIR.', icon: '🌾', tag1: 'DATASET', tag2: '2.4GB', linkText: 'ACCESS BUCKET', linkColor: 'white', linkIcon: '📁' },
+        { title: 'Synthetic Radar (SAR)', desc: 'Calibrated backscatter examples for flood area delineation during monsoon season simulations.', icon: '🌊', tag1: 'DATAINFO', tag2: '500MB', linkText: 'DOWNLOAD (.ZIP) (Coming Soon)', linkColor: 'white' },
+        // { title: 'Multispectral Crop Init', desc: 'VHR satellite mosaics covering training fields in Ayutthaya. Bands include RGB, NIR, SWIR.', icon: '🌾', tag1: 'DATASET', tag2: '2.4GB', linkText: 'ACCESS BUCKET', linkColor: 'white', linkIcon: '📁' },
       ]
     },
-    {
-      title: 'Manuals & Briefings',
-      icon: 'DOCS',
-      color: 'var(--accent-amber)',
-      items: [
-        { title: 'Challenge SRS v1.4', desc: 'Technical specifications and requirement checklists for all competition phases.', icon: '📋', tag1: 'MANDATORY', linkText: 'VIEW PDF', linkColor: 'white' },
-        { title: 'UX/UI Guidelines', desc: 'Design system constants, fonts, and component structures required for front-end development.', icon: '🎨', tag1: 'ASSETS', linkText: 'FIGMA BOARD', linkColor: 'white' },
-      ]
-    }
+    // {
+    //   title: 'Manuals & Briefings',
+    //   icon: 'DOCS',
+    //   color: 'var(--accent-amber)',
+    //   items: [
+    //     { title: 'Challenge SRS v1.4', desc: 'Technical specifications and requirement checklists for all competition phases.', icon: '📋', tag1: 'MANDATORY', linkText: 'VIEW PDF', linkColor: 'white' },
+    //     { title: 'UX/UI Guidelines', desc: 'Design system constants, fonts, and component structures required for front-end development.', icon: '🎨', tag1: 'ASSETS', linkText: 'FIGMA BOARD', linkColor: 'white' },
+    //   ]
+    // }
   ]
 
   return (
@@ -148,10 +148,8 @@ function ResourcesContent() {
       
       {/* Footer */}
       <footer className="border-t border-[rgba(255,255,255,0.05)] pt-4 sm:pt-6 text-center text-[8px] sm:text-xs text-(--text-muted) tracking-wide">
-        <div className="mb-2">© 2026 GEOAI HACKATHON | PRECISION LENS UI</div>
+        <div className="mb-2">© 2026 GEOAI HACKATHON</div>
         <div className="flex flex-wrap justify-center gap-4 sm:gap-6">
-          <span>PRIVACY POLICY</span>
-          <span>TERMS OF SERVICE</span>
         </div>
       </footer>
     </div>

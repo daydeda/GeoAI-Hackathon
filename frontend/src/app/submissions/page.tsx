@@ -43,7 +43,7 @@ function SubmissionsContent() {
   const [history, setHistory] = useState<Submission[]>([])
   const [hasTeam, setHasTeam] = useState(true)
   const [loading, setLoading] = useState(true)
-  
+
   const [file, setFile] = useState<File | null>(null)
   const [gistda, setGistda] = useState(false)
   const [uploading, setUploading] = useState(false)
@@ -52,10 +52,10 @@ function SubmissionsContent() {
   const fetchHistory = useCallback(async () => {
     if (authLoading) return
     try {
-      if (!user?.team) { 
+      if (!user?.team) {
         setHasTeam(false)
         setLoading(false)
-        return 
+        return
       }
       setHasTeam(true)
       const res = await fetch(`${API}/api/v1/submissions`, { credentials: 'include' })
@@ -74,14 +74,9 @@ function SubmissionsContent() {
       }
     }, LIVE_REFRESH_MS)
 
-    const onFocus = () => {
-      void fetchHistory()
-    }
-
+    const onFocus = () => { void fetchHistory() }
     const onVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        void fetchHistory()
-      }
+      if (document.visibilityState === 'visible') void fetchHistory()
     }
 
     window.addEventListener('focus', onFocus)
@@ -163,14 +158,31 @@ function SubmissionsContent() {
     }
   }
 
+  // ─── FIXED: fetch blob through authenticated request, then open as object URL ───
   const download = async (id: string, e: React.MouseEvent) => {
     e.preventDefault()
-    const res = await fetch(`${API}/api/v1/submissions/${id}/download`, { credentials: 'include' })
-    if (res.ok) {
-      const d = await res.json()
-      window.open(d.url, '_blank', 'noopener,noreferrer')
+    try {
+      const res = await fetch(`${API}/api/v1/submissions/${id}/view`, {
+        credentials: 'include',
+      })
+      if (!res.ok) {
+        console.error('Failed to fetch PDF:', res.status)
+        return
+      }
+      const blob = await res.blob()
+      const objectUrl = URL.createObjectURL(blob)
+      const newTab = window.open(objectUrl, '_blank')
+      // Revoke the object URL after the tab has had time to load it
+      if (newTab) {
+        newTab.addEventListener('load', () => URL.revokeObjectURL(objectUrl), { once: true })
+      } else {
+        setTimeout(() => URL.revokeObjectURL(objectUrl), 30000)
+      }
+    } catch (err) {
+      console.error('Error opening PDF:', err)
     }
   }
+  // ─────────────────────────────────────────────────────────────────────────────
 
   if (loading || authLoading) return (
     <div className="flex min-h-screen items-center justify-center px-4">
@@ -293,7 +305,7 @@ function SubmissionsContent() {
           {/* Upload Form */}
           <div className="card p-4 sm:p-6 rounded-lg border border-(--border-subtle) bg-(--bg-surface)">
             <div className="font-mono text-[10px] sm:text-xs text-(--accent-cyan) mb-4 tracking-widest">NEW UPLINK</div>
-            
+
             <div
               {...getRootProps()}
               className={`p-6 sm:p-8 rounded-lg border-2 border-dashed mb-4 sm:mb-6 transition-colors text-center ${

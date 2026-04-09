@@ -7,6 +7,7 @@ import Link from 'next/link'
 import type { LucideIcon } from 'lucide-react'
 import {
   Activity,
+  ArrowUpDown,
   Check,
   Download,
   FileSpreadsheet,
@@ -21,9 +22,22 @@ import CustomDropdown from '@/components/CustomDropdown'
 import { useCompetitionPhases } from '@/hooks/useCompetitionPhases'
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
-// app base path is available via NEXT_PUBLIC_BASE_PATH when needed
 
-// base path helper retained for future use
+// Role priority order (higher index = higher privilege)
+const ROLE_PRIORITY: Record<string, number> = {
+  COMPETITOR: 0,
+  MODERATOR: 1,
+  JUDGE: 2,
+  ADMIN: 3,
+}
+
+/** Returns the single "primary" role for a user (highest privilege wins) */
+function getPrimaryRole(roles: string[]): string {
+  if (!roles || roles.length === 0) return 'COMPETITOR'
+  return [...roles].sort(
+    (a, b) => (ROLE_PRIORITY[b] ?? -1) - (ROLE_PRIORITY[a] ?? -1),
+  )[0]
+}
 
 interface UserRow {
   id: string
@@ -61,15 +75,32 @@ interface TeamRow {
   score?: number
   submissions?: unknown[]
 }
-interface LogRow { id: string; action: string; entityType: string; entityId: string; oldValue?: string; newValue?: string; createdAt: string; actor?: { email: string } }
-interface TeamSubmissionRow { isActive?: boolean; scoreAggregate?: { totalWeighted?: number } }
-interface TeamApiRow extends TeamRow { submissions?: TeamSubmissionRow[] }
+interface LogRow {
+  id: string
+  action: string
+  entityType: string
+  entityId: string
+  oldValue?: string
+  newValue?: string
+  createdAt: string
+  actor?: { email: string }
+}
+interface TeamSubmissionRow {
+  isActive?: boolean
+  scoreAggregate?: { totalWeighted?: number }
+}
+interface TeamApiRow extends TeamRow {
+  submissions?: TeamSubmissionRow[]
+}
 interface AnnouncementEmailStatus {
   announcementDate: string
   enabled: boolean
   sentCount: number
   failedCount: number
 }
+
+type SortField = 'role' | 'email' | 'name' | null
+type SortDir = 'asc' | 'desc'
 
 import AppShell from '@/components/AppShell'
 
@@ -103,13 +134,25 @@ function AdminContent() {
   const [teamSearch, setTeamSearch] = useState('')
   const [loading, setLoading] = useState(true)
   const [sendingAnnouncement, setSendingAnnouncement] = useState(false)
-  const [announcementStatus, setAnnouncementStatus] = useState<AnnouncementEmailStatus | null>(null)
-  const [confirmAction, setConfirmAction] = useState<{ type: 'PROMOTE' | 'DISQUALIFY' | 'REVOKE' | 'RESTORE', teamId: string, teamName: string } | null>(null)
+  const [announcementStatus, setAnnouncementStatus] =
+    useState<AnnouncementEmailStatus | null>(null)
+  const [confirmAction, setConfirmAction] = useState<{
+    type: 'PROMOTE' | 'DISQUALIFY' | 'REVOKE' | 'RESTORE'
+    teamId: string
+    teamName: string
+  } | null>(null)
+
+  // ── Client-side sort state for the users table ──────────────────────────
+  const [sortField, setSortField] = useState<SortField>('role')
+  const [sortDir, setSortDir] = useState<SortDir>('asc')
+  // ────────────────────────────────────────────────────────────────────────
+
   const { currentPhase, phases } = useCompetitionPhases()
   const phaseDeadline = formatPhaseDeadline(currentPhase.date)
   const announcementPhase = phases.find((phase) => phase.key === 'announcement')
-  const announcementDeadlineText = announcementPhase ? formatPhaseDeadline(announcementPhase.date) : '-'
-  // Management links removed per request
+  const announcementDeadlineText = announcementPhase
+    ? formatPhaseDeadline(announcementPhase.date)
+    : '-'
   const canAccessManagementTools = hasRole('ADMIN') || hasRole('MODERATOR')
 
   useEffect(() => {
@@ -124,7 +167,11 @@ function AdminContent() {
   const teamTo = Math.min(teamPage * teamLimit, totalTeams)
 
   const openUserUpload = (userId: string, type: 'avatar' | 'id-card') => {
-    window.open(`${API}/api/v1/admin/users/${userId}/uploads/${type}/view`, '_blank', 'noopener,noreferrer')
+    window.open(
+      `${API}/api/v1/admin/users/${userId}/uploads/${type}/view`,
+      '_blank',
+      'noopener,noreferrer',
+    )
   }
 
   const fetchAll = useCallback(async () => {
@@ -133,7 +180,10 @@ function AdminContent() {
     const timeoutId = setTimeout(() => controller.abort(), 5000)
 
     try {
-      const opts = { credentials: 'include', signal: controller.signal } as const
+      const opts = {
+        credentials: 'include',
+        signal: controller.signal,
+      } as const
       const userParams = new URLSearchParams({
         page: String(userPage),
         limit: String(userLimit),
@@ -155,20 +205,30 @@ function AdminContent() {
         fetch(`${API}/api/v1/admin/audit-logs?limit=10`, opts),
         fetch(`${API}/api/v1/admin/announcement-email/status`, opts),
       ])
-      
+
       clearTimeout(timeoutId)
-      
-      if (usersRes.ok) { const d = await usersRes.json(); setUsers(d.data || []); setTotalUsers(d.total || 0); }
-      if (teamsRes.ok) { 
-        const d = await teamsRes.json(); 
-        const formattedTeams = ((d.data as TeamApiRow[]) || []).map((t) => {
-          const activeSub = t.submissions?.find((s) => s.isActive);
-          return { ...t, score: activeSub?.scoreAggregate?.totalWeighted ?? undefined };
-        });
-        setTeams(formattedTeams); 
-        setTotalTeams(d.total || 0);
+
+      if (usersRes.ok) {
+        const d = await usersRes.json()
+        setUsers(d.data || [])
+        setTotalUsers(d.total || 0)
       }
-      if (logsRes.ok) { const d = await logsRes.json(); setLogs(d.data || []); }
+      if (teamsRes.ok) {
+        const d = await teamsRes.json()
+        const formattedTeams = ((d.data as TeamApiRow[]) || []).map((t) => {
+          const activeSub = t.submissions?.find((s) => s.isActive)
+          return {
+            ...t,
+            score: activeSub?.scoreAggregate?.totalWeighted ?? undefined,
+          }
+        })
+        setTeams(formattedTeams)
+        setTotalTeams(d.total || 0)
+      }
+      if (logsRes.ok) {
+        const d = await logsRes.json()
+        setLogs(d.data || [])
+      }
       if (announcementRes.ok) {
         const d = await announcementRes.json()
         setAnnouncementStatus(d)
@@ -182,29 +242,78 @@ function AdminContent() {
     } finally {
       setLoading(false)
     }
-  }, [search, userRoleFilter, userLimit, userPage, teamTrackFilter, teamSearch, teamLimit, teamPage])
+  }, [
+    search,
+    userRoleFilter,
+    userLimit,
+    userPage,
+    teamTrackFilter,
+    teamSearch,
+    teamLimit,
+    teamPage,
+  ])
 
   useEffect(() => {
-    let active = true;
+    let active = true
     const load = async () => {
-      if (!active) return;
-      await fetchAll();
-    };
-    load();
-    return () => { active = false; };
+      if (!active) return
+      await fetchAll()
+    }
+    load()
+    return () => {
+      active = false
+    }
   }, [fetchAll])
 
-  const assignRole = async (userId: string, role: string) => {
+  // ── Role assignment: PUT replaces all roles with exactly one role ────────
+  const assignRole = async (userId: string, newRole: string) => {
     try {
-      await fetch(`${API}/api/v1/admin/users/${userId}/roles`, { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ role }) })
+      // PUT /roles replaces the entire roles array; if backend only has POST,
+      // we first DELETE all existing roles then POST the new one.
+      const res = await fetch(`${API}/api/v1/admin/users/${userId}/roles`, {
+        method: 'PUT',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ role: newRole }),
+      })
+
+      if (!res.ok) {
+        // Fallback: try POST (old API) — server should handle idempotency
+        await fetch(`${API}/api/v1/admin/users/${userId}/roles`, {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ role: newRole }),
+        })
+      }
+
+      // Optimistically update local state so the UI reflects the change
+      // immediately without waiting for a full refetch.
+      setUsers((prev) =>
+        prev.map((u) => (u.id === userId ? { ...u, roles: [newRole] } : u)),
+      )
+
+      // Then do a background refetch to sync server state
       fetchAll()
-    } catch { }
+    } catch (err) {
+      console.error('assignRole failed:', err)
+      showAlert('Failed to update role.', 'error')
+    }
   }
+  // ────────────────────────────────────────────────────────────────────────
 
   const deleteUser = async (userId: string, userEmail: string) => {
-    if (!window.confirm(`Delete user ${userEmail}? This action cannot be undone.`)) return
+    if (
+      !window.confirm(
+        `Delete user ${userEmail}? This action cannot be undone.`,
+      )
+    )
+      return
     try {
-      const res = await fetch(`${API}/api/v1/admin/users/${userId}`, { method: 'DELETE', credentials: 'include' })
+      const res = await fetch(`${API}/api/v1/admin/users/${userId}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      })
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
         showAlert(data.error || 'Failed to delete user', 'error')
@@ -218,9 +327,17 @@ function AdminContent() {
   }
 
   const deleteTeam = async (teamId: string, teamName: string) => {
-    if (!window.confirm(`Delete team ${teamName}? This action cannot be undone.`)) return
+    if (
+      !window.confirm(
+        `Delete team ${teamName}? This action cannot be undone.`,
+      )
+    )
+      return
     try {
-      const res = await fetch(`${API}/api/v1/admin/teams/${teamId}`, { method: 'DELETE', credentials: 'include' })
+      const res = await fetch(`${API}/api/v1/admin/teams/${teamId}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      })
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
         showAlert(data.error || 'Failed to delete team', 'error')
@@ -234,35 +351,44 @@ function AdminContent() {
   }
 
   const executeConfirmAction = async () => {
-    if (!confirmAction) return;
-    const { type, teamId } = confirmAction;
-    setConfirmAction(null);
+    if (!confirmAction) return
+    const { type, teamId } = confirmAction
+    setConfirmAction(null)
     try {
-      const status = (type === 'PROMOTE' || type === 'RESTORE') ? 'FINALIST' : 'REJECTED';
-      await fetch(`${API}/api/v1/admin/teams/${teamId}/status`, { method: 'PATCH', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status }) })
+      const status =
+        type === 'PROMOTE' || type === 'RESTORE' ? 'FINALIST' : 'REJECTED'
+      await fetch(`${API}/api/v1/admin/teams/${teamId}/status`, {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status }),
+      })
       fetchAll()
-    } catch { }
+    } catch {}
   }
 
   const exportData = async (type: string) => {
     try {
-      const res = await fetch(`${API}/api/v1/admin/exports`, { 
-        method: 'POST', 
-        credentials: 'include', 
-        headers: { 'Content-Type': 'application/json' }, 
-        body: JSON.stringify({ type }) 
+      const res = await fetch(`${API}/api/v1/admin/exports`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type }),
       })
-      
+
       if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}));
-        console.error('Export failed:', errorData);
-        showAlert(`Export failed: ${errorData.message || 'Unknown error'}`, 'error');
-        return;
+        const errorData = await res.json().catch(() => ({}))
+        showAlert(
+          `Export failed: ${errorData.message || 'Unknown error'}`,
+          'error',
+        )
+        return
       }
 
       const disposition = res.headers.get('Content-Disposition')
-      let filename = `${type.toLowerCase() === 'teams' ? 'teams.csv' : 'submissions.xlsx'}`
-      
+      let filename =
+        type.toLowerCase() === 'teams' ? 'teams.csv' : 'submissions.xlsx'
+
       if (disposition && disposition.indexOf('attachment') !== -1) {
         const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/
         const matches = filenameRegex.exec(disposition)
@@ -286,27 +412,48 @@ function AdminContent() {
     }
   }
 
-  const exportCards: Array<{ label: string; title: string; type: string; icon: LucideIcon }> = [
-    { label: 'TEAMS REGISTRY', title: 'Export Teams as CSV', type: 'TEAMS', icon: Download },
-    { label: 'PROPOSAL BUNDLE', title: 'Export Proposals as XLSX', type: 'SUBMISSIONS', icon: FileSpreadsheet },
+  const exportCards: Array<{
+    label: string
+    title: string
+    type: string
+    icon: LucideIcon
+  }> = [
+    {
+      label: 'TEAMS REGISTRY',
+      title: 'Export Teams as CSV',
+      type: 'TEAMS',
+      icon: Download,
+    },
+    {
+      label: 'PROPOSAL BUNDLE',
+      title: 'Export Proposals as XLSX',
+      type: 'SUBMISSIONS',
+      icon: FileSpreadsheet,
+    },
   ]
-
-  // Management links removed per request
 
   const sendAnnouncementEmails = async () => {
     if (!announcementStatus?.enabled || sendingAnnouncement) return
-    if (!window.confirm('Send announcement emails now? This will send to all eligible competitor accounts who have not been sent yet.')) return
+    if (
+      !window.confirm(
+        'Send announcement emails now? This will send to all eligible competitor accounts who have not been sent yet.',
+      )
+    )
+      return
 
     setSendingAnnouncement(true)
     try {
-      const res = await fetch(`${API}/api/v1/admin/announcement-email/send`, {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ onlyGmail: false }),
-      })
+      const res = await fetch(
+        `${API}/api/v1/admin/announcement-email/send`,
+        {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ onlyGmail: false }),
+        },
+      )
 
-      const payload = await res.json().catch(() => ({})) as {
+      const payload = (await res.json().catch(() => ({}))) as {
         error?: string
         sentCount?: number
         failedCount?: number
@@ -314,7 +461,10 @@ function AdminContent() {
       }
 
       if (!res.ok) {
-        showAlert(payload.error || 'Failed to send announcement emails.', 'error')
+        showAlert(
+          payload.error || 'Failed to send announcement emails.',
+          'error',
+        )
         return
       }
 
@@ -330,36 +480,117 @@ function AdminContent() {
     }
   }
 
+  // ── Client-side sort helper ──────────────────────────────────────────────
+  const toggleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))
+    } else {
+      setSortField(field)
+      setSortDir('asc')
+    }
+  }
+
+  const sortedUsers = [...users].sort((a, b) => {
+    if (!sortField) return 0
+    let aVal = ''
+    let bVal = ''
+    if (sortField === 'role') {
+      // Sort by privilege level so ADMIN > JUDGE > MODERATOR > COMPETITOR
+      const aPriority = ROLE_PRIORITY[getPrimaryRole(a.roles)] ?? 0
+      const bPriority = ROLE_PRIORITY[getPrimaryRole(b.roles)] ?? 0
+      return sortDir === 'asc'
+        ? aPriority - bPriority
+        : bPriority - aPriority
+    }
+    if (sortField === 'email') {
+      aVal = a.email.toLowerCase()
+      bVal = b.email.toLowerCase()
+    }
+    if (sortField === 'name') {
+      aVal = a.fullName.toLowerCase()
+      bVal = b.fullName.toLowerCase()
+    }
+    if (aVal < bVal) return sortDir === 'asc' ? -1 : 1
+    if (aVal > bVal) return sortDir === 'asc' ? 1 : -1
+    return 0
+  })
+
+  const SortIcon = ({ field }: { field: SortField }) => (
+    <ArrowUpDown
+      size={11}
+      className="ml-1 inline-block opacity-50 transition-opacity group-hover:opacity-100"
+      style={{
+        color:
+          sortField === field ? 'var(--accent-cyan)' : 'var(--text-muted)',
+        opacity: sortField === field ? 1 : undefined,
+      }}
+    />
+  )
+  // ────────────────────────────────────────────────────────────────────────
+
+  // Badge colours per role
+  const ROLE_BADGE: Record<string, { bg: string; color: string; label: string }> =
+    {
+      ADMIN: {
+        bg: 'rgba(255,171,0,0.12)',
+        color: 'var(--accent-amber)',
+        label: 'ADMIN',
+      },
+      JUDGE: {
+        bg: 'rgba(0,200,255,0.1)',
+        color: 'var(--accent-cyan)',
+        label: 'JUDGE',
+      },
+      MODERATOR: {
+        bg: 'rgba(0,230,118,0.1)',
+        color: 'var(--accent-green)',
+        label: 'MODERATOR',
+      },
+      COMPETITOR: {
+        bg: 'rgba(255,255,255,0.05)',
+        color: 'var(--text-secondary)',
+        label: 'COMPETITOR',
+      },
+    }
+
   return (
     <div className="mx-auto flex min-h-screen w-full max-w-[1440px] flex-col bg-(--bg-base)">
       {/* Confirmation Modal */}
       {confirmAction && (
         <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-[rgba(5,13,26,0.85)] p-4 backdrop-blur-sm">
-           <div className="flex w-full max-w-md flex-col gap-6 rounded-lg border border-white/10 bg-(--bg-surface) p-6 shadow-[0_24px_64px_rgba(0,0,0,0.4)] sm:p-8">
-              <div>
-                 <h2 className="font-display mb-2 text-lg font-bold tracking-[0.05em] text-white sm:text-xl">
-                   CONFIRM ACTION
-                 </h2>
-                 <p className="m-0 text-sm leading-relaxed text-(--text-secondary)">
-                   Are you sure you want to <strong>{confirmAction.type}</strong> team <strong>{confirmAction.teamName}</strong>?
-                 </p>
-              </div>
-              <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:justify-end">
-                <button 
-                  onClick={() => setConfirmAction(null)}
-                  className="rounded border border-(--border-subtle) bg-transparent px-6 py-2 text-xs font-semibold tracking-[0.05em] text-(--text-muted)"
-                >
-                  CANCEL
-                </button>
-                <button 
-                  onClick={executeConfirmAction}
-                  className="rounded border-none px-6 py-2 text-xs font-bold tracking-[0.05em] text-black"
-                  style={{ background: confirmAction.type === 'PROMOTE' || confirmAction.type === 'RESTORE' ? 'var(--accent-cyan)' : 'var(--accent-red)' }}
-                >
-                  CONFIRM
-                </button>
-              </div>
-           </div>
+          <div className="flex w-full max-w-md flex-col gap-6 rounded-lg border border-white/10 bg-(--bg-surface) p-6 shadow-[0_24px_64px_rgba(0,0,0,0.4)] sm:p-8">
+            <div>
+              <h2 className="font-display mb-2 text-lg font-bold tracking-[0.05em] text-white sm:text-xl">
+                CONFIRM ACTION
+              </h2>
+              <p className="m-0 text-sm leading-relaxed text-(--text-secondary)">
+                Are you sure you want to{' '}
+                <strong>{confirmAction.type}</strong> team{' '}
+                <strong>{confirmAction.teamName}</strong>?
+              </p>
+            </div>
+            <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:justify-end">
+              <button
+                onClick={() => setConfirmAction(null)}
+                className="rounded border border-(--border-subtle) bg-transparent px-6 py-2 text-xs font-semibold tracking-[0.05em] text-(--text-muted)"
+              >
+                CANCEL
+              </button>
+              <button
+                onClick={executeConfirmAction}
+                className="rounded border-none px-6 py-2 text-xs font-bold tracking-[0.05em] text-black"
+                style={{
+                  background:
+                    confirmAction.type === 'PROMOTE' ||
+                    confirmAction.type === 'RESTORE'
+                      ? 'var(--accent-cyan)'
+                      : 'var(--accent-red)',
+                }}
+              >
+                CONFIRM
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
@@ -367,25 +598,69 @@ function AdminContent() {
       <div className="mb-8 flex flex-col gap-3">
         <div className="font-mono flex items-center gap-2 text-[11px] tracking-[0.1em] text-(--accent-green)">
           <Activity size={12} />
-          <span>{loading ? 'SYNCHRONIZING...' : 'ADMINISTRATIVE TERMINAL'}</span>
+          <span>
+            {loading ? 'SYNCHRONIZING...' : 'ADMINISTRATIVE TERMINAL'}
+          </span>
         </div>
-        <h1 className="font-display text-3xl text-white sm:text-4xl md:text-5xl">Command Center</h1>
+        <h1 className="font-display text-3xl text-white sm:text-4xl md:text-5xl">
+          Command Center
+        </h1>
       </div>
 
       {/* Stat cards */}
       <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {[
-          { label: 'REGISTERED USERS', value: totalUsers.toLocaleString(), change: 'Platform Wide', changeColor: 'var(--accent-green)', color: 'var(--accent-cyan)' },
-          { label: 'ACTIVE TEAMS', value: totalTeams.toLocaleString(), change: 'Registered Squads', changeColor: 'var(--accent-green)', color: 'var(--accent-green)' },
-          { label: 'TOTAL PROPOSALS', value: teams.reduce((acc, t) => acc + (t.submissions?.length || 0), 0).toLocaleString(), change: 'Submitted PDFs', changeColor: 'var(--text-muted)', color: 'var(--accent-amber)' },
-          { label: 'CURRENT PHASE', value: currentPhase.title, change: `Deadline ${phaseDeadline}`, changeColor: 'var(--accent-cyan)', color: 'white' },
+          {
+            label: 'REGISTERED USERS',
+            value: totalUsers.toLocaleString(),
+            change: 'Platform Wide',
+            changeColor: 'var(--accent-green)',
+            color: 'var(--accent-cyan)',
+          },
+          {
+            label: 'ACTIVE TEAMS',
+            value: totalTeams.toLocaleString(),
+            change: 'Registered Squads',
+            changeColor: 'var(--accent-green)',
+            color: 'var(--accent-green)',
+          },
+          {
+            label: 'TOTAL PROPOSALS',
+            value: teams
+              .reduce((acc, t) => acc + (t.submissions?.length || 0), 0)
+              .toLocaleString(),
+            change: 'Submitted PDFs',
+            changeColor: 'var(--text-muted)',
+            color: 'var(--accent-amber)',
+          },
+          {
+            label: 'CURRENT PHASE',
+            value: currentPhase.title,
+            change: `Deadline ${phaseDeadline}`,
+            changeColor: 'var(--accent-cyan)',
+            color: 'white',
+          },
         ].map((s, i) => (
-          <div key={i} className="flex flex-col gap-3 border-l-2 bg-(--bg-surface) px-6 py-5" style={{ borderLeftColor: s.color }}>
-            <div className="font-mono text-[11px] tracking-[0.1em] text-(--text-muted)">{s.label}</div>
-            <div className="font-display text-3xl font-bold leading-none sm:text-4xl" style={{ color: s.color }}>
+          <div
+            key={i}
+            className="flex flex-col gap-3 border-l-2 bg-(--bg-surface) px-6 py-5"
+            style={{ borderLeftColor: s.color }}
+          >
+            <div className="font-mono text-[11px] tracking-[0.1em] text-(--text-muted)">
+              {s.label}
+            </div>
+            <div
+              className="font-display text-3xl font-bold leading-none sm:text-4xl"
+              style={{ color: s.color }}
+            >
               {s.value}
             </div>
-            <div className="text-xs font-medium" style={{ color: s.changeColor }}>{s.change}</div>
+            <div
+              className="text-xs font-medium"
+              style={{ color: s.changeColor }}
+            >
+              {s.change}
+            </div>
           </div>
         ))}
       </div>
@@ -393,14 +668,19 @@ function AdminContent() {
       <div className="grid flex-1 grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
         {/* Main panels */}
         <div className="flex flex-col gap-6">
-          {/* User Management */}
+          {/* ── User Management ─────────────────────────────────────────── */}
           <div className="border-t border-white/5 bg-(--bg-surface) p-4 sm:p-6 lg:p-8">
             <div className="mb-5 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
               <div>
-                <h2 className="mb-1 text-xl font-semibold text-white sm:text-2xl">User Management</h2>
-                <div className="text-xs tracking-[0.05em] text-(--text-muted)">REGISTRY CONTROL & ROLE ASSIGNMENT</div>
+                <h2 className="mb-1 text-xl font-semibold text-white sm:text-2xl">
+                  User Management
+                </h2>
+                <div className="text-xs tracking-[0.05em] text-(--text-muted)">
+                  REGISTRY CONTROL & ROLE ASSIGNMENT
+                </div>
               </div>
               <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center md:w-auto">
+                {/* Role filter */}
                 <div className="w-full sm:w-[190px]">
                   <CustomDropdown
                     value={userRoleFilter}
@@ -417,12 +697,16 @@ function AdminContent() {
                     ]}
                   />
                 </div>
+                {/* Search */}
                 <div className="relative w-full md:w-auto">
-                  <Search size={14} className="pointer-events-none absolute left-3 top-2.5 text-(--text-muted)" />
+                  <Search
+                    size={14}
+                    className="pointer-events-none absolute left-3 top-2.5 text-(--text-muted)"
+                  />
                   <input
                     placeholder="UUID / EMAIL / NAME"
                     value={search}
-                    onChange={e => {
+                    onChange={(e) => {
                       setSearch(e.target.value)
                       setUserPage(1)
                     }}
@@ -433,99 +717,176 @@ function AdminContent() {
             </div>
 
             <div className="overflow-x-auto">
-            <table className="min-w-[720px] w-full border-collapse">
-              <thead>
-                <tr className="border-b border-white/5">
-                  <th className="py-4 text-left text-[11px] font-semibold tracking-[0.1em] text-(--text-muted)">USER IDENTIFIER</th>
-                  <th className="py-4 text-left text-[11px] font-semibold tracking-[0.1em] text-(--text-muted)">USER INFORMATION</th>
-                  <th className="py-4 text-left text-[11px] font-semibold tracking-[0.1em] text-(--text-muted)">ROLE ASSIGNMENT</th>
-                  <th className="py-4 text-right text-[11px] font-semibold tracking-[0.1em] text-(--text-muted)">STATUS</th>
-                </tr>
-              </thead>
-              <tbody>
-                {users.map(u => (
-                  <tr key={u.id} className="border-b border-white/[0.02]">
-                    <td className="py-5">
-                      <div className="mb-1 text-sm font-semibold text-white">{u.email}</div>
-                      <div className="font-mono text-[10px] text-(--text-muted)">UUID: {u.id}</div>
-                    </td>
-                    <td className="py-5 text-sm text-(--text-secondary)">
-                      <div>{u.fullName}</div>
-                      <div className="text-[10px] text-(--text-muted)">
-                        {u.firstName || '-'} {u.lastName || ''}
-                      </div>
-                      <div className="text-[10px] text-(--text-muted)">{u.university || 'University not set'}{u.yearOfStudy ? ` · Year ${u.yearOfStudy}` : ''}</div>
-                      <div className="text-[10px] text-(--text-muted)">{u.phoneNumber || 'Phone not set'}</div>
-                      <div className="text-[10px] text-(--text-muted)">{u.address || 'Address not set'}</div>
-                      <div className="text-[10px] text-(--text-muted)">
-                        Profile: {u.profileCompleted ? 'Completed' : 'Incomplete'} · ID: {u.idCardUploaded ? 'Uploaded' : 'Missing'}
-                      </div>
-                      <div className="mt-2 flex flex-wrap gap-2">
-                        {u.avatarUrl && (
-                          <button
-                            type="button"
-                            onClick={() => openUserUpload(u.id, 'avatar')}
-                            className="rounded border border-(--accent-cyan) px-2 py-1 text-[10px] text-(--accent-cyan)"
-                          >
-                            View Avatar
-                          </button>
-                        )}
-                        {u.idCardUploaded && (
-                          <button
-                            type="button"
-                            onClick={() => openUserUpload(u.id, 'id-card')}
-                            className="rounded border border-(--accent-green) px-2 py-1 text-[10px] text-(--accent-green)"
-                          >
-                            View ID Card
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                    <td className="py-5">
-                      <CustomDropdown
-                        className="w-[150px]"
-                        value={u.roles?.[0] ?? 'COMPETITOR'}
-                        onChange={(nextRole) => assignRole(u.id, nextRole)}
-                        options={[
-                          { value: 'COMPETITOR', label: 'COMPETITOR' },
-                          { value: 'MODERATOR', label: 'MODERATOR' },
-                          { value: 'JUDGE', label: 'JUDGE' },
-                          { value: 'ADMIN', label: 'ADMIN' },
-                        ]}
-                      />
-                    </td>
-                    <td className="py-5 text-right">
-                      <div className="inline-flex items-center gap-2">
-                        <span className="h-1.5 w-1.5 rounded-full" style={{ background: u.roles.includes('ADMIN') ? 'var(--accent-amber)' : 'var(--accent-green)' }} />
-                        <span className="text-[11px] font-semibold tracking-[0.05em]" style={{ color: u.roles?.includes('ADMIN') ? 'var(--accent-amber)' : 'var(--accent-green)' }}>
-                          {u.roles?.includes('ADMIN') ? 'RESTRICTED' : u.roles?.includes('COMPETITOR') ? 'ACTIVE' : 'VERIFIED'}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => deleteUser(u.id, u.email)}
-                          className="ml-2 inline-flex items-center gap-1 rounded border border-[rgba(255,23,68,0.4)] px-2 py-1 text-[10px] text-(--accent-red)"
-                        >
-                          <Trash2 size={10} />
-                          DELETE
-                        </button>
-                      </div>
-                    </td>
+              <table className="min-w-[720px] w-full border-collapse">
+                <thead>
+                  <tr className="border-b border-white/5">
+                    {/* Sortable: email */}
+                    <th
+                      className="group cursor-pointer select-none py-4 text-left text-[11px] font-semibold tracking-[0.1em] text-(--text-muted)"
+                      onClick={() => toggleSort('email')}
+                    >
+                      USER IDENTIFIER
+                      <SortIcon field="email" />
+                    </th>
+                    {/* Sortable: name */}
+                    <th
+                      className="group cursor-pointer select-none py-4 text-left text-[11px] font-semibold tracking-[0.1em] text-(--text-muted)"
+                      onClick={() => toggleSort('name')}
+                    >
+                      USER INFORMATION
+                      <SortIcon field="name" />
+                    </th>
+                    {/* Sortable: role */}
+                    <th
+                      className="group cursor-pointer select-none py-4 text-left text-[11px] font-semibold tracking-[0.1em] text-(--text-muted)"
+                      onClick={() => toggleSort('role')}
+                    >
+                      ROLE ASSIGNMENT
+                      <SortIcon field="role" />
+                    </th>
+                    <th className="py-4 text-right text-[11px] font-semibold tracking-[0.1em] text-(--text-muted)">
+                      STATUS
+                    </th>
                   </tr>
-                ))}
-                {users.length === 0 && (
-                  <tr>
-                    <td colSpan={4} className="py-8 text-center text-sm text-(--text-muted)">
-                      ไม่พบผู้ใช้ที่ตรงกับคำค้นหา
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {sortedUsers.map((u) => {
+                    const primaryRole = getPrimaryRole(u.roles)
+                    const badge =
+                      ROLE_BADGE[primaryRole] ?? ROLE_BADGE.COMPETITOR
+                    return (
+                      <tr key={u.id} className="border-b border-white/[0.02]">
+                        <td className="py-5">
+                          <div className="mb-1 text-sm font-semibold text-white">
+                            {u.email}
+                          </div>
+                          <div className="font-mono text-[10px] text-(--text-muted)">
+                            UUID: {u.id}
+                          </div>
+                        </td>
+                        <td className="py-5 text-sm text-(--text-secondary)">
+                          <div>{u.fullName}</div>
+                          <div className="text-[10px] text-(--text-muted)">
+                            {u.firstName || '-'} {u.lastName || ''}
+                          </div>
+                          <div className="text-[10px] text-(--text-muted)">
+                            {u.university || 'University not set'}
+                            {u.yearOfStudy ? ` · Year ${u.yearOfStudy}` : ''}
+                          </div>
+                          <div className="text-[10px] text-(--text-muted)">
+                            {u.phoneNumber || 'Phone not set'}
+                          </div>
+                          <div className="text-[10px] text-(--text-muted)">
+                            {u.address || 'Address not set'}
+                          </div>
+                          <div className="text-[10px] text-(--text-muted)">
+                            Profile:{' '}
+                            {u.profileCompleted ? 'Completed' : 'Incomplete'} ·
+                            ID: {u.idCardUploaded ? 'Uploaded' : 'Missing'}
+                          </div>
+                          <div className="mt-2 flex flex-wrap gap-2">
+                            {u.avatarUrl && (
+                              <button
+                                type="button"
+                                onClick={() => openUserUpload(u.id, 'avatar')}
+                                className="rounded border border-(--accent-cyan) px-2 py-1 text-[10px] text-(--accent-cyan)"
+                              >
+                                View Avatar
+                              </button>
+                            )}
+                            {u.idCardUploaded && (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  openUserUpload(u.id, 'id-card')
+                                }
+                                className="rounded border border-(--accent-green) px-2 py-1 text-[10px] text-(--accent-green)"
+                              >
+                                View ID Card
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                        <td className="py-5">
+                          <div className="flex flex-col gap-2">
+                            {/* Current role badge */}
+                            <span
+                              className="inline-block w-fit rounded px-2 py-0.5 text-[10px] font-bold tracking-[0.08em]"
+                              style={{
+                                background: badge.bg,
+                                color: badge.color,
+                              }}
+                            >
+                              {badge.label}
+                            </span>
+                            {/* Role change dropdown */}
+                            <CustomDropdown
+                              className="w-[150px]"
+                              value={primaryRole}
+                              onChange={(nextRole) =>
+                                assignRole(u.id, nextRole)
+                              }
+                              options={[
+                                {
+                                  value: 'COMPETITOR',
+                                  label: 'COMPETITOR',
+                                },
+                                {
+                                  value: 'MODERATOR',
+                                  label: 'MODERATOR',
+                                },
+                                { value: 'JUDGE', label: 'JUDGE' },
+                                { value: 'ADMIN', label: 'ADMIN' },
+                              ]}
+                            />
+                          </div>
+                        </td>
+                        <td className="py-5 text-right">
+                          <div className="inline-flex items-center gap-2">
+                            <span
+                              className="h-1.5 w-1.5 rounded-full"
+                              style={{ background: badge.color }}
+                            />
+                            <span
+                              className="text-[11px] font-semibold tracking-[0.05em]"
+                              style={{ color: badge.color }}
+                            >
+                              {primaryRole === 'ADMIN'
+                                ? 'RESTRICTED'
+                                : primaryRole === 'COMPETITOR'
+                                  ? 'ACTIVE'
+                                  : 'VERIFIED'}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => deleteUser(u.id, u.email)}
+                              className="ml-2 inline-flex items-center gap-1 rounded border border-[rgba(255,23,68,0.4)] px-2 py-1 text-[10px] text-(--accent-red)"
+                            >
+                              <Trash2 size={10} />
+                              DELETE
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                  {sortedUsers.length === 0 && (
+                    <tr>
+                      <td
+                        colSpan={4}
+                        className="py-8 text-center text-sm text-(--text-muted)"
+                      >
+                        ไม่พบผู้ใช้ที่ตรงกับคำค้นหา
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
             </div>
 
             <div className="mt-4 flex flex-col gap-3 border-t border-white/5 pt-4 text-xs text-(--text-muted) sm:flex-row sm:items-center sm:justify-between">
               <div>
-                Showing users {userFrom}-{userTo} of {totalUsers}
+                Showing users {userFrom}–{userTo} of {totalUsers}
               </div>
               <div className="flex items-center gap-2">
                 <button
@@ -541,7 +902,9 @@ function AdminContent() {
                 </span>
                 <button
                   type="button"
-                  onClick={() => setUserPage((p) => Math.min(totalUserPages, p + 1))}
+                  onClick={() =>
+                    setUserPage((p) => Math.min(totalUserPages, p + 1))
+                  }
                   disabled={userPage >= totalUserPages || loading}
                   className="rounded border border-(--border-subtle) px-3 py-1.5 text-xs text-(--text-secondary) disabled:cursor-not-allowed disabled:opacity-50"
                 >
@@ -551,10 +914,12 @@ function AdminContent() {
             </div>
           </div>
 
-          {/* Team Management */}
+          {/* ── Team Management ─────────────────────────────────────────── */}
           <div className="border-t border-white/5 bg-(--bg-surface) p-4 sm:p-6 lg:p-8">
             <div className="mb-5 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-              <h2 className="text-xl font-semibold text-white sm:text-2xl">Team Management</h2>
+              <h2 className="text-xl font-semibold text-white sm:text-2xl">
+                Team Management
+              </h2>
               <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center md:w-auto">
                 <div className="w-full sm:w-[230px]">
                   <CustomDropdown
@@ -565,17 +930,26 @@ function AdminContent() {
                     }}
                     options={[
                       { value: 'ALL', label: 'ALL TRACKS' },
-                      { value: 'SMART_AGRICULTURE', label: 'SMART AGRICULTURE' },
-                      { value: 'DISASTER_FLOOD_RESPONSE', label: 'DISASTER FLOOD RESPONSE' },
+                      {
+                        value: 'SMART_AGRICULTURE',
+                        label: 'SMART AGRICULTURE',
+                      },
+                      {
+                        value: 'DISASTER_FLOOD_RESPONSE',
+                        label: 'DISASTER FLOOD RESPONSE',
+                      },
                     ]}
                   />
                 </div>
                 <div className="relative w-full md:w-auto">
-                  <Search size={14} className="pointer-events-none absolute left-3 top-2.5 text-(--text-muted)" />
+                  <Search
+                    size={14}
+                    className="pointer-events-none absolute left-3 top-2.5 text-(--text-muted)"
+                  />
                   <input
                     placeholder="SEARCH TEAM NAME"
                     value={teamSearch}
-                    onChange={e => {
+                    onChange={(e) => {
                       setTeamSearch(e.target.value)
                       setTeamPage(1)
                     }}
@@ -585,89 +959,130 @@ function AdminContent() {
               </div>
             </div>
             <div className="overflow-x-auto">
-            <table className="min-w-[760px] w-full border-collapse">
-              <thead>
-                <tr className="border-b border-white/5">
-                  <th className="py-4 text-left text-[11px] font-semibold tracking-[0.1em] text-(--text-muted)">TEAM NAME</th>
-                  <th className="py-4 text-left text-[11px] font-semibold tracking-[0.1em] text-(--text-muted)">MEMBERS</th>
-                  <th className="py-4 text-left text-[11px] font-semibold tracking-[0.1em] text-(--text-muted)">SCORE (M)</th>
-                  <th className="py-4 text-right text-[11px] font-semibold tracking-[0.1em] text-(--text-muted)">STATE PROMOTION</th>
-                </tr>
-              </thead>
-              <tbody>
-                {teams.map((t, i) => (
-                  <tr key={i} className="border-b border-white/[0.02]">
-                    <td className="py-5">
-                      <div className="text-[15px] font-semibold text-(--accent-cyan)">{t.name}</div>
-                    </td>
-                    <td className="py-5 text-sm text-(--text-secondary)">
-                      <div>{(t.members || []).length} Members</div>
-                      <div className="mt-2 flex flex-wrap gap-2">
-                        {t.members?.slice(0, 3).map((member) => (
-                          <div key={member.id} className="flex items-center gap-1">
-                            {member.user.avatarUrl && (
-                              <button
-                                type="button"
-                                onClick={() => openUserUpload(member.user.id, 'avatar')}
-                                className="rounded border border-(--accent-cyan) px-2 py-1 text-[10px] text-(--accent-cyan)"
-                              >
-                                {member.user.fullName.split(' ')[0]} avatar
-                              </button>
-                            )}
-                            {member.user.idCardUploaded && (
-                              <button
-                                type="button"
-                                onClick={() => openUserUpload(member.user.id, 'id-card')}
-                                className="rounded border border-(--accent-green) px-2 py-1 text-[10px] text-(--accent-green)"
-                              >
-                                ID
-                              </button>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    </td>
-                    <td className="py-5 text-sm text-white">{t.score?.toFixed(4) || 'N/A'}</td>
-                    <td className="py-5 text-right">
-                      {t.currentStatus === 'FINALIST' ? (
-                        <div className="inline-flex items-center gap-3">
-                          <span className="inline-flex items-center gap-1 rounded border border-(--accent-green) bg-[rgba(0,230,118,0.1)] px-3 py-1.5 text-[11px] font-bold tracking-[0.05em] text-(--accent-green)">
-                            <Check size={12} /> FINALIST
-                          </span>
-                          <button onClick={() => setConfirmAction({ type: 'REVOKE', teamId: t.id, teamName: t.name })} className="border-none bg-transparent text-[10px] text-(--text-muted) underline">REVOKE</button>
-                        </div>
-                      ) : t.currentStatus === 'REJECTED' ? (
-                        <div className="inline-flex items-center gap-3">
-                          <span className="inline-flex items-center gap-1 rounded border border-(--accent-red) bg-[rgba(255,23,68,0.1)] px-3 py-1.5 text-[11px] font-bold tracking-[0.05em] text-(--accent-red)">
-                            <X size={12} /> DISQUALIFIED
-                          </span>
-                          <button onClick={() => setConfirmAction({ type: 'RESTORE', teamId: t.id, teamName: t.name })} className="rounded border border-(--accent-cyan) bg-transparent px-3 py-1.5 text-[10px] text-(--accent-cyan)">RESTORE TO FINALIST</button>
-                        </div>
-                      ) : (
-                        <div className="inline-flex items-center gap-3">
-                          <span className="inline-flex items-center rounded border border-(--border-subtle) bg-(--bg-base) px-3 py-1.5 text-[11px] font-semibold tracking-[0.05em] text-(--text-muted)">
-                            NOT FINALIZED
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => deleteTeam(t.id, t.name)}
-                            className="inline-flex items-center gap-1 border border-[rgba(255,23,68,0.4)] bg-transparent px-4 py-2 text-[10px] font-semibold tracking-[0.05em] text-(--accent-red)"
-                          >
-                            <Trash2 size={10} />
-                            DELETE
-                          </button>
-                        </div>
-                      )}
-                    </td>
+              <table className="min-w-[760px] w-full border-collapse">
+                <thead>
+                  <tr className="border-b border-white/5">
+                    <th className="py-4 text-left text-[11px] font-semibold tracking-[0.1em] text-(--text-muted)">
+                      TEAM NAME
+                    </th>
+                    <th className="py-4 text-left text-[11px] font-semibold tracking-[0.1em] text-(--text-muted)">
+                      MEMBERS
+                    </th>
+                    <th className="py-4 text-left text-[11px] font-semibold tracking-[0.1em] text-(--text-muted)">
+                      SCORE (M)
+                    </th>
+                    <th className="py-4 text-right text-[11px] font-semibold tracking-[0.1em] text-(--text-muted)">
+                      STATE PROMOTION
+                    </th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {teams.map((t, i) => (
+                    <tr key={i} className="border-b border-white/[0.02]">
+                      <td className="py-5">
+                        <div className="text-[15px] font-semibold text-(--accent-cyan)">
+                          {t.name}
+                        </div>
+                      </td>
+                      <td className="py-5 text-sm text-(--text-secondary)">
+                        <div>{(t.members || []).length} Members</div>
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          {t.members?.slice(0, 3).map((member) => (
+                            <div
+                              key={member.id}
+                              className="flex items-center gap-1"
+                            >
+                              {member.user.avatarUrl && (
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    openUserUpload(member.user.id, 'avatar')
+                                  }
+                                  className="rounded border border-(--accent-cyan) px-2 py-1 text-[10px] text-(--accent-cyan)"
+                                >
+                                  {member.user.fullName.split(' ')[0]} avatar
+                                </button>
+                              )}
+                              {member.user.idCardUploaded && (
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    openUserUpload(member.user.id, 'id-card')
+                                  }
+                                  className="rounded border border-(--accent-green) px-2 py-1 text-[10px] text-(--accent-green)"
+                                >
+                                  ID
+                                </button>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </td>
+                      <td className="py-5 text-sm text-white">
+                        {t.score?.toFixed(4) || 'N/A'}
+                      </td>
+                      <td className="py-5 text-right">
+                        {t.currentStatus === 'FINALIST' ? (
+                          <div className="inline-flex items-center gap-3">
+                            <span className="inline-flex items-center gap-1 rounded border border-(--accent-green) bg-[rgba(0,230,118,0.1)] px-3 py-1.5 text-[11px] font-bold tracking-[0.05em] text-(--accent-green)">
+                              <Check size={12} /> FINALIST
+                            </span>
+                            <button
+                              onClick={() =>
+                                setConfirmAction({
+                                  type: 'REVOKE',
+                                  teamId: t.id,
+                                  teamName: t.name,
+                                })
+                              }
+                              className="border-none bg-transparent text-[10px] text-(--text-muted) underline"
+                            >
+                              REVOKE
+                            </button>
+                          </div>
+                        ) : t.currentStatus === 'REJECTED' ? (
+                          <div className="inline-flex items-center gap-3">
+                            <span className="inline-flex items-center gap-1 rounded border border-(--accent-red) bg-[rgba(255,23,68,0.1)] px-3 py-1.5 text-[11px] font-bold tracking-[0.05em] text-(--accent-red)">
+                              <X size={12} /> DISQUALIFIED
+                            </span>
+                            <button
+                              onClick={() =>
+                                setConfirmAction({
+                                  type: 'RESTORE',
+                                  teamId: t.id,
+                                  teamName: t.name,
+                                })
+                              }
+                              className="rounded border border-(--accent-cyan) bg-transparent px-3 py-1.5 text-[10px] text-(--accent-cyan)"
+                            >
+                              RESTORE TO FINALIST
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="inline-flex items-center gap-3">
+                            <span className="inline-flex items-center rounded border border-(--border-subtle) bg-(--bg-base) px-3 py-1.5 text-[11px] font-semibold tracking-[0.05em] text-(--text-muted)">
+                              NOT FINALIZED
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => deleteTeam(t.id, t.name)}
+                              className="inline-flex items-center gap-1 border border-[rgba(255,23,68,0.4)] bg-transparent px-4 py-2 text-[10px] font-semibold tracking-[0.05em] text-(--accent-red)"
+                            >
+                              <Trash2 size={10} />
+                              DELETE
+                            </button>
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
 
             <div className="mt-4 flex flex-col gap-3 border-t border-white/5 pt-4 text-xs text-(--text-muted) sm:flex-row sm:items-center sm:justify-between">
               <div>
-                Showing teams {teamFrom}-{teamTo} of {totalTeams}
+                Showing teams {teamFrom}–{teamTo} of {totalTeams}
               </div>
               <div className="flex items-center gap-2">
                 <button
@@ -683,7 +1098,9 @@ function AdminContent() {
                 </span>
                 <button
                   type="button"
-                  onClick={() => setTeamPage((p) => Math.min(totalTeamPages, p + 1))}
+                  onClick={() =>
+                    setTeamPage((p) => Math.min(totalTeamPages, p + 1))
+                  }
                   disabled={teamPage >= totalTeamPages || loading}
                   className="rounded border border-(--border-subtle) px-3 py-1.5 text-xs text-(--text-secondary) disabled:cursor-not-allowed disabled:opacity-50"
                 >
@@ -694,11 +1111,13 @@ function AdminContent() {
           </div>
         </div>
 
-        {/* Right sidebar */}
+        {/* ── Right sidebar ─────────────────────────────────────────────── */}
         <div className="flex flex-col gap-6">
           {/* Data Extraction */}
           <div>
-            <h3 className="mb-4 text-lg font-semibold text-white">Data Extraction</h3>
+            <h3 className="mb-4 text-lg font-semibold text-white">
+              Data Extraction
+            </h3>
             <button
               type="button"
               onClick={sendAnnouncementEmails}
@@ -706,43 +1125,53 @@ function AdminContent() {
               className="mb-3 flex w-full items-center justify-between border-l-2 border-transparent bg-(--bg-surface) px-5 py-4 text-left transition enabled:hover:border-(--accent-cyan) disabled:cursor-not-allowed disabled:opacity-50"
             >
               <div>
-                <div className="font-mono mb-1 text-[10px] tracking-[0.1em] text-(--text-muted)">ANNOUNCEMENT MAILER</div>
+                <div className="font-mono mb-1 text-[10px] tracking-[0.1em] text-(--text-muted)">
+                  ANNOUNCEMENT MAILER
+                </div>
                 <div className="text-sm font-medium text-white">
-                  {sendingAnnouncement ? 'Sending Emails...' : 'Send Announcement Emails'}
+                  {sendingAnnouncement
+                    ? 'Sending Emails...'
+                    : 'Send Announcement Emails'}
                 </div>
                 <div className="mt-1 text-[11px] text-(--text-muted)">
                   Available after: {announcementDeadlineText}
                 </div>
                 {announcementStatus && (
                   <div className="mt-1 text-[11px] text-(--text-muted)">
-                    Sent: {announcementStatus.sentCount} · Failed: {announcementStatus.failedCount}
+                    Sent: {announcementStatus.sentCount} · Failed:{' '}
+                    {announcementStatus.failedCount}
                   </div>
                 )}
               </div>
               <Mail size={18} className="text-(--accent-cyan)" />
             </button>
             <div className="flex flex-col gap-3">
-              {exportCards.map(exp => (
-                <div 
-                  key={exp.type} 
+              {exportCards.map((exp) => (
+                <div
+                  key={exp.type}
                   onClick={() => exportData(exp.type)}
                   className="flex cursor-pointer items-center justify-between border-l-2 border-transparent bg-(--bg-surface) px-5 py-4 transition hover:border-(--accent-cyan)"
                 >
                   <div>
-                    <div className="font-mono mb-1 text-[10px] tracking-[0.1em] text-(--text-muted)">{exp.label}</div>
-                    <div className="text-sm font-medium text-white">{exp.title}</div>
+                    <div className="font-mono mb-1 text-[10px] tracking-[0.1em] text-(--text-muted)">
+                      {exp.label}
+                    </div>
+                    <div className="text-sm font-medium text-white">
+                      {exp.title}
+                    </div>
                   </div>
                   <exp.icon size={18} className="text-(--accent-cyan)" />
                 </div>
               ))}
-              {/* Management cards removed */}
             </div>
           </div>
 
           {/* Live Ops Log */}
           <div>
             <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-xs font-semibold tracking-[0.1em] text-(--text-secondary)">LIVE OPERATIONAL LOG</h3>
+              <h3 className="text-xs font-semibold tracking-[0.1em] text-(--text-secondary)">
+                LIVE OPERATIONAL LOG
+              </h3>
               <span className="h-2 w-2 rounded-full bg-(--accent-green) shadow-[0_0_10px_var(--accent-green)]" />
             </div>
 
@@ -750,14 +1179,31 @@ function AdminContent() {
               {logs.slice(0, 4).map((log) => (
                 <div key={log.id} className="bg-(--bg-surface) p-4">
                   <div className="mb-2 flex justify-between gap-3">
-                    <span className="font-mono text-[10px] text-(--text-muted)">LOG_ID: {log.entityId}</span>
-                    <span className="font-mono text-[10px] text-(--text-muted)">{formatAuditLogTimestamp(log.createdAt).timeLabel} UTC</span>
+                    <span className="font-mono text-[10px] text-(--text-muted)">
+                      LOG_ID: {log.entityId}
+                    </span>
+                    <span className="font-mono text-[10px] text-(--text-muted)">
+                      {formatAuditLogTimestamp(log.createdAt).timeLabel} UTC
+                    </span>
                   </div>
                   <div className="text-xs leading-relaxed text-(--text-secondary)">
                     {log.action.includes('Warning') ? (
-                      <>{log.action.split('Submission Server')[0]} <span style={{ color: 'var(--accent-amber)' }}>Submission Server{log.action.split('Submission Server')[1]}</span></>
+                      <>
+                        {log.action.split('Submission Server')[0]}{' '}
+                        <span style={{ color: 'var(--accent-amber)' }}>
+                          Submission Server
+                          {log.action.split('Submission Server')[1]}
+                        </span>
+                      </>
                     ) : (
-                      <span dangerouslySetInnerHTML={{ __html: log.action.replace(/(Orbital Pioneers|Finalist|sarah\.connor|GitHub API|Judge)/g, '<span style="color:var(--accent-green)">$1</span>') }} />
+                      <span
+                        dangerouslySetInnerHTML={{
+                          __html: log.action.replace(
+                            /(Orbital Pioneers|Finalist|sarah\.connor|GitHub API|Judge)/g,
+                            '<span style="color:var(--accent-green)">$1</span>',
+                          ),
+                        }}
+                      />
                     )}
                   </div>
                 </div>
@@ -774,7 +1220,7 @@ function AdminContent() {
           </div>
         </div>
       </div>
-      
+
       {/* Footer */}
       <footer className="mt-8 flex flex-col gap-3 border-t border-white/5 pt-6 text-[10px] tracking-[0.05em] text-(--text-muted) lg:flex-row lg:items-center lg:justify-between">
         <div>© 2024 GEOAI HACKATHON | PRECISION LENS UI</div>
@@ -789,4 +1235,3 @@ function AdminContent() {
     </div>
   )
 }
-

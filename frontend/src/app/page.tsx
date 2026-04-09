@@ -441,14 +441,7 @@ export default function LandingPage() {
             ))}
           </div>
           <div className="text-center text-xs sm:text-sm text-(--text-muted)">
-            © 2026 GEOAI HACKATHON · PRECISION LENS UI ·{' '}
-            <a href="#" className="hover:text-(--text-primary) transition-colors">
-              Privacy Policy
-            </a>
-            {' · '}
-            <a href="#" className="hover:text-(--text-primary) transition-colors">
-              Terms of Service
-            </a>
+            © 2026 GEOAI HACKATHON · {' '}
           </div>
         </div>
       </footer>
