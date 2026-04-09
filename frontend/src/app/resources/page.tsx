@@ -149,7 +149,7 @@ function ResourcesContent() {
               }`}>
                 {sec.icon}
               </span>
-              <div className="text-sm sm:text-base font-semibold text-white tracking-wider">
+              <div className="text-sm sm:text-base font-semibold text-white tracking-wider whitespace-pre-line">
                 {sec.title}
               </div>
             </div>
