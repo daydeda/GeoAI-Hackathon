@@ -149,7 +149,7 @@ function ResourcesContent() {
               }`}>
                 {sec.icon}
               </span>
-              <div className="text-sm sm:text-base font-semibold text-white tracking-wider whitespace-pre-line">
+              <div className="text-sm sm:text-base font-semibold text-white tracking-wider">
                 {sec.title}
               </div>
             </div>
@@ -164,7 +164,7 @@ function ResourcesContent() {
                   </div>
                 </div>
                 
-                <h3 className="font-display text-base sm:text-lg text-white mb-2 sm:mb-3">{item.title}</h3>
+                <h3 className="font-display text-base sm:text-lg text-white mb-2 sm:mb-3 whitespace-pre-line">{item.title}</h3>
                 <p className="text-[8px] sm:text-xs lg:text-sm text-(--text-secondary) leading-relaxed mb-4 sm:mb-6 flex-1 whitespace-pre-line">{item.desc}</p>
                 
                 {item.linkUrl ? (
