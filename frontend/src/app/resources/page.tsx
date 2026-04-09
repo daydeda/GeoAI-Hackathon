@@ -13,7 +13,7 @@ function ResourcesContent() {
     tag2?: string;
     linkText: string;
     linkColor: string;
-      linkUrl?: string;
+    linkUrl?: string;
     linkIcon?: string;
     isExternal?: boolean;
   }
@@ -31,7 +31,7 @@ function ResourcesContent() {
       icon: 'SYSTEM',
       color: 'var(--accent-green)',
       items: [
-      { title: 'GISTDA Sphere Platform', desc: 'Core integration portal for real-time satellite data streams. Required for real-time inference tasks.', icon: '🛰️', tag1: 'API', tag2: 'REQUIRED', linkText: 'sphere.gistda.or.th', linkColor: 'var(--accent-green)', linkUrl: 'https://sphere.gistda.or.th/', isExternal: true },
+      { title: 'GISTDA Sphere Platform', desc: 'ระบบรวมศูนย์ข้อมูลดาวเทียมแบบเรียลไทม์ สำหรับใช้ประกอบการประมวลผลโมเดล (Inference) โดยตรง', icon: '🛰️', tag1: 'API', tag2: 'REQUIRED', linkText: 'sphere.gistda.or.th', linkColor: 'var(--accent-green)', linkUrl: 'https://sphere.gistda.or.th/', isExternal: true },
         // { title: 'Spatial DB Connection', desc: 'Credentials and documentation for accessing the read-only PostgreSQL/PostGIS cluster.', icon: '📡', tag1: 'DOCS', linkText: 'ACCESS CREDENTIALS', linkColor: 'var(--text-secondary)' },
       ]
     },
@@ -40,7 +40,7 @@ function ResourcesContent() {
       icon: 'DATA',
       color: 'var(--accent-cyan)',
       items: [
-        { title: 'Synthetic Radar (SAR)', desc: 'Calibrated backscatter examples for flood area delineation during monsoon season simulations.', icon: '🌊', tag1: 'DATAINFO', tag2: '500MB', linkText: 'DOWNLOAD (.ZIP) (Coming Soon)', linkColor: 'white' },
+        { title: 'Optical And SAR data from Sentinel 1 & 2', desc: 'ภาพถ่ายดาวเทียมความละเอียดสูงที่รวมความคมชัดของภาพเชิงแสง (Sentinel-2) เข้ากับระบบเรดาร์ทะลุทะลวงเมฆ (Sentinel-1) เหมาะอย่างยิ่งสำหรับการติดตามการขยายตัวของน้ำท่วมและการเปลี่ยนแปลงของสภาพภูมิประเทศในช่วงฤดูมรสุม', icon: '🌊', tag1: 'DATAINFO', tag2: '500MB', linkText: 'dataspace.copernicus.eu', linkColor: 'var(--accent-green)', linkUrl: 'https://dataspace.copernicus.eu/data-collections/copernicus-sentinel-missions', isExternal: true,  },
         // { title: 'Multispectral Crop Init', desc: 'VHR satellite mosaics covering training fields in Ayutthaya. Bands include RGB, NIR, SWIR.', icon: '🌾', tag1: 'DATASET', tag2: '2.4GB', linkText: 'ACCESS BUCKET', linkColor: 'white', linkIcon: '📁' },
       ]
     },

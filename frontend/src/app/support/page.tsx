@@ -13,26 +13,26 @@ const CONTACT_EMAIL = 'cegs@kmitl.ac.th'
 
 const FAQ_ITEMS: FaqItem[] = [
   {
-    question: 'How many team members are allowed?',
-    answer: 'Each team can have 3 to 4 members. One member must be assigned as the team leader.',
+    question: 'มีกี่คนต่อทีม?',
+    answer: 'แต่ละทีมสามารถมีสมาชิกได้ 4 คน โดยต้องมีสมาชิกคนหนึ่งเป็นหัวหน้าทีม',
   },
   {
-    question: 'Can we update our submission before the deadline?',
+    question: 'ถ้ายังไม่หมดเวลาส่ง ขอเปลี่ยนไฟล์หรือแก้ Proposal ใหม่ได้หรือเปล่า?',
     answer:
-      'Yes. You can upload a revised file, and the latest upload before the deadline will be used for evaluation.',
+      'ได้ครับ คุณสามารถอัปโหลดไฟล์ที่แก้ไขใหม่ได้เลย โดยระบบจะยึดไฟล์ล่าสุดที่ส่งเข้ามาก่อนปิดรับงานเพื่อนำไปพิจารณาครับ',
   },
   {
-    question: 'What file format is accepted for proposal upload?',
-    answer: 'Proposal files must be submitted in PDF format with a maximum size of 20 MB.',
+    question: 'ไฟล์ที่รองรับสำหรับการส่ง Proposal คือรูปแบบไหน',
+    answer: 'ไฟล์ข้อเสนอต้องส่งเป็นรูปแบบ PDF เท่านั้น โดยมีขนาดไฟล์สูงสุดไม่เกิน 20 MB ครับ',
   },
   {
-    question: 'Can guest users open the support page?',
-    answer: 'Yes. The support page is public and can be viewed without signing in.',
+    question: 'บุคคลทั่วไป (Guest) สามารถเข้าดูหน้าช่วยเหลือ (Support) ได้ไหม?',
+    answer: 'ได้ครับ หน้าช่วยเหลือเปิดเป็นสาธารณะ สามารถเข้าชมได้โดยไม่จำเป็นต้องเข้าสู่ระบบครับ',
   },
   {
-    question: 'Where should we report urgent technical issues?',
+    question: 'หากพบปัญหาทางเทคนิคที่เร่งด่วน ควรแจ้งที่ไหน?',
     answer:
-      'Please contact cegs@kmitl.ac.th and include screenshots or error details.',
+      'กรุณาติดต่อที่อีเมล cegs@kmitl.ac.th โดยรบกวนแนบรูปหน้าจอ (Screenshot) หรือรายละเอียดข้อผิดพลาดมาด้วยครับ เพื่อให้ทีมงานสามารถช่วยแก้ไขปัญหาได้รวดเร็วขึ้นครับ',
   },
 ]
 
@@ -48,8 +48,7 @@ function SupportContent() {
             Contact Us
           </h1>
           <p className="mt-3 max-w-2xl text-sm leading-relaxed text-(--text-secondary)">
-            Need help with registration, submissions, or platform access? Use the contact
-            information below and review the common questions.
+            ติดปัญหาเรื่องลงทะเบียน ส่งผลงาน หรือเข้าใช้งานระบบใช่ไหม? ติดต่อเราได้ตามข้อมูลด้านล่าง หรือลองเช็กคำถามที่พบบ่อย (FAQs) ก่อนได้เลย!
           </p>
           <div className="mt-5 inline-flex items-center gap-2 rounded-full border border-(--border-active) bg-[rgba(0,229,255,0.08)] px-3 py-1.5 text-xs text-(--accent-cyan)">
             <span className="h-2 w-2 rounded-full bg-(--accent-cyan)" />
@@ -93,8 +92,7 @@ function SupportContent() {
           <article className="rounded-lg border border-(--border-subtle) bg-(--bg-surface) p-5 sm:p-6">
             <h2 className="text-lg font-semibold text-(--text-primary)">Need Immediate Help?</h2>
             <p className="mt-2 text-sm leading-relaxed text-(--text-secondary)">
-              For urgent issues, include your team name, issue time, and a screenshot in your email
-              so we can triage quickly.
+              เพื่อความรวดเร็ว หากมีปัญหาเร่งด่วน รบกวนระบุชื่อทีม เวลา และแนบรูป Screenshot มาให้เราด้วยนะ เราจะได้ช่วยแก้ปัญหาให้คุณได้เร็วขึ้น
             </p>
             <div className="mt-5 flex flex-col gap-3">
               <a
@@ -116,7 +114,7 @@ function SupportContent() {
         {/* FAQ */}
         <section className="rounded-lg border border-(--border-subtle) bg-(--bg-surface) p-5 sm:p-7">
           <h2 className="text-xl font-semibold text-(--text-primary)">
-            Frequently Asked Questions
+            คำถามที่พบบ่อย (FAQs)
           </h2>
           <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2">
             {FAQ_ITEMS.map((item) => (
