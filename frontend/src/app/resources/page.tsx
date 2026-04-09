@@ -40,8 +40,8 @@ function ResourcesContent() {
       icon: 'DATA',
       color: 'var(--accent-cyan)',
       items: [
-        { title: 'Optical And SAR data from <br/> Sentinel 1 & 2', 
-          desc: ' Sentinel-1 (Radar/SAR): สำคัญมากสำหรับบริบทไทย เพราะคลื่นเรดาร์สามารถทะลุเมฆได้ นำมาใช้ประมวลผลหาพื้นที่น้ำท่วมขัง (Flood Extent) ได้อย่างแม่นยำ หรือใช้ดูความชื้นในดินเพื่อเตือนภัยแล้ง <br/><br/> Sentinel-2 (Multispectral): เหมาะสำหรับช่วงฟ้าเปิด ใช้ดูดัชนีพืชพรรณ (NDVI, NDWI) เพื่อจำแนกประเภทพืช (เช่น ข้าว อ้อย ยางพารา) หรือดูความเสียหายของแปลงเกษตรจากแมลงศัตรูพืช ', 
+        { title: 'Optical And SAR data from \n Sentinel 1 & 2', 
+          desc: ' Sentinel-1 (Radar/SAR): สำคัญมากสำหรับบริบทไทย เพราะคลื่นเรดาร์สามารถทะลุเมฆได้ นำมาใช้ประมวลผลหาพื้นที่น้ำท่วมขัง (Flood Extent) ได้อย่างแม่นยำ หรือใช้ดูความชื้นในดินเพื่อเตือนภัยแล้ง \n\n Sentinel-2 (Multispectral): เหมาะสำหรับช่วงฟ้าเปิด ใช้ดูดัชนีพืชพรรณ (NDVI, NDWI) เพื่อจำแนกประเภทพืช (เช่น ข้าว อ้อย ยางพารา) หรือดูความเสียหายของแปลงเกษตรจากแมลงศัตรูพืช ', 
           icon: '🌊', 
           tag1: 'DATAINFO', 
           tag2: '500MB', 
@@ -138,7 +138,7 @@ function ResourcesContent() {
       </div>
 
       {/* Main grids */}
-      <div className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 mb-8 sm:mb-12">
+      <div className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 mb-8 sm:mb-12 items-start">
         {sections.map((sec, secIdx) => (
           <div key={secIdx} className="flex flex-col gap-3 sm:gap-4">
             <div className="flex items-center gap-2 sm:gap-3 mb-2">
@@ -155,7 +155,7 @@ function ResourcesContent() {
             </div>
 
             {sec.items.map((item, i) => (
-              <div key={i} className="bg-(--bg-surface) border border-[rgba(255,255,255,0.05)] rounded p-4 sm:p-6 flex-1 flex flex-col hover:border-[rgba(255,255,255,0.1)] transition">
+              <div key={i} className="bg-(--bg-surface) border border-[rgba(255,255,255,0.05)] rounded p-4 sm:p-6 flex flex-col hover:border-[rgba(255,255,255,0.1)] transition">
                 <div className="flex justify-between items-start gap-2 mb-3 sm:mb-4">
                   <div className="text-2xl sm:text-3xl">{item.icon}</div>
                   <div className="flex gap-1.5 flex-wrap justify-end">
@@ -165,7 +165,7 @@ function ResourcesContent() {
                 </div>
                 
                 <h3 className="font-display text-base sm:text-lg text-white mb-2 sm:mb-3">{item.title}</h3>
-                <p className="text-[8px] sm:text-xs lg:text-sm text-(--text-secondary) leading-relaxed mb-4 sm:mb-6 flex-1">{item.desc}</p>
+                <p className="text-[8px] sm:text-xs lg:text-sm text-(--text-secondary) leading-relaxed mb-4 sm:mb-6 flex-1 whitespace-pre-line">{item.desc}</p>
                 
                 {item.linkUrl ? (
                   <a
