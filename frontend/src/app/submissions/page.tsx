@@ -28,7 +28,12 @@ interface Submission {
 interface UploadErrorPayload {
   message?: string
   error?: string
-  missingMembers?: Array<{ fullName?: string; email?: string; userId?: string }>
+  missingMembers?: Array<{
+    fullName?: string
+    email?: string
+    userId?: string
+    missing?: Array<'experience' | 'studentId'>
+  }>
 }
 
 function normalizeReviewStatus(status?: string) {
@@ -143,10 +148,18 @@ function SubmissionsContent() {
 
         const d = (await res.json().catch(() => ({}))) as UploadErrorPayload
         if (Array.isArray(d.missingMembers) && d.missingMembers.length > 0) {
-          const names = d.missingMembers
-            .map((member, index) => member.fullName || member.email || `Member ${index + 1}`)
+          const memberSummaries = d.missingMembers
+            .map((member, index) => {
+              const displayName = member.fullName || member.email || `Member ${index + 1}`
+              const missingItems = new Set(member.missing || [])
+              const labels: string[] = []
+              if (missingItems.has('experience')) labels.push('Experience')
+              if (missingItems.has('studentId')) labels.push('Student ID')
+              const suffix = labels.length > 0 ? ` (${labels.join(' + ')} missing)` : ''
+              return `${displayName}${suffix}`
+            })
             .join(', ')
-          setError(`Upload blocked. Student ID is missing for these members: ${names}`)
+          setError(`Upload blocked. Incomplete team members: ${memberSummaries}`)
         } else {
           setError(d.error || d.message || 'Upload failed. Please try again.')
         }

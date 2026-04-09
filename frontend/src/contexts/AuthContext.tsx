@@ -23,6 +23,7 @@ export interface User {
   profile?: {
     firstName?: string | null
     lastName?: string | null
+    experience?: string | null
     university?: string | null
     yearOfStudy?: number | null
     phoneNumber?: string | null

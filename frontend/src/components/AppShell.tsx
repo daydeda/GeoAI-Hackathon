@@ -88,6 +88,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const [profileData, setProfileData] = useState({
     firstName: actor?.profile?.firstName || '',
     lastName: actor?.profile?.lastName || '',
+    experience: actor?.profile?.experience || '',
     university: actor?.profile?.university || '',
     yearOfStudy: actor?.profile?.yearOfStudy ? String(actor.profile.yearOfStudy) : '',
     phoneNumber: actor?.profile?.phoneNumber || '',
@@ -132,6 +133,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       const formData = new FormData()
       formData.append('firstName', profileData.firstName)
       formData.append('lastName', profileData.lastName)
+      formData.append('experience', profileData.experience)
       formData.append('university', profileData.university)
       formData.append('yearOfStudy', profileData.yearOfStudy)
       formData.append('phoneNumber', profileData.phoneNumber)
@@ -250,7 +252,11 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                 <input required type="number" min={1} max={12} placeholder="Year of Study" value={profileData.yearOfStudy} onChange={(e) => setProfileData((prev) => ({ ...prev, yearOfStudy: e.target.value }))} className="rounded border border-(--border-subtle) bg-(--bg-surface) px-3 py-2 text-sm" />
                 <input required placeholder="Phone Number" value={profileData.phoneNumber} onChange={(e) => setProfileData((prev) => ({ ...prev, phoneNumber: e.target.value }))} className="rounded border border-(--border-subtle) bg-(--bg-surface) px-3 py-2 text-sm sm:col-span-2" />
                 <textarea required placeholder="Address" value={profileData.address} onChange={(e) => setProfileData((prev) => ({ ...prev, address: e.target.value }))} className="min-h-24 rounded border border-(--border-subtle) bg-(--bg-surface) px-3 py-2 text-sm sm:col-span-2" />
+                <textarea placeholder="Experience (Optional at sign-in)" value={profileData.experience} onChange={(e) => setProfileData((prev) => ({ ...prev, experience: e.target.value }))} className="min-h-24 rounded border border-(--border-subtle) bg-(--bg-surface) px-3 py-2 text-sm sm:col-span-2" />
               </div>
+              <p className="mt-3 text-[11px] text-(--text-muted)">
+                First Name, Last Name, University, Year of Study, Phone Number, and Address are required at first sign-in. Experience and Student ID are required for every team member before proposal submission.
+              </p>
             </div>
 
             <div className="mb-6 mt-4 rounded border border-(--border-subtle) bg-(--bg-base) p-4 sm:p-5">

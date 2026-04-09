@@ -12,13 +12,35 @@ import { writeAuditLog } from '../services/auditLog.js'
 const SCOPES = ['openid', 'email', 'profile']
 const PROFILE_ID_MAX_BYTES = 5 * 1024 * 1024
 
+const requiredTextField = (min: number, max: number) => z
+  .string()
+  .trim()
+  .min(min)
+  .max(max)
+
+const optionalTextField = (max: number) => z
+  .string()
+  .trim()
+  .max(max)
+  .optional()
+  .or(z.literal(''))
+  .transform((value) => {
+    if (!value) return null
+    const trimmed = value.trim()
+    return trimmed.length > 0 ? trimmed : null
+  })
+
 const ProfileSchema = z.object({
-  firstName: z.string().trim().min(1).max(80),
-  lastName: z.string().trim().min(1).max(80),
-  university: z.string().trim().min(2).max(160),
-  yearOfStudy: z.coerce.number().int().min(1).max(12),
-  phoneNumber: z.string().trim().min(6).max(30),
-  address: z.string().trim().min(8).max(500),
+  firstName: requiredTextField(1, 80),
+  lastName: requiredTextField(1, 80),
+  experience: optionalTextField(2000),
+  university: requiredTextField(2, 160),
+  yearOfStudy: z.preprocess((value) => {
+    if (value === '' || value === null || typeof value === 'undefined') return undefined
+    return value
+  }, z.coerce.number().int().min(1).max(12)),
+  phoneNumber: requiredTextField(6, 30),
+  address: requiredTextField(8, 500),
 })
 
 function safeFileName(name: string) {
@@ -28,6 +50,7 @@ function safeFileName(name: string) {
 function hasRequiredProfileFields(input: {
   firstName?: string | null
   lastName?: string | null
+  experience?: string | null
   university?: string | null
   yearOfStudy?: number | null
   phoneNumber?: string | null
@@ -307,6 +330,7 @@ export async function authRoutes(app: FastifyInstance) {
     const actor = request.user as JwtPayload
     const existingUser = await prisma.user.findUnique({ where: { id: actor.userId } }) as {
       id: string
+      fullName?: string | null
       profileCompleted?: boolean
       idCardFileKey?: string | null
       idCardFileName?: string | null
@@ -369,7 +393,9 @@ export async function authRoutes(app: FastifyInstance) {
     }
 
     const profile = parsed.data
-    const fullName = `${profile.firstName} ${profile.lastName}`.trim()
+    const firstName = profile.firstName ?? null
+    const lastName = profile.lastName ?? null
+    const fullName = `${firstName ?? ''} ${lastName ?? ''}`.trim() || existingUser.fullName || actor.email
 
     // Profile completion is based on required profile fields; ID upload is optional at onboarding.
     const profileCompleted = true
@@ -377,8 +403,9 @@ export async function authRoutes(app: FastifyInstance) {
     const updatedUser = await prisma.user.update({
       where: { id: actor.userId },
       data: {
-        firstName: profile.firstName,
-        lastName: profile.lastName,
+        firstName,
+        lastName,
+        experience: profile.experience,
         university: profile.university,
         yearOfStudy: profile.yearOfStudy,
         phoneNumber: profile.phoneNumber,
@@ -429,6 +456,7 @@ export async function authRoutes(app: FastifyInstance) {
       profileCompleted?: boolean
       firstName?: string | null
       lastName?: string | null
+      experience?: string | null
       university?: string | null
       yearOfStudy?: number | null
       phoneNumber?: string | null
@@ -453,6 +481,7 @@ export async function authRoutes(app: FastifyInstance) {
       profile: {
         firstName: u.firstName,
         lastName: u.lastName,
+        experience: u.experience,
         university: u.university,
         yearOfStudy: u.yearOfStudy,
         phoneNumber: u.phoneNumber,

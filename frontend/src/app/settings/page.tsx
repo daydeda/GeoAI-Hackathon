@@ -9,6 +9,7 @@ const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
 type FormState = {
   firstName: string
   lastName: string
+  experience: string
   university: string
   yearOfStudy: string
   phoneNumber: string
@@ -53,15 +54,16 @@ function SettingsContent() {
   const [form, setForm] = useState<FormState>({
     firstName: user?.profile?.firstName || '',
     lastName: user?.profile?.lastName || '',
+    experience: user?.profile?.experience || '',
     university: user?.profile?.university || '',
     yearOfStudy: user?.profile?.yearOfStudy ? String(user.profile.yearOfStudy) : '',
     phoneNumber: user?.profile?.phoneNumber || '',
     address: user?.profile?.address || '',
   })
 
-  const hasProfile = useMemo(() => Boolean(user?.profileCompleted), [user?.profileCompleted])
+  const hasExperience = useMemo(() => Boolean(user?.profile?.experience?.trim()), [user?.profile?.experience])
   const hasStudentId = useMemo(() => Boolean(user?.profile?.idCardFileUploaded), [user?.profile?.idCardFileUploaded])
-  const settingsProfileCompleted = hasProfile && hasStudentId
+  const settingsProfileCompleted = hasExperience && hasStudentId
 
   const onSubmit = async (event: FormEvent) => {
     event.preventDefault()
@@ -73,6 +75,7 @@ function SettingsContent() {
       const formData = new FormData()
       formData.append('firstName', form.firstName)
       formData.append('lastName', form.lastName)
+      formData.append('experience', form.experience)
       formData.append('university', form.university)
       formData.append('yearOfStudy', form.yearOfStudy)
       formData.append('phoneNumber', form.phoneNumber)
@@ -129,6 +132,7 @@ function SettingsContent() {
           <input required type="number" min={1} max={12} placeholder="Year of Study" value={form.yearOfStudy} onChange={(e) => setForm((prev) => ({ ...prev, yearOfStudy: e.target.value }))} className="rounded border border-(--border-subtle) bg-(--bg-base) px-3 py-2 text-sm" />
           <input required placeholder="Phone Number" value={form.phoneNumber} onChange={(e) => setForm((prev) => ({ ...prev, phoneNumber: e.target.value }))} className="rounded border border-(--border-subtle) bg-(--bg-base) px-3 py-2 text-sm sm:col-span-2" />
           <textarea required placeholder="Address" value={form.address} onChange={(e) => setForm((prev) => ({ ...prev, address: e.target.value }))} className="min-h-24 rounded border border-(--border-subtle) bg-(--bg-base) px-3 py-2 text-sm sm:col-span-2" />
+          <textarea required placeholder="Experience (Required before proposal submission)" value={form.experience} onChange={(e) => setForm((prev) => ({ ...prev, experience: e.target.value }))} className="min-h-24 rounded border border-(--border-subtle) bg-(--bg-base) px-3 py-2 text-sm sm:col-span-2" />
         </div>
 
         <div className="mt-5 rounded border border-(--border-subtle) bg-(--bg-base) p-4">
@@ -148,12 +152,12 @@ function SettingsContent() {
           />
           {idCardFile && <div className="mt-2 text-[11px] text-(--accent-cyan)">Selected: {idCardFile.name}</div>}
           <p className="mt-2 text-[11px] text-(--text-muted)">
-            All team members must upload Student ID before proposal submission.
+            All team members must complete Experience and upload Student ID before proposal submission.
           </p>
         </div>
 
         <button type="submit" disabled={saving} className="mt-5 rounded bg-(--accent-cyan) px-5 py-3 text-sm font-semibold text-black disabled:opacity-60">
-          {saving ? 'Saving...' : hasProfile ? 'Save Changes' : 'Complete Profile'}
+          {saving ? 'Saving...' : settingsProfileCompleted ? 'Save Changes' : 'Complete Profile'}
         </button>
       </form>
     </div>

@@ -74,7 +74,14 @@ async function ensureCompetitorProfileCompleted(userId: string) {
   return { ok: true as const }
 }
 
-async function getMembersMissingStudentId(teamId: string): Promise<Array<{ userId: string; fullName: string; email: string }>> {
+type MissingPrerequisite = 'experience' | 'studentId'
+
+async function getMembersMissingSubmissionPrerequisites(teamId: string): Promise<Array<{
+  userId: string
+  fullName: string
+  email: string
+  missing: MissingPrerequisite[]
+}>> {
   const members = await prisma.teamMember.findMany({
     where: { teamId },
     include: {
@@ -83,6 +90,7 @@ async function getMembersMissingStudentId(teamId: string): Promise<Array<{ userI
           id: true,
           fullName: true,
           email: true,
+          experience: true,
           idCardFileKey: true,
           idCardFileName: true,
         },
@@ -91,16 +99,23 @@ async function getMembersMissingStudentId(teamId: string): Promise<Array<{ userI
   })
 
   return members
-    .filter((member) => {
+    .map((member) => {
       const key = (member.user.idCardFileKey || '').trim()
       const legacyName = (member.user.idCardFileName || '').trim()
-      return key.length === 0 && legacyName.length === 0
+      const experience = String((member.user as { experience?: string | null }).experience || '').trim()
+      const missing: MissingPrerequisite[] = []
+
+      if (experience.length === 0) missing.push('experience')
+      if (key.length === 0 && legacyName.length === 0) missing.push('studentId')
+
+      return {
+        userId: member.user.id,
+        fullName: member.user.fullName,
+        email: member.user.email,
+        missing,
+      }
     })
-    .map((member) => ({
-      userId: member.user.id,
-      fullName: member.user.fullName,
-      email: member.user.email,
-    }))
+    .filter((member) => member.missing.length > 0)
 }
 
 export async function submissionRoutes(app: FastifyInstance) {
@@ -183,10 +198,10 @@ export async function submissionRoutes(app: FastifyInstance) {
       return reply.status(423).send({ error: 'Submission deadline has passed' })
     }
 
-    const missingMembers = await getMembersMissingStudentId(membership.teamId)
+    const missingMembers = await getMembersMissingSubmissionPrerequisites(membership.teamId)
     if (missingMembers.length > 0) {
       return reply.status(409).send({
-        error: 'Submission blocked: all team members must upload Student ID before proposal upload',
+        error: 'Submission blocked: all team members must complete Experience and upload Student ID before proposal upload',
         missingMembers,
       })
     }
@@ -256,10 +271,10 @@ export async function submissionRoutes(app: FastifyInstance) {
     if (!team) return reply.status(404).send({ error: 'Team not found' })
     if (team.leaderId !== actor.userId) return reply.status(403).send({ error: 'Only team leader can submit' })
 
-    const missingMembers = await getMembersMissingStudentId(teamId)
+    const missingMembers = await getMembersMissingSubmissionPrerequisites(teamId)
     if (missingMembers.length > 0) {
       return reply.status(409).send({
-        error: 'Submission blocked: all team members must upload Student ID before proposal upload',
+        error: 'Submission blocked: all team members must complete Experience and upload Student ID before proposal upload',
         missingMembers,
       })
     }
