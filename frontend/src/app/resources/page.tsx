@@ -40,7 +40,7 @@ function ResourcesContent() {
       icon: 'DATA',
       color: 'var(--accent-cyan)',
       items: [
-        { title: 'Optical And SAR data from Sentinel 1 & 2', desc: 'ภาพถ่ายดาวเทียมความละเอียดสูงที่รวมความคมชัดของภาพเชิงแสง (Sentinel-2) เข้ากับระบบเรดาร์ทะลุทะลวงเมฆ (Sentinel-1) เหมาะอย่างยิ่งสำหรับการติดตามการขยายตัวของน้ำท่วมและการเปลี่ยนแปลงของสภาพภูมิประเทศในช่วงฤดูมรสุม', icon: '🌊', tag1: 'DATAINFO', tag2: '500MB', linkText: 'dataspace.copernicus.eu', linkColor: 'var(--accent-green)', linkUrl: 'https://dataspace.copernicus.eu/data-collections/copernicus-sentinel-missions', isExternal: true,  },
+        { title: 'Optical And SAR data from \n Sentinel 1 & 2', desc: ' Sentinel-1 (Radar/SAR): สำคัญมากสำหรับบริบทไทย เพราะคลื่นเรดาร์สามารถทะลุเมฆได้ นำมาใช้ประมวลผลหาพื้นที่น้ำท่วมขัง (Flood Extent) ได้อย่างแม่นยำ หรือใช้ดูความชื้นในดินเพื่อเตือนภัยแล้ง \n Sentinel-2 (Multispectral): เหมาะสำหรับช่วงฟ้าเปิด ใช้ดูดัชนีพืชพรรณ (NDVI, NDWI) เพื่อจำแนกประเภทพืช (เช่น ข้าว อ้อย ยางพารา) หรือดูความเสียหายของแปลงเกษตรจากแมลงศัตรูพืช ', icon: '🌊', tag1: 'DATAINFO', tag2: '500MB', linkText: 'dataspace.copernicus.eu', linkColor: 'var(--accent-green)', linkUrl: 'https://dataspace.copernicus.eu/data-collections/copernicus-sentinel-missions', isExternal: true,  },
         // { title: 'Multispectral Crop Init', desc: 'VHR satellite mosaics covering training fields in Ayutthaya. Bands include RGB, NIR, SWIR.', icon: '🌾', tag1: 'DATASET', tag2: '2.4GB', linkText: 'ACCESS BUCKET', linkColor: 'white', linkIcon: '📁' },
       ]
     },
