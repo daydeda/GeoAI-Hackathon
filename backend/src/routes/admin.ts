@@ -21,11 +21,95 @@ const SendAnnouncementSchema = z.object({
   onlyGmail: z.boolean().optional(),
 })
 
+type DailyCountRow = {
+  day: Date
+  count: bigint
+}
+
 function getFinalResultStatus(status: TeamStatus): TeamStatus {
   return status === 'FINALIST' ? 'FINALIST' : 'REJECTED'
 }
 
 export async function adminRoutes(app: FastifyInstance) {
+  // GET /api/v1/admin/stats/overview
+  app.get('/stats/overview', { preHandler: [requireRole('ADMIN', 'MODERATOR')] }, async (request) => {
+    const query = z.object({ days: z.coerce.number().int().min(7).max(365).optional() }).safeParse(request.query)
+    const days = query.success ? query.data.days ?? 30 : 30
+
+    const fromDate = new Date()
+    fromDate.setHours(0, 0, 0, 0)
+    fromDate.setDate(fromDate.getDate() - (days - 1))
+
+    const [userRows, submissionRows, teamRows] = await Promise.all([
+      prisma.$queryRaw<DailyCountRow[]>(Prisma.sql`
+        SELECT date_trunc('day', "createdAt") AS day, COUNT(*)::bigint AS count
+        FROM "users"
+        WHERE "createdAt" >= ${fromDate}
+        GROUP BY 1
+        ORDER BY 1 ASC
+      `),
+      prisma.$queryRaw<DailyCountRow[]>(Prisma.sql`
+        SELECT date_trunc('day', "submittedAt") AS day, COUNT(*)::bigint AS count
+        FROM "submissions"
+        WHERE "submittedAt" >= ${fromDate}
+        GROUP BY 1
+        ORDER BY 1 ASC
+      `),
+      prisma.$queryRaw<DailyCountRow[]>(Prisma.sql`
+        SELECT date_trunc('day', "createdAt") AS day, COUNT(*)::bigint AS count
+        FROM "teams"
+        WHERE "createdAt" >= ${fromDate}
+        GROUP BY 1
+        ORDER BY 1 ASC
+      `),
+    ])
+
+    const toMap = (rows: DailyCountRow[]) => {
+      const map = new Map<string, number>()
+      rows.forEach((row) => {
+        const key = new Date(row.day).toISOString().slice(0, 10)
+        map.set(key, Number(row.count))
+      })
+      return map
+    }
+
+    const userMap = toMap(userRows)
+    const submissionMap = toMap(submissionRows)
+    const teamMap = toMap(teamRows)
+
+    const series: Array<{
+      date: string
+      registrations: number
+      submissions: number
+      teams: number
+    }> = []
+
+    for (let index = 0; index < days; index += 1) {
+      const day = new Date(fromDate)
+      day.setDate(fromDate.getDate() + index)
+      const key = day.toISOString().slice(0, 10)
+
+      series.push({
+        date: key,
+        registrations: userMap.get(key) ?? 0,
+        submissions: submissionMap.get(key) ?? 0,
+        teams: teamMap.get(key) ?? 0,
+      })
+    }
+
+    return {
+      days,
+      from: fromDate.toISOString(),
+      to: new Date().toISOString(),
+      totals: {
+        registrations: series.reduce((acc, item) => acc + item.registrations, 0),
+        submissions: series.reduce((acc, item) => acc + item.submissions, 0),
+        teams: series.reduce((acc, item) => acc + item.teams, 0),
+      },
+      series,
+    }
+  })
+
   // GET /api/v1/admin/tools-access
   // Used by Nginx auth_request to protect Prisma Studio / MinIO routes.
   app.get('/tools-access', { preHandler: [requireRole('ADMIN', 'MODERATOR')] }, async (_request, reply) => {

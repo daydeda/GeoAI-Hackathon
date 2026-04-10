@@ -187,10 +187,10 @@ function ModeratorContent() {
                     Members: {team.members.length} · Missing ID: {missingMembers}
                   </div>
                   <div className="mt-2 space-y-1 border-t border-(--border-subtle) pt-2">
-                    {team.members.slice(0, 4).map((member, idx) => (
+                    {team.members.map((member, idx) => (
                       <div key={`${team.id}-${idx}`} className="flex items-center justify-between gap-2 text-[10px] text-(--text-muted)">
                         <span className="truncate">
-                          {member.user.fullName || member.user.email || 'Unnamed member'} · ID{' '}
+                          {member.user.fullName || member.user.email || 'Unnamed member'} · Gmail: {member.user.email || '-'} · ID{' '}
                           {member.user.idCardUploaded ? 'Uploaded' : 'Missing'}
                         </span>
                         {member.user.idCardUploaded ? (
@@ -205,11 +205,6 @@ function ModeratorContent() {
                         ) : null}
                       </div>
                     ))}
-                    {team.members.length > 4 && (
-                      <div className="text-[10px] text-(--text-muted)">
-                        +{team.members.length - 4} more members
-                      </div>
-                    )}
                   </div>
                 </div>
               )

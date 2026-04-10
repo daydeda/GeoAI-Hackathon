@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import type { LucideIcon } from 'lucide-react'
 import {
+  BarChart3,
   BookOpen,
   ClipboardCheck,
   Cog,
@@ -104,6 +105,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     if (!isPrivileged) return [] as NavItem[]
     return [
       { href: '/admin', label: 'Admin Panel', icon: Shield, activeColor: 'var(--accent-green)' },
+      { href: '/stats', label: 'Stats Overview', icon: BarChart3, activeColor: 'var(--accent-green)' },
       { href: '/admin/deadlines', label: 'Phase Deadlines', icon: Trophy, activeColor: 'var(--accent-green)' },
       { href: '/admin/logs', label: 'Logs', icon: ScrollText, activeColor: 'var(--accent-green)' },
     ]

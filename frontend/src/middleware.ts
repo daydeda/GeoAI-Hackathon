@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
 // Add paths that require authentication here
-const protectedPaths = ['/admin', '/moderator', '/mod', '/judge', '/team', '/submissions', '/resources', '/dashboard', '/documents', '/invite']
+const protectedPaths = ['/admin', '/moderator', '/mod', '/judge', '/team', '/submissions', '/resources', '/dashboard', '/documents', '/invite', '/stats']
 
 function withBasePath(basePath: string, path: string) {
   if (!basePath) return path
@@ -50,6 +50,9 @@ export function middleware(request: NextRequest) {
 
         // Basic RBAC routing based on decoded roles
         if (normalizedPath.startsWith('/admin') && !(roles.includes('ADMIN') || roles.includes('MODERATOR'))) {
+          return NextResponse.redirect(new URL(withBasePath(basePath, '/team'), request.url))
+        }
+        if (normalizedPath.startsWith('/stats') && !(roles.includes('ADMIN') || roles.includes('MODERATOR'))) {
           return NextResponse.redirect(new URL(withBasePath(basePath, '/team'), request.url))
         }
         if (normalizedPath.startsWith('/judge') && !(roles.includes('JUDGE') || roles.includes('ADMIN') || roles.includes('MODERATOR'))) {

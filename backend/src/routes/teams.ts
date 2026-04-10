@@ -4,7 +4,7 @@ import { nanoid } from 'nanoid'
 import { prisma } from '../plugins/prisma.js'
 import { authenticate, JwtPayload } from '../middleware/auth.js'
 import { writeAuditLog } from '../services/auditLog.js'
-import { Track } from '@prisma/client'
+import { Prisma, Track } from '@prisma/client'
 import { getPhaseByKey } from '../services/phaseConfig.js'
 
 const MAX_TEAM_SIZE = Number(process.env.MAX_TEAM_SIZE) || 4
@@ -13,6 +13,10 @@ const CreateTeamSchema = z.object({
   name: z.string().min(2).max(80),
   institution: z.string().min(2).max(120),
   track: z.enum(['SMART_AGRICULTURE', 'DISASTER_FLOOD_RESPONSE']),
+})
+
+const UpdateTeamNameSchema = z.object({
+  name: z.string().min(2).max(80),
 })
 
 async function ensureCompetitorProfileCompleted(userId: string) {
@@ -143,6 +147,48 @@ export async function teamRoutes(app: FastifyInstance) {
     await writeAuditLog({ actorId: actor.userId, action: 'INVITE_CREATED', entityType: 'invite', entityId: invite.id, newValue: { teamId, code: invite.code } })
 
     return reply.status(201).send({ code: invite.code, inviteUrl: `${process.env.FRONTEND_URL}/invite/${invite.code}` })
+  })
+
+  // PATCH /api/v1/teams/:teamId — update team name (leader only)
+  app.patch('/teams/:teamId', { preHandler: [authenticate] }, async (request, reply) => {
+    const actor = request.user as JwtPayload
+    const { teamId } = request.params as { teamId: string }
+
+    const body = UpdateTeamNameSchema.safeParse(request.body)
+    if (!body.success) return reply.status(400).send({ error: body.error.flatten() })
+
+    const team = await prisma.team.findUnique({ where: { id: teamId } })
+    if (!team) return reply.status(404).send({ error: 'Team not found' })
+    if (team.leaderId !== actor.userId) return reply.status(403).send({ error: 'Only team leader can update team name' })
+
+    const nextName = body.data.name.trim()
+    if (!nextName) return reply.status(400).send({ error: 'Team name is required' })
+
+    try {
+      const updated = await prisma.team.update({
+        where: { id: teamId },
+        data: { name: nextName },
+      })
+
+      await writeAuditLog({
+        actorId: actor.userId,
+        action: 'TEAM_UPDATED',
+        entityType: 'team',
+        entityId: teamId,
+        oldValue: { name: team.name },
+        newValue: { name: updated.name },
+      })
+
+      return reply.send({
+        id: updated.id,
+        name: updated.name,
+      })
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+        return reply.status(409).send({ error: 'Team name already exists' })
+      }
+      throw error
+    }
   })
 
   // POST /api/v1/invites/:code/join

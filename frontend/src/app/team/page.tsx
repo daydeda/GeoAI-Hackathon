@@ -18,6 +18,9 @@ function TeamContent() {
   const [team, setTeam] = useState<TeamData | null>(null)
   const [loading, setLoading] = useState(true)
   const [copied, setCopied] = useState(false)
+  const [editingTeamName, setEditingTeamName] = useState(false)
+  const [teamNameInput, setTeamNameInput] = useState('')
+  const [savingTeamName, setSavingTeamName] = useState(false)
   
   // Forms
   const [name, setName] = useState('')
@@ -35,6 +38,12 @@ function TeamContent() {
       setLoading(false)
     }
   }, [])
+
+  useEffect(() => {
+    if (!editingTeamName) {
+      setTeamNameInput(team?.name || '')
+    }
+  }, [team?.name, editingTeamName])
 
   useEffect(() => {
     void fetchTeam()
@@ -115,6 +124,39 @@ function TeamContent() {
     else {
       const d = await res.json()
       setError(d.error || 'Failed to generate invite code')
+    }
+  }
+
+  const saveTeamName = async () => {
+    if (!team || !team.isLeader || savingTeamName) return
+
+    const trimmedName = teamNameInput.trim()
+    if (!trimmedName) {
+      setError('Team name cannot be empty')
+      return
+    }
+
+    setSavingTeamName(true)
+    setError('')
+
+    try {
+      const res = await fetch(`${API}/api/v1/teams/${team.id}`, {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: trimmedName }),
+      })
+
+      if (res.ok) {
+        setEditingTeamName(false)
+        await fetchTeam()
+        await refetchUser()
+      } else {
+        const d = await res.json().catch(() => ({}))
+        setError(d.error || 'Failed to update team name')
+      }
+    } finally {
+      setSavingTeamName(false)
     }
   }
 
@@ -216,7 +258,52 @@ function TeamContent() {
             {/* Left: Crew Roster */}
             <div className="card p-4 sm:p-6 rounded-lg border border-(--border-subtle) bg-(--bg-surface)">
               <div className="mb-4 sm:mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4">
-                <h2 className="font-display text-lg sm:text-xl">{team.name}</h2>
+                <div className="flex flex-col gap-2">
+                  {team.isLeader && editingTeamName ? (
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                      <input
+                        value={teamNameInput}
+                        onChange={(e) => setTeamNameInput(e.target.value)}
+                        maxLength={80}
+                        className="input w-full sm:w-[280px] px-3 py-2 rounded border border-(--border-subtle) bg-(--bg-base) text-xs sm:text-sm focus:border-(--accent-cyan) focus:outline-none"
+                      />
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          disabled={savingTeamName}
+                          onClick={saveTeamName}
+                          className="btn btn-primary px-3 py-2 rounded text-[10px] sm:text-xs disabled:opacity-60"
+                        >
+                          {savingTeamName ? 'SAVING...' : 'SAVE'}
+                        </button>
+                        <button
+                          type="button"
+                          disabled={savingTeamName}
+                          onClick={() => {
+                            setEditingTeamName(false)
+                            setTeamNameInput(team.name)
+                          }}
+                          className="btn btn-outline px-3 py-2 rounded text-[10px] sm:text-xs disabled:opacity-60"
+                        >
+                          CANCEL
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <h2 className="font-display text-lg sm:text-xl">{team.name}</h2>
+                      {team.isLeader && (
+                        <button
+                          type="button"
+                          onClick={() => setEditingTeamName(true)}
+                          className="text-[10px] sm:text-xs px-2 py-1 rounded border border-(--border-subtle) hover:border-(--accent-cyan) hover:text-(--accent-cyan) transition-colors"
+                        >
+                          EDIT NAME
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
                 <span className="badge badge-pass text-[10px] sm:text-xs px-2 sm:px-3 py-1">
                   {team.memberCount || team.members.length} / 4 DEPLOYED
                 </span>

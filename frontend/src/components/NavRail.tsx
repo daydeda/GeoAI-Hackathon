@@ -24,6 +24,7 @@ const NAV_SECTIONS = [
       { href: '/mod', label: 'Mod Panel', icon: '⊛', roles: ['MODERATOR', 'ADMIN'] },
       { href: '/judge', label: 'Judge Queue', icon: '⊜', roles: ['JUDGE', 'ADMIN', 'MODERATOR'] },
       { href: '/admin', label: 'Admin Panel', icon: '⊝', roles: ['ADMIN', 'MODERATOR'] },
+      { href: '/stats', label: 'Stats Overview', icon: '∿', roles: ['ADMIN', 'MODERATOR'] },
       { href: '/admin/deadlines', label: 'Phase Deadlines', icon: '⊚', roles: ['ADMIN', 'MODERATOR'] },
       { href: '/admin/logs', label: 'Logs', icon: '≡', roles: ['ADMIN', 'MODERATOR'] },
     ] as NavItem[],
