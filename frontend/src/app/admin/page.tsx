@@ -43,6 +43,7 @@ interface UserRow {
   id: string
   email: string
   fullName: string
+  createdAt?: string
   avatarUrl?: string | null
   firstName?: string
   lastName?: string
@@ -386,8 +387,10 @@ function AdminContent() {
       }
 
       const disposition = res.headers.get('Content-Disposition')
-      let filename =
-        type.toLowerCase() === 'teams' ? 'teams.csv' : 'submissions.xlsx'
+      let filename = 'export.xlsx'
+      if (type.toLowerCase() === 'teams') filename = 'teams.csv'
+      if (type.toLowerCase() === 'submissions') filename = 'submissions.xlsx'
+      if (type.toLowerCase() === 'users') filename = 'competitors.xlsx'
 
       if (disposition && disposition.indexOf('attachment') !== -1) {
         const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/
@@ -418,6 +421,12 @@ function AdminContent() {
     type: string
     icon: LucideIcon
   }> = [
+    {
+      label: 'COMPETITOR REGISTRY',
+      title: 'Export Competitors as XLSX',
+      type: 'USERS',
+      icon: Download,
+    },
     {
       label: 'TEAMS REGISTRY',
       title: 'Export Teams as CSV',
@@ -778,6 +787,18 @@ function AdminContent() {
                           </div>
                           <div className="text-[10px] text-(--text-muted)">
                             {u.address || 'Address not set'}
+                          </div>
+                          <div className="text-[10px] text-(--text-muted)">
+                            Registration Date:{' '}
+                            {u.createdAt
+                              ? new Date(u.createdAt).toLocaleDateString()
+                              : '-'}
+                          </div>
+                          <div className="text-[10px] text-(--text-muted)">
+                            Registration Time:{' '}
+                            {u.createdAt
+                              ? new Date(u.createdAt).toLocaleTimeString()
+                              : '-'}
                           </div>
                           <div className="text-[10px] text-(--text-muted)">
                             Profile:{' '}

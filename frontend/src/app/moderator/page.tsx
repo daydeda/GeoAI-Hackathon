@@ -12,6 +12,13 @@ interface Team { name: string; track: string }
 interface File { fileKey: string; originalName: string }
 interface Review { status: 'PASS' | 'DISQUALIFIED' }
 interface Submission { id: string; submittedAt: string; team: Team; files: File[]; moderatorReview: Review | null }
+interface TeamOverviewRow {
+  id: string
+  name: string
+  institution: string
+  leader?: { fullName?: string; email?: string }
+  members: Array<{ user: { id: string; fullName?: string; email?: string; idCardUploaded?: boolean } }>
+}
 
 const TRACK_LABELS: Record<string, string> = {
   SMART_AGRICULTURE: 'Smart Agriculture',
@@ -24,12 +31,17 @@ function formatTrackLabel(track: string) {
 
 function ModeratorContent() {
   const [submissions, setSubmissions] = useState<Submission[]>([])
+  const [teamOverview, setTeamOverview] = useState<TeamOverviewRow[]>([])
+  const [teamOverviewTotal, setTeamOverviewTotal] = useState(0)
+  const [teamOverviewPage, setTeamOverviewPage] = useState(1)
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
   const [trackFilter, setTrackFilter] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
   const [search, setSearch] = useState('')
   const [previewSubmissionId, setPreviewSubmissionId] = useState<string | null>(null)
+  const TEAM_OVERVIEW_LIMIT = 10
+  const totalTeamOverviewPages = Math.max(1, Math.ceil(teamOverviewTotal / TEAM_OVERVIEW_LIMIT))
 
   const fetchSubmissions = useCallback(async () => {
     setLoading(true)
@@ -37,17 +49,29 @@ function ModeratorContent() {
       const qs = new URLSearchParams({ limit: '50' })
       if (trackFilter) qs.set('track', trackFilter)
       if (statusFilter) qs.set('status', statusFilter)
-      
-      const res = await fetch(`${API}/api/v1/mod/submissions?${qs.toString()}`, { credentials: 'include' })
+
+      const teamsQs = new URLSearchParams({ page: String(teamOverviewPage), limit: String(TEAM_OVERVIEW_LIMIT) })
+      if (trackFilter) teamsQs.set('track', trackFilter)
+
+      const [res, teamsRes] = await Promise.all([
+        fetch(`${API}/api/v1/mod/submissions?${qs.toString()}`, { credentials: 'include' }),
+        fetch(`${API}/api/v1/admin/teams?${teamsQs.toString()}`, { credentials: 'include' }),
+      ])
+
       if (res.ok) {
         const d = await res.json()
         setSubmissions(d.data || [])
         setTotal(d.total || 0)
       }
+      if (teamsRes.ok) {
+        const d = await teamsRes.json()
+        setTeamOverview((d.data || []) as TeamOverviewRow[])
+        setTeamOverviewTotal(d.total || 0)
+      }
     } finally {
       setLoading(false)
     }
-  }, [trackFilter, statusFilter])
+  }, [trackFilter, statusFilter, teamOverviewPage])
 
   useEffect(() => { fetchSubmissions() }, [fetchSubmissions])
 
@@ -110,7 +134,10 @@ function ModeratorContent() {
             <CustomDropdown
               className="min-w-[190px]"
               value={trackFilter}
-              onChange={setTrackFilter}
+              onChange={(value) => {
+                setTrackFilter(value)
+                setTeamOverviewPage(1)
+              }}
               options={[
                 { value: '', label: 'ALL TRACKS' },
                 { value: 'SMART_AGRICULTURE', label: 'Smart Agriculture' },
@@ -138,7 +165,83 @@ function ModeratorContent() {
       </div>
 
       {/* Submissions Table */}
-      <div className="flex-1 overflow-x-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+      <div className="px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+        <div className="rounded border border-(--border-subtle) bg-(--bg-surface) p-4 sm:p-5">
+          <div className="mb-3 sm:mb-4">
+            <h2 className="text-sm sm:text-base font-semibold text-white tracking-wide">Team Information Overview</h2>
+            <p className="text-[11px] sm:text-xs text-(--text-muted)">
+              Verify team member completeness before moderation decisions.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+            {teamOverview.map((team) => {
+              const missingMembers = team.members.filter((member) => !member.user.idCardUploaded).length
+              return (
+                <div key={team.id} className="rounded border border-(--border-subtle) bg-(--bg-base) p-3">
+                  <div className="text-xs font-semibold text-white truncate">{team.name}</div>
+                  <div className="text-[11px] text-(--text-muted) truncate">{team.institution || 'Institution not set'}</div>
+                  <div className="mt-2 text-[11px] text-(--text-secondary)">
+                    Leader: {team.leader?.fullName || team.leader?.email || '-'}
+                  </div>
+                  <div className="text-[11px] text-(--text-secondary)">
+                    Members: {team.members.length} · Missing ID: {missingMembers}
+                  </div>
+                  <div className="mt-2 space-y-1 border-t border-(--border-subtle) pt-2">
+                    {team.members.slice(0, 4).map((member, idx) => (
+                      <div key={`${team.id}-${idx}`} className="flex items-center justify-between gap-2 text-[10px] text-(--text-muted)">
+                        <span className="truncate">
+                          {member.user.fullName || member.user.email || 'Unnamed member'} · ID{' '}
+                          {member.user.idCardUploaded ? 'Uploaded' : 'Missing'}
+                        </span>
+                        {member.user.idCardUploaded ? (
+                          <a
+                            href={`${API}/api/v1/admin/users/${member.user.id}/uploads/id-card/view`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="shrink-0 rounded border border-(--accent-cyan) px-1.5 py-0.5 text-[9px] text-(--accent-cyan) no-underline"
+                          >
+                            View ID
+                          </a>
+                        ) : null}
+                      </div>
+                    ))}
+                    {team.members.length > 4 && (
+                      <div className="text-[10px] text-(--text-muted)">
+                        +{team.members.length - 4} more members
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+          <div className="mt-4 flex flex-col gap-2 border-t border-(--border-subtle) pt-3 text-[11px] text-(--text-muted) sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              Page {teamOverviewPage} of {totalTeamOverviewPages} · Teams {teamOverview.length} / {teamOverviewTotal}
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setTeamOverviewPage((p) => Math.max(1, p - 1))}
+                disabled={teamOverviewPage <= 1 || loading}
+                className="rounded border border-(--border-subtle) px-2 py-1 text-[11px] text-(--text-secondary) disabled:opacity-50"
+              >
+                Prev
+              </button>
+              <button
+                type="button"
+                onClick={() => setTeamOverviewPage((p) => Math.min(totalTeamOverviewPages, p + 1))}
+                disabled={teamOverviewPage >= totalTeamOverviewPages || loading}
+                className="rounded border border-(--border-subtle) px-2 py-1 text-[11px] text-(--text-secondary) disabled:opacity-50"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex-1 overflow-x-auto px-4 sm:px-6 lg:px-8 pb-4 sm:pb-6">
         <table className="w-full text-left text-xs sm:text-sm">
           <thead>
             <tr className="border-b border-[rgba(255,255,255,0.05)]">

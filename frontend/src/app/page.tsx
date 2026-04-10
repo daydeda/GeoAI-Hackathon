@@ -79,6 +79,7 @@ const sponsoredBy = [
 
 const navLinks = [
   { label: 'Challenges', href: '#timeline' },
+  { label: 'Quick Guide', href: '#quick-guide' },
   { label: 'Leaderboard', href: '/login' },
   { label: 'Docs', href: '/docs' },
   { label: 'Contact Us', href: '/support' },
@@ -327,6 +328,59 @@ export default function LandingPage() {
                     </span>
                   ))}
                 </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── Quick Guide ── */}
+      <section id="quick-guide" className="border-t border-b border-(--border-subtle) bg-(--bg-surface) px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-20">
+        <div className="max-w-5xl mx-auto">
+          <div className="mb-8 sm:mb-10">
+            <div className="font-mono text-[10px] sm:text-xs text-(--text-muted) tracking-widest mb-2">
+              QUICK SUBMISSION GUIDE
+            </div>
+            <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold text-(--text-primary)">
+              Submit Your Proposal In 5 Steps
+            </h2>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
+            {[
+              {
+                step: '01',
+                title: 'Sign-in with Google',
+                desc: 'เริ่มต้นด้วยการ "Continue with Google" จากนั้นกรอกข้อมูลโปรไฟล์และการตั้งค่าทีมของคุณให้เรียบร้อย',
+              },
+              {
+                step: '02',
+                title: 'Create or Join a Team',
+                desc: 'เลือกหัวข้อของคุณที่ต้องการจะส่ง เชิญเพื่อนร่วมทีม และตรวจสอบรายละเอียดของสมาชิกทุกคนให้ครบถ้วน',
+              },
+              {
+                step: '03',
+                title: 'Prepare Submission PDF',
+                desc: 'อัปโหลด Proposal ของคุณในรูปแบบไฟล์ PDF ผ่านช่องทางการส่งงาน (Submission) ให้เรียบร้อยก่อนครบกำหนดเวลา',
+              },
+              {
+                step: '04',
+                title: 'Check GISTDA Declaration',
+                desc: 'กดยอมรับปฏิญญา Sphere of GISTDA และบันทึกข้อมูลการส่ง Proposal ของคุณ',
+              },
+              {
+                step: '05',
+                title: 'Verify Status',
+                desc: 'ติดตามความคืบหน้าการตรวจทานได้จากแดชบอร์ดของคุณ และสามารถอัปเดต Proposal ใหม่ได้',
+              },
+            ].map((item) => (
+              <div
+                key={item.step}
+                className="rounded-lg border border-(--border-subtle) bg-(--bg-base) p-5 sm:p-6"
+              >
+                <div className="font-mono text-xs tracking-widest text-(--accent-cyan) mb-2">STEP {item.step}</div>
+                <h3 className="font-display text-lg sm:text-xl text-(--text-primary) mb-2">{item.title}</h3>
+                <p className="text-sm sm:text-base text-(--text-secondary) leading-relaxed">{item.desc}</p>
               </div>
             ))}
           </div>

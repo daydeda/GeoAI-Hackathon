@@ -6,9 +6,9 @@ GeoAI Hackathon Portal is a full-stack competition platform for team registratio
 
 | Scope | Current Version | Notes |
 |---|---:|---|
-| Project (Monorepo) | 1.3.0 | Deadline governance + judge PDF viewer + competitor validation updates |
-| Frontend (Next.js) | 1.3.0 | Dynamic phase sync, countdown refactor, announcement feedback view, branding update |
-| Backend (Fastify + Prisma) | 1.3.0 | Global phase API, Student ID optional onboarding, team upload gate on missing IDs |
+| Project (Monorepo) | 1.9.0 | Deadline governance + judge PDF viewer + competitor validation updates, admin/export and moderator UX updates |
+| Frontend (Next.js) | 1.9.0 | Dynamic phase sync, countdown refactor, announcement feedback view, branding update, landing Quick Guide, moderator team overview |
+| Backend (Fastify + Prisma) | 1.9.0 | Global phase API, Student ID optional onboarding, team upload gate on missing IDs, exporter enhancements and GISTDA parsing fix |
 
 ## Project Evolution
 
@@ -49,6 +49,15 @@ GeoAI Hackathon Portal is a full-stack competition platform for team registratio
 - Branding:
   - Legacy institution references updated to KMUTT.
   - Institutional/partner logo slots updated and wired in landing page.
+
+### v1.9.0 - Feature & Bugfix Release (2026-04-10)
+
+- Landing page: Added a concise "Quick Guide" to help competitors sign in and submit (starts with Sign-in with Google).
+- Moderator dashboard: Added Team Information Overview above Protocol Timeline with member previews and Student ID photo preview links; added server-backed pagination to the overview.
+- Admin: Added competitor export (competitors.xlsx) and displayed Registration Date + Registration Time in the users table.
+- Backend exporter: Added "Modified Date + Time" to Team CSV and Proposals XLSX, export now selects latest submission per team to reflect DB state.
+- Bugfix: Hardened GISTDA declaration parsing to accept common multipart/form truthy values and numeric forms to prevent false negatives in exports.
+
 
 ## Sub-Project Changelogs
 
