@@ -8,6 +8,7 @@ import { getAutoGrantedRolesForEmail } from '../config/roleByEmail.js'
 import { z } from 'zod'
 import { minioClient, BUCKET } from '../services/storage.js'
 import { writeAuditLog } from '../services/auditLog.js'
+import { getPhaseByKey } from '../services/phaseConfig.js'
 
 const SCOPES = ['openid', 'email', 'profile']
 const PROFILE_ID_MAX_BYTES = 5 * 1024 * 1024
@@ -328,14 +329,42 @@ export async function authRoutes(app: FastifyInstance) {
     preHandler: [authenticate],
   }, async (request, reply) => {
     const actor = request.user as JwtPayload
-    const existingUser = await prisma.user.findUnique({ where: { id: actor.userId } }) as {
+    const existingUser = await prisma.user.findUnique({ where: { id: actor.userId } }) as ({
       id: string
       fullName?: string | null
       profileCompleted?: boolean
       idCardFileKey?: string | null
       idCardFileName?: string | null
-    } | null
+      competitorStatus?: string | null
+    }) | null
     if (!existingUser) return reply.status(404).send({ error: 'User not found' })
+
+    // ── Profile lockdown checks ──
+    // 1. Locked if user is already a Verified Competitor
+    if (existingUser.competitorStatus === 'VERIFIED_COMPETITOR') {
+      return reply.status(403).send({
+        error: 'Profile editing is locked. Your application has been verified.',
+        locked: true,
+        reason: 'VERIFIED_COMPETITOR',
+      })
+    }
+    // 2. Locked if the submission phase deadline has passed
+    try {
+      const submissionPhase = await getPhaseByKey('submission')
+      if (submissionPhase) {
+        const deadline = new Date(submissionPhase.date)
+        if (!Number.isNaN(deadline.getTime()) && Date.now() > deadline.getTime()) {
+          return reply.status(403).send({
+            error: 'Profile editing is locked. The submission deadline has passed.',
+            locked: true,
+            reason: 'DEADLINE_PASSED',
+            deadline: deadline.toISOString(),
+          })
+        }
+      }
+    } catch {
+      // Phase config unavailable — continue (fail-open for editability)
+    }
 
     const rawProfileBody: Record<string, string> = {}
     let uploadedFile:
@@ -478,6 +507,8 @@ export async function authRoutes(app: FastifyInstance) {
       avatarUrl: u.avatarUrl,
       roles: u.userRoles.map((ur: any) => ur.role.name),
       profileCompleted,
+      competitorStatus: u.competitorStatus,
+      moderatorNote: u.moderatorNote ?? null,
       profile: {
         firstName: u.firstName,
         lastName: u.lastName,

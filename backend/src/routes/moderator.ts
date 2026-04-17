@@ -78,24 +78,67 @@ export async function moderatorRoutes(app: FastifyInstance) {
     const body = ReviewSchema.safeParse(request.body)
     if (!body.success) return reply.status(400).send({ error: body.error.flatten() })
 
-    const submission = await prisma.submission.findUnique({ where: { id: submissionId }, include: { moderatorReview: true } })
+    const statusResult = body.data.status
+    const isReject = statusResult !== 'PASS'
+
+    // If rejecting, a reason note is mandatory
+    if (isReject && (!body.data.note || body.data.note.trim().length === 0)) {
+      return reply.status(400).send({
+        error: 'A rejection reason is required when marking a submission as Incorrect/Disqualified.',
+      })
+    }
+
+    const submission = await prisma.submission.findUnique({
+      where: { id: submissionId },
+      include: {
+        moderatorReview: true,
+        team: {
+          include: {
+            members: { include: { user: { select: { id: true } } } },
+            leader: { select: { id: true } },
+          },
+        },
+      },
+    })
     if (!submission) return reply.status(404).send({ error: 'Submission not found' })
 
     const oldStatus = submission.moderatorReview?.status ?? null
 
-    const statusForDb: ReviewStatus = body.data.status === 'PASS' ? 'PASS' : 'FAIL'
+    const statusForDb: ReviewStatus = statusResult === 'PASS' ? 'PASS' : 'FAIL'
+    const noteToSave = body.data.note?.trim() || null
 
     const review = await prisma.moderatorReview.upsert({
       where: { submissionId },
-      update: { status: statusForDb, note: body.data.note, reviewerId: actor.userId, reviewedAt: new Date() },
-      create: { submissionId, reviewerId: actor.userId, status: statusForDb, note: body.data.note },
+      update: { status: statusForDb, note: noteToSave, reviewerId: actor.userId, reviewedAt: new Date() },
+      create: { submissionId, reviewerId: actor.userId, status: statusForDb, note: noteToSave },
     })
 
-    // Update team status
+    // Collect all user IDs in the team (leader + members)
+    const teamUserIds = [
+      submission.team.leaderId,
+      ...submission.team.members.map((m) => m.user.id),
+    ].filter((id, idx, arr) => arr.indexOf(id) === idx)
+
     if (statusForDb === 'PASS') {
-      await prisma.team.update({ where: { id: submission.teamId }, data: { currentStatus: 'PRE_SCREEN_PASSED' } })
+      // Team passes pre-screen → team status changes, members become VERIFIED_COMPETITOR
+      await prisma.team.update({
+        where: { id: submission.teamId },
+        data: { currentStatus: 'PRE_SCREEN_PASSED' },
+      })
+      await (prisma.user as any).updateMany({
+        where: { id: { in: teamUserIds } },
+        data: { competitorStatus: 'VERIFIED_COMPETITOR', moderatorNote: null },
+      })
     } else {
-      await prisma.team.update({ where: { id: submission.teamId }, data: { currentStatus: 'REJECTED' } })
+      // Submission rejected → team REJECTED, members become INCORRECT_COMPETITOR with note
+      await prisma.team.update({
+        where: { id: submission.teamId },
+        data: { currentStatus: 'REJECTED' },
+      })
+      await (prisma.user as any).updateMany({
+        where: { id: { in: teamUserIds } },
+        data: { competitorStatus: 'INCORRECT_COMPETITOR', moderatorNote: noteToSave },
+      })
     }
 
     await writeAuditLog({
@@ -104,7 +147,7 @@ export async function moderatorRoutes(app: FastifyInstance) {
       entityType: 'submission',
       entityId: submissionId,
       oldValue: { status: oldStatus },
-      newValue: { status: normalizeReviewStatus(statusForDb), note: body.data.note },
+      newValue: { status: normalizeReviewStatus(statusForDb), note: noteToSave },
     })
 
     return {
@@ -170,5 +213,90 @@ export async function moderatorRoutes(app: FastifyInstance) {
       recipients,
       message,
     }
+  })
+
+  // GET /api/v1/mod/users
+  app.get('/users', { preHandler: [requireRole('MODERATOR', 'ADMIN')] }, async (request, reply) => {
+    const { status, search, page = '1', limit = '20' } = request.query as Record<string, string>
+    
+    const where: any = {}
+    if (status && status !== 'ALL' && status !== '') {
+      if (status === 'QUALIFIED') {
+        where.competitorStatus = { in: ['QUALIFIED', 'VERIFIED_COMPETITOR'] }
+      } else if (status === 'DISQUALIFIED') {
+        where.competitorStatus = { in: ['DISQUALIFIED', 'INCORRECT_COMPETITOR'] }
+      } else {
+        where.competitorStatus = status
+      }
+    }
+    if (search) {
+      where.OR = [
+        { fullName: { contains: search, mode: 'insensitive' } },
+        { email: { contains: search, mode: 'insensitive' } },
+      ]
+    }
+
+    const [users, total] = await Promise.all([
+      (prisma.user as any).findMany({
+        where,
+        select: {
+          id: true,
+          email: true,
+          fullName: true,
+          competitorStatus: true,
+          moderatorNote: true,
+          idCardFileKey: true,
+          university: true,
+          yearOfStudy: true,
+          createdAt: true,
+        },
+        orderBy: { createdAt: 'desc' },
+        skip: (Number(page) - 1) * Number(limit),
+        take: Number(limit),
+      }),
+      (prisma.user as any).count({ where }),
+    ])
+
+    return { data: users, total, page: Number(page), limit: Number(limit) }
+  })
+
+  // POST /api/v1/mod/users/:userId/verify
+  app.post('/users/:userId/verify', { preHandler: [requireRole('MODERATOR', 'ADMIN')] }, async (request, reply) => {
+    const actor = request.user as JwtPayload
+    const { userId } = request.params as { userId: string }
+    const body = z.object({
+      status: z.enum(['VERIFIED_COMPETITOR', 'INCORRECT_COMPETITOR']),
+      note: z.string().max(1000).optional(),
+    }).safeParse(request.body)
+
+    if (!body.success) return reply.status(400).send({ error: body.error.flatten() })
+
+    const { status, note } = body.data
+
+    if (status === 'INCORRECT_COMPETITOR' && (!note || note.trim().length === 0)) {
+      return reply.status(400).send({ error: 'A rejection reason is required.' })
+    }
+
+    const user = await (prisma.user as any).findUnique({ where: { id: userId } })
+    if (!user) return reply.status(404).send({ error: 'User not found' })
+
+    const updatedUser = await (prisma.user as any).update({
+      where: { id: userId },
+      data: {
+        competitorStatus: status,
+        moderatorNote: note || null,
+      },
+    })
+
+    await writeAuditLog({
+      actorId: actor.userId,
+      action: 'USER_VERIFIED' as any,
+      entityType: 'user',
+      entityId: userId,
+      oldValue: { competitorStatus: user.competitorStatus },
+      newValue: { competitorStatus: status, moderatorNote: note },
+    })
+
+    return updatedUser
   })
 }

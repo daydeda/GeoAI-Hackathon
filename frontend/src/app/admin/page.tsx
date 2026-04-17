@@ -54,6 +54,8 @@ interface UserRow {
   profileCompleted?: boolean
   idCardUploaded?: boolean
   roles: string[]
+  competitorStatus?: string | null
+  moderatorNote?: string | null
 }
 interface TeamMemberRow {
   id: string
@@ -131,6 +133,7 @@ function AdminContent() {
   const [logs, setLogs] = useState<LogRow[]>([])
   const [search, setSearch] = useState('')
   const [userRoleFilter, setUserRoleFilter] = useState('ALL')
+  const [userStatusFilter, setUserStatusFilter] = useState('ALL')
   const [teamTrackFilter, setTeamTrackFilter] = useState('ALL')
   const [teamSearch, setTeamSearch] = useState('')
   const [loading, setLoading] = useState(true)
@@ -192,6 +195,7 @@ function AdminContent() {
       const trimmedSearch = search.trim()
       if (trimmedSearch) userParams.set('search', trimmedSearch)
       if (userRoleFilter !== 'ALL') userParams.set('role', userRoleFilter)
+      if (userStatusFilter !== 'ALL') userParams.set('competitorStatus', userStatusFilter)
       const teamParams = new URLSearchParams({
         page: String(teamPage),
         limit: String(teamLimit),
@@ -246,6 +250,7 @@ function AdminContent() {
   }, [
     search,
     userRoleFilter,
+    userStatusFilter,
     userLimit,
     userPage,
     teamTrackFilter,
@@ -611,9 +616,18 @@ function AdminContent() {
             {loading ? 'SYNCHRONIZING...' : 'ADMINISTRATIVE TERMINAL'}
           </span>
         </div>
-        <h1 className="font-display text-3xl text-white sm:text-4xl md:text-5xl">
-          Command Center
-        </h1>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <h1 className="font-display text-3xl text-white sm:text-4xl md:text-5xl">
+            Command Center
+          </h1>
+          <Link
+            href="/admin/email"
+            className="inline-flex items-center gap-2 rounded border border-(--accent-cyan) bg-[rgba(0,229,255,0.07)] px-4 py-2.5 text-xs font-semibold text-(--accent-cyan) no-underline transition hover:bg-[rgba(0,229,255,0.14)]"
+          >
+            <Mail size={14} />
+            Email Dispatch
+          </Link>
+        </div>
       </div>
 
       {/* Stat cards */}
@@ -690,7 +704,7 @@ function AdminContent() {
               </div>
               <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center md:w-auto">
                 {/* Role filter */}
-                <div className="w-full sm:w-[190px]">
+                <div className="w-full sm:w-[180px]">
                   <CustomDropdown
                     value={userRoleFilter}
                     onChange={(nextRole) => {
@@ -703,6 +717,24 @@ function AdminContent() {
                       { value: 'MODERATOR', label: 'MODERATOR' },
                       { value: 'JUDGE', label: 'JUDGE' },
                       { value: 'ADMIN', label: 'ADMIN' },
+                    ]}
+                  />
+                </div>
+                {/* Competitor Status filter */}
+                <div className="w-full sm:w-[200px]">
+                  <CustomDropdown
+                    value={userStatusFilter}
+                    onChange={(nextStatus) => {
+                      setUserStatusFilter(nextStatus)
+                      setUserPage(1)
+                    }}
+                    options={[
+                      { value: 'ALL', label: 'ALL STATUS' },
+                      { value: 'PENDING', label: 'PENDING' },
+                      { value: 'VERIFIED_COMPETITOR', label: 'VERIFIED' },
+                      { value: 'INCORRECT_COMPETITOR', label: 'INCORRECT' },
+                      { value: 'QUALIFIED', label: 'QUALIFIED' },
+                      { value: 'DISQUALIFIED', label: 'DISQUALIFIED' },
                     ]}
                   />
                 </div>
@@ -719,14 +751,14 @@ function AdminContent() {
                       setSearch(e.target.value)
                       setUserPage(1)
                     }}
-                    className="w-full rounded border border-(--border-subtle) bg-(--bg-base) px-3 py-2 pl-9 text-xs tracking-[0.05em] text-white outline-none md:w-[280px]"
+                    className="w-full rounded border border-(--border-subtle) bg-(--bg-base) px-3 py-2 pl-9 text-xs tracking-[0.05em] text-white outline-none md:w-[260px]"
                   />
                 </div>
               </div>
             </div>
 
             <div className="overflow-x-auto">
-              <table className="min-w-[720px] w-full border-collapse">
+              <table className="min-w-[900px] w-full border-collapse">
                 <thead>
                   <tr className="border-b border-white/5">
                     {/* Sortable: email */}
@@ -753,8 +785,14 @@ function AdminContent() {
                       ROLE ASSIGNMENT
                       <SortIcon field="role" />
                     </th>
+                    <th className="py-4 text-left text-[11px] font-semibold tracking-[0.1em] text-(--text-muted)">
+                      COMP. STATUS
+                    </th>
+                    <th className="py-4 text-left text-[11px] font-semibold tracking-[0.1em] text-(--text-muted) max-w-[180px]">
+                      REASON
+                    </th>
                     <th className="py-4 text-right text-[11px] font-semibold tracking-[0.1em] text-(--text-muted)">
-                      STATUS
+                      ACTIONS
                     </th>
                   </tr>
                 </thead>
@@ -763,6 +801,18 @@ function AdminContent() {
                     const primaryRole = getPrimaryRole(u.roles)
                     const badge =
                       ROLE_BADGE[primaryRole] ?? ROLE_BADGE.COMPETITOR
+
+                    const COMP_STATUS_STYLE: Record<string, { label: string; color: string }> = {
+                      PENDING: { label: 'PENDING', color: 'var(--text-muted)' },
+                      VERIFIED_COMPETITOR: { label: 'VERIFIED', color: 'var(--accent-green)' },
+                      INCORRECT_COMPETITOR: { label: 'INCORRECT', color: '#ff6275' },
+                      QUALIFIED: { label: 'QUALIFIED', color: 'var(--accent-cyan)' },
+                      DISQUALIFIED: { label: 'DISQUALIFIED', color: '#ff6275' },
+                    }
+                    const compStyle = u.competitorStatus
+                      ? (COMP_STATUS_STYLE[u.competitorStatus] ?? COMP_STATUS_STYLE.PENDING)
+                      : COMP_STATUS_STYLE.PENDING
+
                     return (
                       <tr key={u.id} className="border-b border-white/[0.02]">
                         <td className="py-5">
@@ -862,6 +912,29 @@ function AdminContent() {
                             />
                           </div>
                         </td>
+                        {/* Competitor Status column */}
+                        <td className="py-5">
+                          <span
+                            className="inline-block rounded px-2 py-0.5 text-[10px] font-bold tracking-[0.07em]"
+                            style={{ color: compStyle.color, background: `${compStyle.color}18` }}
+                          >
+                            {compStyle.label}
+                          </span>
+                        </td>
+                        {/* Reason column */}
+                        <td className="py-5 max-w-[180px]">
+                          {u.moderatorNote ? (
+                            <span
+                              className="block text-[10px] text-(--text-muted) italic leading-relaxed"
+                              title={u.moderatorNote}
+                              style={{ display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}
+                            >
+                              {u.moderatorNote}
+                            </span>
+                          ) : (
+                            <span className="text-[10px] text-(--border-subtle)">—</span>
+                          )}
+                        </td>
                         <td className="py-5 text-right">
                           <div className="inline-flex items-center gap-2">
                             <span
@@ -894,7 +967,7 @@ function AdminContent() {
                   {sortedUsers.length === 0 && (
                     <tr>
                       <td
-                        colSpan={4}
+                        colSpan={6}
                         className="py-8 text-center text-sm text-(--text-muted)"
                       >
                         ไม่พบผู้ใช้ที่ตรงกับคำค้นหา

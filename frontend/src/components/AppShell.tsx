@@ -13,11 +13,14 @@ import {
   LayoutGrid,
   LifeBuoy,
   LogOut,
+  Mail,
   Menu,
   Scale,
   ScrollText,
   Shield,
+  ShieldCheck,
   Trophy,
+  UserCheck,
   UserCircle2,
   Users,
   X,
@@ -106,6 +109,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     return [
       { href: '/admin', label: 'Admin Panel', icon: Shield, activeColor: 'var(--accent-green)' },
       { href: '/stats', label: 'Stats Overview', icon: BarChart3, activeColor: 'var(--accent-green)' },
+      { href: '/admin/email', label: 'Email Dispatch', icon: Mail, activeColor: 'var(--accent-green)' },
       { href: '/admin/deadlines', label: 'Phase Deadlines', icon: Trophy, activeColor: 'var(--accent-green)' },
       { href: '/admin/logs', label: 'Logs', icon: ScrollText, activeColor: 'var(--accent-green)' },
     ]
@@ -113,7 +117,10 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
   const moderatorMenu = useMemo(() => {
     if (!isPrivileged) return [] as NavItem[]
-    return [{ href: '/moderator', label: 'Moderator Dash', icon: Scale }]
+    return [
+      { href: '/moderator', label: 'Submissions Review', icon: Scale },
+      { href: '/moderator/verify', label: 'Moderator Review', icon: ShieldCheck },
+    ]
   }, [isPrivileged])
 
   const judgeMenu = useMemo(() => {

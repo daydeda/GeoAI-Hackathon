@@ -12,6 +12,9 @@ import { minioClient, BUCKET } from '../services/storage.js'
 import { Prisma, TeamStatus, ExportType } from '@prisma/client'
 import { getPhaseByKey } from '../services/phaseConfig.js'
 import { sendAnnouncementEmail } from '../services/announcementMailer.js'
+import { sendBulkEmail } from '../services/bulkMailer.js'
+
+type CompetitorStatus = 'PENDING' | 'VERIFIED_COMPETITOR' | 'INCORRECT_COMPETITOR' | 'DISQUALIFIED' | 'QUALIFIED'
 
 const AssignRoleSchema = z.object({ role: z.enum(['COMPETITOR', 'MODERATOR', 'JUDGE', 'ADMIN']) })
 const TeamStatusSchema = z.object({ status: z.nativeEnum(TeamStatus), note: z.string().optional() })
@@ -19,6 +22,24 @@ const ExportSchema = z.object({ type: z.nativeEnum(ExportType) })
 const SendAnnouncementSchema = z.object({
   projectName: z.string().trim().min(1).max(120).optional(),
   onlyGmail: z.boolean().optional(),
+})
+
+const ALLOWED_COMPETITOR_STATUSES = new Set<string>([
+  'PENDING', 'VERIFIED_COMPETITOR', 'INCORRECT_COMPETITOR', 'DISQUALIFIED', 'QUALIFIED',
+])
+
+const BulkEmailRecipientsQuerySchema = z.object({
+  statuses: z.string().optional(), // comma-separated CompetitorStatus values
+  teamId: z.string().optional(),
+})
+
+const BulkEmailSendSchema = z.object({
+  subject: z.string().trim().min(1).max(200),
+  htmlBody: z.string().trim().min(1),
+  filters: z.object({
+    statuses: z.array(z.string()).optional(),
+    teamId: z.string().optional(),
+  }).optional(),
 })
 
 type DailyCountRow = {
@@ -327,6 +348,12 @@ export async function adminRoutes(app: FastifyInstance) {
     const roleFilter = normalizedRole && allowedRoles.has(normalizedRole) ? normalizedRole : null
     const looksLikeUuid = Boolean(normalizedSearch && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(normalizedSearch))
 
+    const { competitorStatus } = request.query as Record<string, string>
+    const normalizedCompStatus = competitorStatus?.trim().toUpperCase()
+    const compStatusFilter = normalizedCompStatus && ALLOWED_COMPETITOR_STATUSES.has(normalizedCompStatus)
+      ? normalizedCompStatus as CompetitorStatus
+      : null
+
     const where: Prisma.UserWhereInput = {
       ...(normalizedSearch
         ? {
@@ -348,6 +375,7 @@ export async function adminRoutes(app: FastifyInstance) {
             },
           }
         : {}),
+      ...(compStatusFilter ? { competitorStatus: compStatusFilter } : {}),
     }
 
     const [users, total] = await Promise.all([
@@ -371,6 +399,8 @@ export async function adminRoutes(app: FastifyInstance) {
       address: u.address,
       profileCompleted: Boolean(u.profileCompleted),
       idCardUploaded: Boolean(u.idCardFileKey),
+      competitorStatus: (u as { competitorStatus?: string | null }).competitorStatus ?? null,
+      moderatorNote: (u as { moderatorNote?: string | null }).moderatorNote ?? null,
       roles: u.userRoles.map(ur => ur.role.name), createdAt: u.createdAt,
     })), total }
   })
@@ -593,12 +623,36 @@ export async function adminRoutes(app: FastifyInstance) {
 
     const oldStatus = team.currentStatus
 
+    // Collect all user IDs in this team to cascade competitorStatus
+    const fullTeamForMembers = await prisma.team.findUnique({
+      where: { id: teamId },
+      include: { members: { select: { userId: true } } },
+    })
+    const teamMemberIds = fullTeamForMembers
+      ? [fullTeamForMembers.leaderId, ...fullTeamForMembers.members.map((m) => m.userId)].filter(
+          (id, i, arr) => arr.indexOf(id) === i,
+        )
+      : []
+
     await prisma.$transaction([
       prisma.team.update({ where: { id: teamId }, data: { currentStatus: body.data.status } }),
       prisma.teamStatusHistory.create({
         data: { teamId, fromStatus: oldStatus, toStatus: body.data.status, actorId: actor.userId, note: body.data.note },
       }),
     ])
+
+    // Cascade competitorStatus to all team members based on final status
+    if (body.data.status === 'FINALIST' && teamMemberIds.length > 0) {
+      await (prisma.user as any).updateMany({
+        where: { id: { in: teamMemberIds } },
+        data: { competitorStatus: 'QUALIFIED' },
+      })
+    } else if (body.data.status === 'REJECTED' && teamMemberIds.length > 0) {
+      await (prisma.user as any).updateMany({
+        where: { id: { in: teamMemberIds }, competitorStatus: { in: ['VERIFIED_COMPETITOR', 'QUALIFIED'] } },
+        data: { competitorStatus: 'DISQUALIFIED' },
+      })
+    }
 
     if (body.data.status === 'FINALIST' && oldStatus !== 'FINALIST') {
       try {
@@ -679,5 +733,118 @@ export async function adminRoutes(app: FastifyInstance) {
       .header('Content-Disposition', `attachment; filename="${fileKey}"`)
       .header('Content-Type', mimeType)
       .send(stream)
+  })
+
+  // ─── Bulk Email ───────────────────────────────────────────────────────────
+
+  // GET /api/v1/admin/bulk-email/recipients
+  // Returns the list of recipients that match the given filters so the UI can
+  // show a live recipient count before the actual send.
+  app.get('/bulk-email/recipients', { preHandler: [requireRole('ADMIN', 'MODERATOR')] }, async (request, reply) => {
+    const query = BulkEmailRecipientsQuerySchema.safeParse(request.query)
+    if (!query.success) return reply.status(400).send({ error: query.error.flatten() })
+
+    const { statuses, teamId } = query.data
+    const statusList = statuses
+      ? statuses.split(',').map((s) => s.trim().toUpperCase()).filter((s) => ALLOWED_COMPETITOR_STATUSES.has(s)) as CompetitorStatus[]
+      : []
+
+    // Expand statuses for inclusive filtering in Email Dispatch
+    const finalStatusSet = new Set<CompetitorStatus>(statusList)
+    if (finalStatusSet.has('QUALIFIED')) finalStatusSet.add('VERIFIED_COMPETITOR')
+    if (finalStatusSet.has('DISQUALIFIED')) finalStatusSet.add('INCORRECT_COMPETITOR')
+    const queryStatusList = Array.from(finalStatusSet)
+
+    const where: Prisma.UserWhereInput = {
+      ...(queryStatusList.length > 0 ? { competitorStatus: { in: queryStatusList } } : {}),
+      ...(teamId
+        ? {
+            OR: [
+              { teamMembers: { some: { teamId } } },
+              { ledTeams: { some: { id: teamId } } },
+            ],
+          }
+        : {}),
+    }
+
+    const recipients = await (prisma.user as any).findMany({
+      where,
+      select: { id: true, email: true, fullName: true, competitorStatus: true },
+      orderBy: { email: 'asc' },
+    }) as Array<{ id: string; email: string; fullName: string; competitorStatus: string }>
+
+    return { total: recipients.length, recipients }
+  })
+
+  // POST /api/v1/admin/bulk-email/send
+  app.post('/bulk-email/send', { preHandler: [requireRole('ADMIN', 'MODERATOR')] }, async (request, reply) => {
+    const actor = request.user as JwtPayload
+    const body = BulkEmailSendSchema.safeParse(request.body)
+    if (!body.success) return reply.status(400).send({ error: body.error.flatten() })
+
+    const { subject, htmlBody, filters } = body.data
+    const statusList = (filters?.statuses ?? [])
+      .map((s) => s.trim().toUpperCase())
+      .filter((s) => ALLOWED_COMPETITOR_STATUSES.has(s)) as CompetitorStatus[]
+    const teamId = filters?.teamId
+
+    // Expand statuses for inclusive filtering in Email Dispatch
+    const finalStatusSet = new Set<CompetitorStatus>(statusList)
+    if (finalStatusSet.has('QUALIFIED')) finalStatusSet.add('VERIFIED_COMPETITOR')
+    if (finalStatusSet.has('DISQUALIFIED')) finalStatusSet.add('INCORRECT_COMPETITOR')
+    const queryStatusList = Array.from(finalStatusSet)
+
+    const where: Prisma.UserWhereInput = {
+      ...(queryStatusList.length > 0 ? { competitorStatus: { in: queryStatusList } } : {}),
+      ...(teamId
+        ? {
+            OR: [
+              { teamMembers: { some: { teamId } } },
+              { ledTeams: { some: { id: teamId } } },
+            ],
+          }
+        : {}),
+    }
+
+    // Require at least one filter to avoid accidental blast to everyone
+    if (statusList.length === 0 && !teamId) {
+      return reply.status(400).send({ error: 'At least one status filter or a team must be specified.' })
+    }
+
+    const userRows = await prisma.user.findMany({
+      where,
+      select: { id: true, email: true, fullName: true },
+    })
+
+    if (userRows.length === 0) {
+      return { message: 'No recipients matched the filters.', sent: 0, failed: 0, failures: [] }
+    }
+
+    const result = await sendBulkEmail({
+      subject,
+      htmlBody,
+      recipients: userRows.map(u => ({ userId: u.id, email: u.email, fullName: u.fullName })),
+    })
+
+    await writeAuditLog({
+      actorId: actor.userId,
+      action: 'ANNOUNCEMENT_EMAIL_SEND' as any,
+      entityType: 'bulk_email',
+      entityId: actor.userId,
+      metadata: {
+        subject,
+        filters: { statuses: statusList, teamId },
+        recipientCount: userRows.length,
+        sent: result.sent,
+        failed: result.failed,
+      },
+    })
+
+    return {
+      message: 'Bulk email task completed',
+      sent: result.sent,
+      failed: result.failed,
+      failures: result.failures,
+    }
   })
 }

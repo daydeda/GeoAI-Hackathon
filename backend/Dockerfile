@@ -34,4 +34,5 @@ USER geoai
 
 EXPOSE 4000
 
-CMD ["node", "dist/server.js"]
+# Run schema push (no-migration-folder mode) then start the API
+CMD ["sh", "-c", "node node_modules/.bin/prisma db push --accept-data-loss && node dist/server.js"]

@@ -20,6 +20,8 @@ export interface User {
   avatarUrl?: string
   roles: string[]
   profileCompleted?: boolean
+  competitorStatus?: string | null
+  moderatorNote?: string | null
   profile?: {
     firstName?: string | null
     lastName?: string | null

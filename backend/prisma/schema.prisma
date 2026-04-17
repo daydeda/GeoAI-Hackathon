@@ -15,8 +15,8 @@ datasource db {
 // ─── Auth & Identity ─────────────────────────────────────────
 
 model User {
-  id               String   @id @default(uuid())
-  email            String   @unique
+  id               String           @id @default(uuid())
+  email            String           @unique
   fullName         String
   firstName        String?
   lastName         String?
@@ -27,13 +27,15 @@ model User {
   address          String?
   idCardFileKey    String?
   idCardFileName   String?
-  profileCompleted Boolean  @default(false)
-  announcementSent Boolean  @default(false) @map("announcement_sent")
+  profileCompleted Boolean          @default(false)
+  announcementSent Boolean          @default(false) @map("announcement_sent")
   avatarUrl        String?
-  oauthProvider    String   @default("google")
-  oauthSubject     String   @unique
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  oauthProvider    String           @default("google")
+  oauthSubject     String           @unique
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  competitorStatus CompetitorStatus @default(PENDING)
+  moderatorNote    String?          // Rejection reason from moderator, shown to competitor
 
   // Relations
   userRoles          UserRole[]
@@ -61,6 +63,15 @@ enum RoleType {
   MODERATOR
   JUDGE
   ADMIN
+}
+
+// Individual competitor verification status (set by Moderator review & judge outcome)
+enum CompetitorStatus {
+  PENDING
+  VERIFIED_COMPETITOR
+  INCORRECT_COMPETITOR
+  DISQUALIFIED
+  QUALIFIED
 }
 
 model UserRole {

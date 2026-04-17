@@ -6,9 +6,9 @@ GeoAI Hackathon Portal is a full-stack competition platform for team registratio
 
 | Scope | Current Version | Notes |
 |---|---:|---|
-| Project (Monorepo) | 1.9.0 | Deadline governance + judge PDF viewer + competitor validation updates, admin/export and moderator UX updates |
-| Frontend (Next.js) | 1.9.0 | Dynamic phase sync, countdown refactor, announcement feedback view, branding update, landing Quick Guide, moderator team overview |
-| Backend (Fastify + Prisma) | 1.9.0 | Global phase API, Student ID optional onboarding, team upload gate on missing IDs, exporter enhancements and GISTDA parsing fix |
+| Project (Monorepo) | 2.0.0 | Moderator Review Portal + Email Dispatcher + SMTP Overhaul |
+| Frontend (Next.js) | 2.0.0 | New Verify Portal, Bulk Mailer UI, Inclusive Filtering improvements |
+| Backend (Fastify + Prisma) | 2.0.0 | Bulk Email API, Expanded Status Queries, Secure App Password SMTP |
 
 ## Project Evolution
 
@@ -50,13 +50,19 @@ GeoAI Hackathon Portal is a full-stack competition platform for team registratio
   - Legacy institution references updated to KMUTT.
   - Institutional/partner logo slots updated and wired in landing page.
 
-### v1.9.0 - Feature & Bugfix Release (2026-04-10)
+### v2.0.0 - Admin & Moderator Tools Overhaul (Current)
 
-- Landing page: Added a concise "Quick Guide" to help competitors sign in and submit (starts with Sign-in with Google).
-- Moderator dashboard: Added Team Information Overview above Protocol Timeline with member previews and Student ID photo preview links; added server-backed pagination to the overview.
-- Admin: Added competitor export (competitors.xlsx) and displayed Registration Date + Registration Time in the users table.
-- Backend exporter: Added "Modified Date + Time" to Team CSV and Proposals XLSX, export now selects latest submission per team to reflect DB state.
-- Bugfix: Hardened GISTDA declaration parsing to accept common multipart/form truthy values and numeric forms to prevent false negatives in exports.
+- **Moderator Module:**
+  - **Moderator Review Portal**: Dedicated interface for verifying competitor ID cards and profiles.
+  - **Status Logic**: Standardized verification flow (Verify/Reject/Pending) with mandatory rejection notes.
+  - **Inclusive Filtering**: Advanced dropdowns that map "Qualified" and "Disqualified" to active re-screening states.
+- **Communication & Email:**
+  - **Email Dispatch Dashboard**: Integrated bulk mailer for targeted competitor announcements.
+  - **Personalization**: Supports `{{name}}` and `{{email}}` placeholders with real-time HTML preview.
+  - **Recipient Counter**: Live calculation of targeted audiences based on status segments.
+- **System & Security:**
+  - **SMTP Overhaul**: Integrated project-official KMITL credentials for production email reliability.
+  - **Bug Fixes**: Resolved major filtering discrepancies and TypeScript property errors in administrative tools.
 
 
 ## Sub-Project Changelogs
