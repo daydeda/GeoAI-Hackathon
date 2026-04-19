@@ -693,18 +693,19 @@ function AdminContent() {
         <div className="flex flex-col gap-6">
           {/* ── User Management ─────────────────────────────────────────── */}
           <div className="border-t border-white/5 bg-(--bg-surface) p-4 sm:p-6 lg:p-8">
-            <div className="mb-5 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-              <div>
+            <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+              <div className="min-w-0">
                 <h2 className="mb-1 text-xl font-semibold text-white sm:text-2xl">
                   User Management
                 </h2>
-                <div className="text-xs tracking-[0.05em] text-(--text-muted)">
-                  REGISTRY CONTROL & ROLE ASSIGNMENT
+                <div className="text-[10px] tracking-[0.1em] text-(--text-muted) uppercase">
+                  Registry Control & Role Assignment
                 </div>
               </div>
-              <div className="flex w-full flex-wrap items-center gap-2 md:w-auto md:flex-nowrap">
+
+              <div className="flex flex-wrap items-center gap-2 lg:justify-end">
                 {/* Role filter */}
-                <div className="w-full flex-shrink-0 sm:w-[160px]">
+                <div className="w-[150px] flex-shrink-0">
                   <CustomDropdown
                     value={userRoleFilter}
                     onChange={(nextRole) => {
@@ -721,7 +722,7 @@ function AdminContent() {
                   />
                 </div>
                 {/* Competitor Status filter */}
-                <div className="w-full flex-shrink-0 sm:w-[180px]">
+                <div className="w-[170px] flex-shrink-0">
                   <CustomDropdown
                     value={userStatusFilter}
                     onChange={(nextStatus) => {
@@ -739,19 +740,19 @@ function AdminContent() {
                   />
                 </div>
                 {/* Search */}
-                <div className="relative w-full min-w-0 md:w-64">
+                <div className="relative w-full sm:w-64 lg:w-72">
                   <Search
                     size={14}
                     className="pointer-events-none absolute left-3 top-2.5 text-(--text-muted)"
                   />
                   <input
-                    placeholder="UUID / EMAIL / NAME"
+                    placeholder="Search ID, Email, or Name..."
                     value={search}
                     onChange={(e) => {
                       setSearch(e.target.value)
                       setUserPage(1)
                     }}
-                    className="w-full rounded border border-(--border-subtle) bg-(--bg-base) px-3 py-2 pl-9 text-xs tracking-[0.05em] text-white outline-none transition-colors focus:border-(--accent-cyan)"
+                    className="w-full rounded border border-(--border-subtle) bg-(--bg-base) px-3 py-2 pl-9 text-xs tracking-[0.05em] text-white outline-none ring-(--accent-cyan)/30 transition-all focus:border-(--accent-cyan) focus:ring-2"
                   />
                 </div>
               </div>
