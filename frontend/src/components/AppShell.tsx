@@ -404,10 +404,12 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         </aside>
 
         <aside
-          className={`fixed inset-y-0 left-0 z-[95] w-[86vw] max-w-[320px] transform border-r border-(--border-subtle) bg-(--bg-base) pt-5 transition-transform duration-200 lg:hidden ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}
+          className={`fixed inset-y-0 left-0 z-[95] flex w-[86vw] max-w-[320px] transform flex-col border-r border-(--border-subtle) bg-(--bg-base) pt-5 transition-transform duration-200 lg:hidden ${
+            mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
+          }`}
           aria-hidden={!mobileMenuOpen}
         >
-          <div className="flex items-center justify-between px-5 pb-4">
+          <div className="flex items-center justify-between px-5 pb-4 flex-shrink-0">
             <div>
               <div className="text-sm font-semibold tracking-[0.05em] text-(--accent-cyan)">HACKATHON_v1.0</div>
               <div className="font-mono text-[10px] tracking-[0.1em] text-(--text-muted)">ORBITAL COMMAND</div>
@@ -422,47 +424,53 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             </button>
           </div>
 
-          <div className="px-4 pb-2 text-[10px] tracking-[0.1em] text-(--text-muted)">MAIN MENU</div>
-          <div className="space-y-1">
-            {baseMenu.map((item) => (
-              <div key={item.href}>
-                {menuItem(item, () => setMobileMenuOpen(false))}
-                {item.href === '/resources' && isActiveRoute('/resources') && resourcesSubMenu(() => setMobileMenuOpen(false))}
-              </div>
-            ))}
+          <div className="flex-1 overflow-y-auto pb-8">
+            <div className="px-4 pb-2 text-[10px] tracking-[0.1em] text-(--text-muted)">MAIN MENU</div>
+            <div className="space-y-1">
+              {baseMenu.map((item) => (
+                <div key={item.href}>
+                  {menuItem(item, () => setMobileMenuOpen(false))}
+                  {item.href === '/resources' && isActiveRoute('/resources') && resourcesSubMenu(() => setMobileMenuOpen(false))}
+                </div>
+              ))}
+            </div>
+
+            {adminMenu.length > 0 && (
+              <>
+                <div className="px-4 pb-2 pt-5 text-[10px] tracking-[0.1em] text-(--text-muted)">INTERNAL SYSTEMS</div>
+                <div className="space-y-1">{adminMenu.map((item) => menuItem(item, () => setMobileMenuOpen(false)))}</div>
+              </>
+            )}
+
+            {moderatorMenu.length > 0 && (
+              <>
+                <div className="px-4 pb-2 pt-5 text-[10px] tracking-[0.1em] text-(--text-muted)">PRE-SCREENING</div>
+                <div className="space-y-1">{moderatorMenu.map((item) => menuItem(item, () => setMobileMenuOpen(false)))}</div>
+              </>
+            )}
+
+            {judgeMenu.length > 0 && (
+              <>
+                <div className="px-4 pb-2 pt-5 text-[10px] tracking-[0.1em] text-(--text-muted)">SCORING SYSTEM</div>
+                <div className="space-y-1">{judgeMenu.map((item) => menuItem(item, () => setMobileMenuOpen(false)))}</div>
+              </>
+            )}
           </div>
 
-          {adminMenu.length > 0 && (
-            <>
-              <div className="px-4 pb-2 pt-5 text-[10px] tracking-[0.1em] text-(--text-muted)">INTERNAL SYSTEMS</div>
-              <div className="space-y-1">{adminMenu.map((item) => menuItem(item, () => setMobileMenuOpen(false)))}</div>
-            </>
-          )}
-
-          {moderatorMenu.length > 0 && (
-            <>
-              <div className="px-4 pb-2 pt-5 text-[10px] tracking-[0.1em] text-(--text-muted)">PRE-SCREENING</div>
-              <div className="space-y-1">{moderatorMenu.map((item) => menuItem(item, () => setMobileMenuOpen(false)))}</div>
-            </>
-          )}
-
-          {judgeMenu.length > 0 && (
-            <>
-              <div className="px-4 pb-2 pt-5 text-[10px] tracking-[0.1em] text-(--text-muted)">SCORING SYSTEM</div>
-              <div className="space-y-1">{judgeMenu.map((item) => menuItem(item, () => setMobileMenuOpen(false)))}</div>
-            </>
-          )}
-
-          <div className="absolute bottom-0 left-0 right-0 space-y-3 p-4">
+          <div className="mt-auto space-y-3 border-t border-(--border-subtle) bg-(--bg-base) p-4 flex-shrink-0">
             {actor?.team?.isLeader && (
-              <Link href="/submissions" onClick={() => setMobileMenuOpen(false)} className="btn btn-primary w-full justify-center text-xs">
+              <Link
+                href="/submissions"
+                onClick={() => setMobileMenuOpen(false)}
+                className="btn btn-primary w-full justify-center text-xs"
+              >
                 NEW PROPOSAL
               </Link>
             )}
             <button
               type="button"
               onClick={logout}
-              className="inline-flex w-full items-center justify-center gap-2 rounded border border-(--border-subtle) px-3 py-2 text-xs text-(--text-muted)"
+              className="inline-flex w-full items-center justify-center gap-2 rounded border border-(--border-subtle) px-3 py-2 text-xs text-(--text-muted) transition hover:text-(--text-primary)"
             >
               <LogOut size={14} />
               LOGOUT

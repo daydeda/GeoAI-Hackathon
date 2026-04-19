@@ -19,6 +19,10 @@ const UpdateTeamNameSchema = z.object({
   name: z.string().min(2).max(80),
 })
 
+const UpdateTeamTrackSchema = z.object({
+  track: z.enum(['SMART_AGRICULTURE', 'DISASTER_FLOOD_RESPONSE']),
+})
+
 async function ensureCompetitorProfileCompleted(userId: string) {
   const user = await prisma.user.findUnique({
     where: { id: userId },
@@ -189,6 +193,84 @@ export async function teamRoutes(app: FastifyInstance) {
       }
       throw error
     }
+  })
+
+  // PATCH /api/v1/teams/:teamId/track — change track (leader only, no active submission, before deadline)
+  app.patch('/teams/:teamId/track', { preHandler: [authenticate] }, async (request, reply) => {
+    const actor = request.user as JwtPayload
+    const { teamId } = request.params as { teamId: string }
+
+    const body = UpdateTeamTrackSchema.safeParse(request.body)
+    if (!body.success) return reply.status(400).send({ error: body.error.flatten() })
+
+    const team = await prisma.team.findUnique({ where: { id: teamId } })
+    if (!team) return reply.status(404).send({ error: 'Team not found' })
+    if (team.leaderId !== actor.userId) return reply.status(403).send({ error: 'Only team leader can change the track' })
+
+    // Block if a proposal has already been submitted
+    const activeSubmission = await prisma.submission.findFirst({ where: { teamId, isActive: true } })
+    if (activeSubmission) {
+      return reply.status(409).send({ error: 'Track cannot be changed after a proposal has been submitted' })
+    }
+
+    // Block if submission phase has ended
+    const proposalPhase = await getPhaseByKey('proposal-submission')
+    const proposalDeadline = proposalPhase?.date || process.env.SUBMISSION_DEADLINE_ISO || '2026-04-29T23:59:59+07:00'
+    if (Date.now() > new Date(proposalDeadline).getTime()) {
+      return reply.status(423).send({ error: 'Track cannot be changed after the submission phase has ended' })
+    }
+
+    const oldTrack = team.track
+    const updated = await prisma.team.update({
+      where: { id: teamId },
+      data: { track: body.data.track as Track },
+    })
+
+    await writeAuditLog({
+      actorId: actor.userId,
+      action: 'TEAM_TRACK_CHANGED',
+      entityType: 'team',
+      entityId: teamId,
+      oldValue: { track: oldTrack },
+      newValue: { track: updated.track },
+    })
+
+    return reply.send({ id: updated.id, track: updated.track })
+  })
+
+  // DELETE /api/v1/teams/:teamId — disband team (leader only, no submission, before deadline)
+  app.delete('/teams/:teamId', { preHandler: [authenticate] }, async (request, reply) => {
+    const actor = request.user as JwtPayload
+    const { teamId } = request.params as { teamId: string }
+
+    const team = await prisma.team.findUnique({ where: { id: teamId } })
+    if (!team) return reply.status(404).send({ error: 'Team not found' })
+    if (team.leaderId !== actor.userId) return reply.status(403).send({ error: 'Only team leader can delete the team' })
+
+    // Block if a proposal has already been submitted
+    const activeSubmission = await prisma.submission.findFirst({ where: { teamId, isActive: true } })
+    if (activeSubmission) {
+      return reply.status(409).send({ error: 'Team cannot be deleted after a proposal has been submitted' })
+    }
+
+    // Block if submission phase has ended
+    const proposalPhase = await getPhaseByKey('proposal-submission')
+    const proposalDeadline = proposalPhase?.date || process.env.SUBMISSION_DEADLINE_ISO || '2026-04-29T23:59:59+07:00'
+    if (Date.now() > new Date(proposalDeadline).getTime()) {
+      return reply.status(423).send({ error: 'Team cannot be deleted after the submission phase has ended' })
+    }
+
+    await prisma.team.delete({ where: { id: teamId } })
+
+    await writeAuditLog({
+      actorId: actor.userId,
+      action: 'TEAM_DELETED',
+      entityType: 'team',
+      entityId: teamId,
+      oldValue: { name: team.name, track: team.track },
+    })
+
+    return reply.send({ message: 'Team deleted' })
   })
 
   // POST /api/v1/invites/:code/join

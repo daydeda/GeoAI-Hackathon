@@ -5,13 +5,13 @@ import { AuthProvider } from '@/contexts/AuthContext'
 import AppShell from '@/components/AppShell'
 import { useAuth, TeamInfo } from '@/contexts/AuthContext'
 import CustomDropdown from '@/components/CustomDropdown'
-import { AlertTriangle } from 'lucide-react'
+import { AlertTriangle, Trash2, ChevronDown } from 'lucide-react'
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
 const LIVE_REFRESH_MS = 8000
 
 interface Member { fullName: string; email: string; isLeader: boolean; userId: string }
-interface TeamData extends TeamInfo { institution: string; memberCount: number; members: Member[]; inviteCode: string }
+interface TeamData extends TeamInfo { institution: string; memberCount: number; members: Member[]; inviteCode: string; activeSubmission?: { id: string } | null }
 
 function TeamContent() {
   const { user, loading: authLoading, refetch: refetchUser } = useAuth()
@@ -21,7 +21,16 @@ function TeamContent() {
   const [editingTeamName, setEditingTeamName] = useState(false)
   const [teamNameInput, setTeamNameInput] = useState('')
   const [savingTeamName, setSavingTeamName] = useState(false)
-  
+
+  // Track editing
+  const [editingTrack, setEditingTrack] = useState(false)
+  const [trackInput, setTrackInput] = useState('SMART_AGRICULTURE')
+  const [savingTrack, setSavingTrack] = useState(false)
+
+  // Delete team
+  const [confirmDelete, setConfirmDelete] = useState(false)
+  const [deletingTeam, setDeletingTeam] = useState(false)
+
   // Forms
   const [name, setName] = useState('')
   const [institution, setInstitution] = useState('')
@@ -44,6 +53,12 @@ function TeamContent() {
       setTeamNameInput(team?.name || '')
     }
   }, [team?.name, editingTeamName])
+
+  useEffect(() => {
+    if (!editingTrack) {
+      setTrackInput(team?.track || 'SMART_AGRICULTURE')
+    }
+  }, [team?.track, editingTrack])
 
   useEffect(() => {
     void fetchTeam()
@@ -159,6 +174,56 @@ function TeamContent() {
       setSavingTeamName(false)
     }
   }
+
+  const changeTrack = async () => {
+    if (!team || !team.isLeader || savingTrack) return
+    setSavingTrack(true)
+    setError('')
+    try {
+      const res = await fetch(`${API}/api/v1/teams/${team.id}/track`, {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ track: trackInput }),
+      })
+      if (res.ok) {
+        setEditingTrack(false)
+        await fetchTeam()
+        await refetchUser()
+      } else {
+        const d = await res.json().catch(() => ({}))
+        setError(d.error || 'Failed to update track')
+      }
+    } finally {
+      setSavingTrack(false)
+    }
+  }
+
+  const deleteTeam = async () => {
+    if (!team || !team.isLeader || deletingTeam) return
+    setDeletingTeam(true)
+    setError('')
+    try {
+      const res = await fetch(`${API}/api/v1/teams/${team.id}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      })
+      if (res.ok) {
+        setConfirmDelete(false)
+        setTeam(null)
+        await refetchUser()
+      } else {
+        const d = await res.json().catch(() => ({}))
+        setError(d.error || 'Failed to delete team')
+        setConfirmDelete(false)
+      }
+    } finally {
+      setDeletingTeam(false)
+    }
+  }
+
+  // Derived flags
+  const hasActiveSubmission = Boolean(team?.activeSubmission)
 
   if (loading || authLoading) return (
     <div className="flex min-h-screen items-center justify-center px-4">
@@ -317,7 +382,52 @@ function TeamContent() {
                   </div>
                   <div>
                     <div className="font-mono text-[10px] text-(--text-muted) mb-1 sm:mb-2">TRACK</div>
-                    <div className="text-(--accent-cyan) font-semibold">{team.track.replace(/_/g, ' ')}</div>
+                    {team.isLeader && editingTrack ? (
+                      <div className="flex flex-col gap-2">
+                        <CustomDropdown
+                          value={trackInput}
+                          onChange={setTrackInput}
+                          options={[
+                            { value: 'SMART_AGRICULTURE', label: 'Smart Agriculture' },
+                            { value: 'DISASTER_FLOOD_RESPONSE', label: 'Disaster & Flood Response' },
+                          ]}
+                          buttonClassName="text-xs"
+                        />
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            disabled={savingTrack}
+                            onClick={changeTrack}
+                            className="btn btn-primary px-3 py-1.5 rounded text-[10px] disabled:opacity-60"
+                          >
+                            {savingTrack ? 'SAVING…' : 'SAVE'}
+                          </button>
+                          <button
+                            type="button"
+                            disabled={savingTrack}
+                            onClick={() => { setEditingTrack(false); setTrackInput(team.track) }}
+                            className="btn btn-outline px-3 py-1.5 rounded text-[10px] disabled:opacity-60"
+                          >
+                            CANCEL
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <span className="text-(--accent-cyan) font-semibold">{team.track.replace(/_/g, ' ')}</span>
+                        {team.isLeader && !hasActiveSubmission && (
+                          <button
+                            type="button"
+                            onClick={() => setEditingTrack(true)}
+                            className="flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded border border-(--border-subtle) hover:border-(--accent-cyan) hover:text-(--accent-cyan) transition-colors"
+                            title="Change track"
+                          >
+                            <ChevronDown size={10} />
+                            CHANGE
+                          </button>
+                        )}
+                      </div>
+                    )}
                   </div>
                   <div>
                     <div className="font-mono text-[10px] text-(--text-muted) mb-1 sm:mb-2">STATUS</div>
@@ -366,48 +476,101 @@ function TeamContent() {
               </div>
             </div>
 
-          {/* Right: Invite Code */}
+          {/* Right: Invite Code + Danger Zone */}
           {team.isLeader && (
-            <div className="card p-4 sm:p-6 rounded-lg border border-(--border-subtle) bg-(--bg-surface) h-fit">
-              <h3 className="font-display text-lg sm:text-xl mb-3 sm:mb-4">Recruitment Link</h3>
-              <p className="text-xs sm:text-sm text-(--text-secondary) mb-4 sm:mb-6">
-                Share this secure code with your teammates to allow them to join your unit.
-              </p>
-              
-              <label className="block font-mono text-[10px] text-(--text-muted) mb-2 sm:mb-3 tracking-widest">INVITATION CODE</label>
-              <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 mb-4 sm:mb-6">
-                <input
-                  className="flex-1 font-mono px-3 py-2 sm:py-2.5 rounded border border-(--border-subtle) bg-(--bg-base) text-sm text-center text-(--accent-cyan) tracking-widest focus:outline-none focus:border-(--accent-cyan)"
-                  readOnly
-                  value={team.inviteCode || ''}
-                />
-                {team.inviteCode ? (
-                  <button
-                    className={`px-3 sm:px-4 py-2 sm:py-2.5 rounded font-semibold text-xs sm:text-sm transition-colors flex-shrink-0 ${
-                      copied
-                        ? 'bg-(--accent-green) text-(--bg-base)'
-                        : 'bg-(--accent-cyan) text-(--bg-base) hover:opacity-90'
-                    }`}
-                    onClick={() => {
-                      navigator.clipboard.writeText(team.inviteCode)
-                      setCopied(true)
-                      setTimeout(() => setCopied(false), 2000)
-                    }}
-                  >
-                    {copied ? '✓ COPIED' : 'COPY'}
-                  </button>
-                ) : (
-                  <button
-                    className="px-3 sm:px-4 py-2 sm:py-2.5 rounded font-semibold text-xs sm:text-sm bg-(--accent-cyan) text-(--bg-base) hover:opacity-90 transition-opacity flex-shrink-0"
-                    onClick={generateInvite}
-                  >
-                    GENERATE
-                  </button>
-                )}
+            <div className="flex flex-col gap-4 sm:gap-6 h-fit">
+              <div className="card p-4 sm:p-6 rounded-lg border border-(--border-subtle) bg-(--bg-surface)">
+                <h3 className="font-display text-lg sm:text-xl mb-3 sm:mb-4">Recruitment Link</h3>
+                <p className="text-xs sm:text-sm text-(--text-secondary) mb-4 sm:mb-6">
+                  Share this secure code with your teammates to allow them to join your unit.
+                </p>
+
+                <label className="block font-mono text-[10px] text-(--text-muted) mb-2 sm:mb-3 tracking-widest">INVITATION CODE</label>
+                <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 mb-4 sm:mb-6">
+                  <input
+                    className="flex-1 font-mono px-3 py-2 sm:py-2.5 rounded border border-(--border-subtle) bg-(--bg-base) text-sm text-center text-(--accent-cyan) tracking-widest focus:outline-none focus:border-(--accent-cyan)"
+                    readOnly
+                    value={team.inviteCode || ''}
+                  />
+                  {team.inviteCode ? (
+                    <button
+                      className={`px-3 sm:px-4 py-2 sm:py-2.5 rounded font-semibold text-xs sm:text-sm transition-colors flex-shrink-0 ${
+                        copied
+                          ? 'bg-(--accent-green) text-(--bg-base)'
+                          : 'bg-(--accent-cyan) text-(--bg-base) hover:opacity-90'
+                      }`}
+                      onClick={() => {
+                        navigator.clipboard.writeText(team.inviteCode)
+                        setCopied(true)
+                        setTimeout(() => setCopied(false), 2000)
+                      }}
+                    >
+                      {copied ? '✓ COPIED' : 'COPY'}
+                    </button>
+                  ) : (
+                    <button
+                      className="px-3 sm:px-4 py-2 sm:py-2.5 rounded font-semibold text-xs sm:text-sm bg-(--accent-cyan) text-(--bg-base) hover:opacity-90 transition-opacity flex-shrink-0"
+                      onClick={generateInvite}
+                    >
+                      GENERATE
+                    </button>
+                  )}
+                </div>
+
+                <div className="text-xs text-(--text-muted) bg-(--bg-elevated) p-3 sm:p-4 rounded">
+                  <strong>Note:</strong> Maximum 4 members per team. Code gives immediate access. Do not share publicly.
+                </div>
               </div>
 
-              <div className="text-xs text-(--text-muted) bg-(--bg-elevated) p-3 sm:p-4 rounded">
-                <strong>Note:</strong> Maximum 4 members per team. Code gives immediate access. Do not share publicly.
+              {/* Danger Zone: Delete Team */}
+              <div className="card p-4 sm:p-5 rounded-lg border border-[rgba(255,23,68,0.25)] bg-[rgba(255,23,68,0.04)]">
+                <div className="font-mono text-[10px] text-(--accent-red) mb-2 tracking-widest">DANGER ZONE</div>
+                <p className="text-xs text-(--text-secondary) mb-3">
+                  Permanently disband this team. All members will be removed. This action cannot be undone.
+                </p>
+                {hasActiveSubmission ? (
+                  <div className="text-[10px] text-(--text-muted) bg-(--bg-elevated) rounded px-3 py-2 border border-(--border-subtle)">
+                    🔒 Team deletion is locked — a proposal has been submitted.
+                  </div>
+                ) : (
+                  <>
+                    {!confirmDelete ? (
+                      <button
+                        id="delete-team-btn"
+                        type="button"
+                        onClick={() => setConfirmDelete(true)}
+                        className="flex items-center gap-2 px-4 py-2 rounded text-xs font-semibold text-(--accent-red) border border-(--accent-red) hover:bg-[rgba(255,23,68,0.12)] transition-colors"
+                      >
+                        <Trash2 size={13} />
+                        DELETE TEAM
+                      </button>
+                    ) : (
+                      <div className="flex flex-col gap-2">
+                        <p className="text-[11px] text-(--accent-red) font-semibold">Are you sure? This cannot be undone.</p>
+                        <div className="flex gap-2">
+                          <button
+                            id="confirm-delete-team-btn"
+                            type="button"
+                            disabled={deletingTeam}
+                            onClick={deleteTeam}
+                            className="flex items-center gap-1.5 px-4 py-2 rounded text-xs font-semibold bg-(--accent-red) text-white hover:opacity-90 disabled:opacity-60 transition-opacity"
+                          >
+                            <Trash2 size={12} />
+                            {deletingTeam ? 'DELETING…' : 'CONFIRM DELETE'}
+                          </button>
+                          <button
+                            type="button"
+                            disabled={deletingTeam}
+                            onClick={() => setConfirmDelete(false)}
+                            className="px-4 py-2 rounded text-xs font-semibold border border-(--border-subtle) hover:border-(--border-active) transition-colors disabled:opacity-60"
+                          >
+                            CANCEL
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
               </div>
             </div>
           )}
