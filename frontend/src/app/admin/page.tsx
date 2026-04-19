@@ -702,9 +702,9 @@ function AdminContent() {
                   REGISTRY CONTROL & ROLE ASSIGNMENT
                 </div>
               </div>
-              <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center md:w-auto">
+              <div className="flex w-full flex-wrap items-center gap-2 md:w-auto md:flex-nowrap">
                 {/* Role filter */}
-                <div className="w-full sm:w-[180px]">
+                <div className="w-full flex-shrink-0 sm:w-[160px]">
                   <CustomDropdown
                     value={userRoleFilter}
                     onChange={(nextRole) => {
@@ -721,7 +721,7 @@ function AdminContent() {
                   />
                 </div>
                 {/* Competitor Status filter */}
-                <div className="w-full sm:w-[200px]">
+                <div className="w-full flex-shrink-0 sm:w-[180px]">
                   <CustomDropdown
                     value={userStatusFilter}
                     onChange={(nextStatus) => {
@@ -739,7 +739,7 @@ function AdminContent() {
                   />
                 </div>
                 {/* Search */}
-                <div className="relative w-full md:w-auto">
+                <div className="relative w-full min-w-0 md:w-64">
                   <Search
                     size={14}
                     className="pointer-events-none absolute left-3 top-2.5 text-(--text-muted)"
@@ -751,7 +751,7 @@ function AdminContent() {
                       setSearch(e.target.value)
                       setUserPage(1)
                     }}
-                    className="w-full rounded border border-(--border-subtle) bg-(--bg-base) px-3 py-2 pl-9 text-xs tracking-[0.05em] text-white outline-none md:w-[260px]"
+                    className="w-full rounded border border-(--border-subtle) bg-(--bg-base) px-3 py-2 pl-9 text-xs tracking-[0.05em] text-white outline-none transition-colors focus:border-(--accent-cyan)"
                   />
                 </div>
               </div>
