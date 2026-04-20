@@ -1082,12 +1082,12 @@ function AdminContent() {
                       <td className="py-5 text-sm text-(--text-secondary)">
                         <div>{(t.members || []).length} Members</div>
                         <div className="mt-2 flex flex-wrap gap-2">
-                          {t.members?.slice(0, 3).map((member) => (
+                          {t.members?.map((member) => (
                             <div
                               key={member.id}
                               className="flex items-center gap-1"
                             >
-                              {member.user.avatarUrl && (
+                              {member.user.avatarUrl ? (
                                 <button
                                   type="button"
                                   onClick={() =>
@@ -1097,6 +1097,10 @@ function AdminContent() {
                                 >
                                   {member.user.fullName.split(' ')[0]} avatar
                                 </button>
+                              ) : (
+                                <span className="rounded border border-white/10 px-2 py-1 text-[10px] text-(--text-muted)">
+                                  {member.user.fullName.split(' ')[0]}
+                                </span>
                               )}
                               {member.user.idCardUploaded && (
                                 <button
