@@ -34,6 +34,9 @@ function createTransporter() {
 
   if (refreshToken && oauthClientId && oauthClientSecret) {
     return nodemailer.createTransport({
+      pool: true,
+      maxConnections: 3,
+      maxMessages: 100,
       host, port, secure,
       auth: { type: 'OAuth2', user, clientId: oauthClientId, clientSecret: oauthClientSecret, refreshToken },
     })
@@ -41,7 +44,13 @@ function createTransporter() {
 
   if (!pass) throw new Error('SMTP_PASS is required when OAuth2 is not configured.')
 
-  return nodemailer.createTransport({ host, port, secure, auth: { user, pass } })
+  return nodemailer.createTransport({ 
+    pool: true,
+    maxConnections: 3,
+    maxMessages: 100,
+    host, port, secure, 
+    auth: { user, pass } 
+  })
 }
 
 export async function sendBulkEmail(input: BulkEmailInput): Promise<BulkEmailResult> {
@@ -57,31 +66,44 @@ export async function sendBulkEmail(input: BulkEmailInput): Promise<BulkEmailRes
   let failed = 0
   const failures: Array<{ email: string; reason: string }> = []
 
-  for (const recipient of input.recipients) {
-    try {
-      // Personalise the HTML: replace {{name}} placeholder if used
-      const personalHtml = input.htmlBody
-        .replace(/\{\{name\}\}/gi, escapeHtml(recipient.fullName))
-        .replace(/\{\{email\}\}/gi, escapeHtml(recipient.email))
+  // Process in limited concurrency batches
+  const BATCH_SIZE = 10
+  for (let i = 0; i < input.recipients.length; i += BATCH_SIZE) {
+    const batch = input.recipients.slice(i, i + BATCH_SIZE)
+    
+    await Promise.all(batch.map(async (recipient) => {
+      try {
+        const personalHtml = input.htmlBody
+          .replace(/\{\{name\}\}/gi, escapeHtml(recipient.fullName))
+          .replace(/\{\{email\}\}/gi, escapeHtml(recipient.email))
 
-      const textBody = htmlToPlainText(input.htmlBody)
-        .replace(/\{\{name\}\}/gi, recipient.fullName)
-        .replace(/\{\{email\}\}/gi, recipient.email)
+        const textBody = htmlToPlainText(input.htmlBody)
+          .replace(/\{\{name\}\}/gi, recipient.fullName)
+          .replace(/\{\{email\}\}/gi, recipient.email)
 
-      await transporter.sendMail({
-        from,
-        to: recipient.email,
-        subject: input.subject,
-        html: personalHtml,
-        text: textBody,
-      })
-      sent++
-    } catch (err) {
-      const reason = err instanceof Error ? err.message : 'Unknown error'
-      failures.push({ email: recipient.email, reason })
-      failed++
+        await transporter.sendMail({
+          from,
+          to: recipient.email,
+          subject: input.subject,
+          html: personalHtml,
+          text: textBody,
+        })
+        sent++
+      } catch (err) {
+        const reason = err instanceof Error ? err.message : 'Unknown error'
+        failures.push({ email: recipient.email, reason })
+        failed++
+      }
+    }))
+
+    // Safety pause: Wait 1 second between batches to prevent spam-triggering
+    if (i + BATCH_SIZE < input.recipients.length) {
+      await new Promise((r) => setTimeout(r, 1000))
     }
   }
+
+  // Close the pool since we're done
+  transporter.close()
 
   return { sent, failed, failures }
 }
