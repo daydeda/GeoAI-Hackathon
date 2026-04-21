@@ -120,24 +120,16 @@ export async function moderatorRoutes(app: FastifyInstance) {
     ].filter((id, idx, arr) => arr.indexOf(id) === idx)
 
     if (statusForDb === 'PASS') {
-      // Team passes pre-screen → team status changes, members become VERIFIED_COMPETITOR
+      // Team passes pre-screen → team status changes
       await prisma.team.update({
         where: { id: submission.teamId },
         data: { currentStatus: 'PRE_SCREEN_PASSED' },
       })
-      await (prisma.user as any).updateMany({
-        where: { id: { in: teamUserIds } },
-        data: { competitorStatus: 'VERIFIED_COMPETITOR', moderatorNote: null },
-      })
     } else {
-      // Submission rejected → team REJECTED, members become INCORRECT_COMPETITOR with note
+      // Submission rejected → team REJECTED
       await prisma.team.update({
         where: { id: submission.teamId },
         data: { currentStatus: 'REJECTED' },
-      })
-      await (prisma.user as any).updateMany({
-        where: { id: { in: teamUserIds } },
-        data: { competitorStatus: 'INCORRECT_COMPETITOR', moderatorNote: noteToSave },
       })
     }
 
@@ -222,9 +214,15 @@ export async function moderatorRoutes(app: FastifyInstance) {
     const where: any = {}
     if (status && status !== 'ALL' && status !== '') {
       if (status === 'QUALIFIED') {
-        where.competitorStatus = { in: ['QUALIFIED', 'VERIFIED_COMPETITOR'] }
+        where.OR = [
+          { teamMembers: { some: { team: { currentStatus: 'FINALIST' } } } },
+          { ledTeams: { some: { currentStatus: 'FINALIST' } } }
+        ]
       } else if (status === 'DISQUALIFIED') {
-        where.competitorStatus = { in: ['DISQUALIFIED', 'INCORRECT_COMPETITOR'] }
+        where.OR = [
+          { teamMembers: { some: { team: { currentStatus: 'REJECTED' } } } },
+          { ledTeams: { some: { currentStatus: 'REJECTED' } } }
+        ]
       } else {
         where.competitorStatus = status
       }

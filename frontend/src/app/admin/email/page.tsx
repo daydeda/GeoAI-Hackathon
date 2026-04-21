@@ -15,6 +15,7 @@ import {
   Eye,
   EyeOff,
 } from 'lucide-react'
+import CustomDropdown from '@/components/CustomDropdown'
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
 
@@ -71,6 +72,7 @@ function BulkEmailContent() {
   // Recipients
   const [recipientCount, setRecipientCount] = useState<number | null>(null)
   const [recipientPreview, setRecipientPreview] = useState<RecipientPreview[]>([])
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [showPreview, setShowPreview] = useState(false)
   const [loadingRecipients, setLoadingRecipients] = useState(false)
 
@@ -118,7 +120,9 @@ function BulkEmailContent() {
       if (res.ok) {
         const d = await res.json()
         setRecipientCount(d.total)
-        setRecipientPreview(d.recipients || [])
+        const recipients = d.recipients || []
+        setRecipientPreview(recipients)
+        setSelectedIds(new Set(recipients.map((r: RecipientPreview) => r.id)))
       }
     } finally {
       setLoadingRecipients(false)
@@ -138,6 +142,15 @@ function BulkEmailContent() {
     )
   }
 
+  const toggleRecipient = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
   const handleSend = async () => {
     if (!subject.trim() || !htmlBody.trim()) return
     setSending(true)
@@ -154,6 +167,7 @@ function BulkEmailContent() {
           filters: {
             statuses: selectedStatuses,
             teamId: selectedTeamId || undefined,
+            recipientIds: Array.from(selectedIds),
           },
         }),
       })
@@ -283,16 +297,15 @@ function BulkEmailContent() {
               <div className="mb-1.5 text-xs font-semibold tracking-[0.06em] text-(--text-muted)">
                 TARGET TEAM (OPTIONAL)
               </div>
-              <select
+              <CustomDropdown
                 value={selectedTeamId}
-                onChange={(e) => setSelectedTeamId(e.target.value)}
-                className="w-full rounded border border-(--border-subtle) bg-(--bg-base) px-3 py-2 text-sm text-white outline-none"
-              >
-                <option value="">— All teams —</option>
-                {teams.map((t) => (
-                  <option key={t.id} value={t.id}>{t.name}</option>
-                ))}
-              </select>
+                onChange={setSelectedTeamId}
+                placeholder="— All teams —"
+                options={[
+                  { value: '', label: '— All teams —' },
+                  ...teams.map(t => ({ value: t.id, label: t.name }))
+                ]}
+              />
               <p className="mt-1 text-[11px] text-(--text-muted)">
                 When a team is selected, only its members matching the status filters above are targeted.
                 You may use this without status filters to target an entire team.
@@ -320,13 +333,13 @@ function BulkEmailContent() {
             ) : (
               <>
                 <div className="mt-3 flex items-baseline gap-2">
-                  <span className="font-display text-5xl font-bold text-white">{recipientCount}</span>
-                  <span className="text-sm text-(--text-muted)">recipients</span>
+                  <span className="font-display text-5xl font-bold text-white">{selectedIds.size}</span>
+                  <span className="text-sm text-(--text-muted)">selected / {recipientCount} total</span>
                   {loadingRecipients && <RefreshCw size={14} className="animate-spin text-(--text-muted)" />}
                 </div>
                 <div className="mt-1 flex items-center gap-1 text-[11px] text-(--text-muted)">
                   <Users size={11} />
-                  Emails will be sent to registered Gmail addresses.
+                  Emails will be sent to the {selectedIds.size} selected recipients.
                 </div>
                 <button
                   onClick={() => setShowPreview((p) => !p)}
@@ -336,20 +349,43 @@ function BulkEmailContent() {
                   {showPreview ? 'Hide' : 'Show'} recipient list
                 </button>
                 {showPreview && recipientPreview.length > 0 && (
-                  <div className="mt-3 max-h-48 overflow-y-auto rounded border border-(--border-subtle) bg-(--bg-base)">
-                    {recipientPreview.map((r) => (
-                      <div key={r.id} className="flex items-center justify-between border-b border-white/[0.03] px-3 py-2 last:border-0">
-                        <div>
-                          <div className="text-xs text-white">{r.fullName}</div>
-                          <div className="text-[10px] text-(--text-muted)">{r.email}</div>
-                        </div>
-                        <div className="text-[9px] font-semibold uppercase tracking-wide" style={{
-                          color: STATUS_OPTIONS.find(s => s.value === r.competitorStatus)?.color ?? 'var(--text-muted)',
-                        }}>
-                          {r.competitorStatus?.replace(/_/g, ' ')}
-                        </div>
+                  <div className="mt-3 overflow-hidden rounded border border-(--border-subtle) bg-(--bg-base)">
+                    <div className="flex items-center justify-between bg-white/[0.03] px-3 py-1.5 border-b border-white/[0.05]">
+                      <span className="text-[10px] font-bold text-(--text-muted) tracking-wider uppercase">Recipient List</span>
+                      <div className="flex gap-3">
+                        <button type="button" onClick={() => setSelectedIds(new Set(recipientPreview.map(r => r.id)))} className="text-[10px] font-bold text-(--accent-cyan) hover:underline">SELECT ALL</button>
+                        <button type="button" onClick={() => setSelectedIds(new Set())} className="text-[10px] font-bold text-(--text-muted) hover:underline font-mono">CLEAR</button>
                       </div>
-                    ))}
+                    </div>
+                    <div className="max-h-60 overflow-y-auto">
+                      {recipientPreview.map((r) => {
+                        const isSelected = selectedIds.has(r.id);
+                        return (
+                          <div 
+                            key={r.id} 
+                            onClick={() => toggleRecipient(r.id)}
+                            className={`flex items-center gap-3 border-b border-white/[0.03] px-3 py-2.5 last:border-0 cursor-pointer transition-colors hover:bg-white/[0.02] ${isSelected ? 'bg-white/[0.01]' : 'opacity-60'}`}
+                          >
+                            <div
+                              className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border text-[10px] font-bold transition-all ${
+                                isSelected ? 'bg-(--accent-cyan) border-(--accent-cyan) text-black' : 'border-(--border-subtle) text-transparent'
+                              }`}
+                            >
+                              ✓
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className={`text-xs font-medium truncate ${isSelected ? 'text-white' : 'text-(--text-muted)'}`}>{r.fullName}</div>
+                              <div className="text-[10px] text-(--text-muted) truncate">{r.email}</div>
+                            </div>
+                            <div className="text-[9px] font-mono whitespace-nowrap px-1.5 py-0.5 rounded bg-white/[0.05]" style={{
+                              color: STATUS_OPTIONS.find(s => s.value === r.competitorStatus)?.color ?? 'var(--text-muted)',
+                            }}>
+                              {r.competitorStatus?.replace(/_COMPETITOR/gi, '').replace(/_/g, ' ')}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
                 )}
               </>
@@ -460,7 +496,7 @@ function BulkEmailContent() {
                 className="inline-flex items-center gap-2 rounded bg-(--accent-cyan) px-6 py-3 text-sm font-bold text-black disabled:cursor-not-allowed disabled:opacity-40"
               >
                 <Send size={15} />
-                {sending ? 'Sending…' : `Send to ${recipientCount ?? '?'} Recipients`}
+                {sending ? 'Sending…' : `Send to ${selectedIds.size} Selected`}
               </button>
             </div>
           </div>
@@ -477,7 +513,7 @@ function BulkEmailContent() {
             </div>
             <p className="my-4 text-sm text-(--text-secondary)">
               You are about to send the email <strong className="text-white">&quot;{subject}&quot;</strong> to{' '}
-              <strong className="text-white">{recipientCount}</strong> recipient(s).<br /><br />
+              <strong className="text-white">{selectedIds.size}</strong> selected recipient(s).<br /><br />
               Emails will be delivered to their registered Gmail addresses. This action cannot be undone.
             </p>
             <div className="flex justify-end gap-2">

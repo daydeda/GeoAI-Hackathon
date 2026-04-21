@@ -293,7 +293,7 @@ function ModeratorVerifyContent() {
                     </td>
                     <td className="py-4 px-4">
                       {user.moderatorNote ? (
-                        <div className="max-w-[180px] break-words text-[10px] text-[#ff6275] italic line-clamp-2" title={user.moderatorNote}>
+                        <div className="max-w-[250px] whitespace-pre-wrap text-[11px] text-[#ff6275] italic leading-relaxed">
                           &quot;{user.moderatorNote}&quot;
                         </div>
                       ) : (
@@ -316,15 +316,17 @@ function ModeratorVerifyContent() {
                         )}
                         <div className="h-6 w-[1px] bg-(--border-subtle) mx-1"></div>
                         <button
+                          disabled={user.competitorStatus === 'VERIFIED_COMPETITOR'}
                           onClick={() => handleVerify(user.id, true)}
-                          className="p-1.5 bg-[rgba(0,230,118,0.1)] border border-(--accent-green) text-(--accent-green) rounded hover:bg-(--accent-green) hover:text-black transition-all"
+                          className={`p-1.5 border rounded transition-all ${user.competitorStatus === 'VERIFIED_COMPETITOR' ? 'opacity-30 cursor-not-allowed bg-transparent border-(--border-subtle) text-(--text-muted)' : 'bg-[rgba(0,230,118,0.1)] border-(--accent-green) text-(--accent-green) hover:bg-(--accent-green) hover:text-black'}`}
                           title="Verify Competitor"
                         >
                           <Check size={14} />
                         </button>
                         <button
+                          disabled={user.competitorStatus === 'INCORRECT_COMPETITOR'}
                           onClick={() => setRejectionTarget(user)}
-                          className="p-1.5 bg-[rgba(255,98,117,0.1)] border border-[#ff6275] text-[#ff6275] rounded hover:bg-[#ff6275] hover:text-white transition-all"
+                          className={`p-1.5 border rounded transition-all ${user.competitorStatus === 'INCORRECT_COMPETITOR' ? 'opacity-30 cursor-not-allowed bg-transparent border-(--border-subtle) text-(--text-muted)' : 'bg-[rgba(255,98,117,0.1)] border-[#ff6275] text-[#ff6275] hover:bg-[#ff6275] hover:text-white'}`}
                           title="Reject (Incorrect Data)"
                         >
                           <X size={14} />

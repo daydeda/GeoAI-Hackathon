@@ -10,7 +10,7 @@ const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
 
 interface Team { name: string; track: string }
 interface File { fileKey: string; originalName: string }
-interface Review { status: 'PASS' | 'DISQUALIFIED' }
+interface Review { status: 'PASS' | 'DISQUALIFIED'; note?: string | null }
 interface Submission { id: string; submittedAt: string; team: Team; files: File[]; moderatorReview: Review | null; version: number }
 interface TeamOverviewRow {
   id: string
@@ -29,6 +29,62 @@ function formatTrackLabel(track: string) {
   return TRACK_LABELS[track] || track.replace(/_/g, ' ')
 }
 
+function RejectionModal({
+  teamName,
+  onConfirm,
+  onCancel,
+}: {
+  teamName: string
+  onConfirm: (note: string) => void
+  onCancel: () => void
+}) {
+  const [note, setNote] = useState('')
+  const [touched, setTouched] = useState(false)
+  const invalid = touched && note.trim().length === 0
+
+  return (
+    <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm">
+      <div className="w-full max-w-md rounded-lg border border-[rgba(255,98,117,0.4)] bg-(--bg-surface) p-6 shadow-[0_24px_64px_rgba(0,0,0,0.5)]">
+        <div className="mb-1 flex items-center gap-2">
+          <Check size={16} className="text-[#ff6275]" />
+          <h2 className="text-base font-bold tracking-[0.05em] text-white">REJECTION REASON REQUIRED</h2>
+        </div>
+        <p className="mb-4 text-sm text-(--text-secondary)">
+          You are disqualifying <strong className="text-white">{teamName}</strong>. 
+          Please provide a reason — this is required and will be shown to the competitors.
+        </p>
+        <textarea
+          autoFocus
+          value={note}
+          onChange={(e) => setNote(e.target.value)}
+          onBlur={() => setTouched(true)}
+          placeholder="Describe why this submission is being disqualified (e.g., missing requirements, incorrect track)…"
+          className={`min-h-[100px] w-full rounded border bg-(--bg-base) px-3 py-2 text-sm text-white outline-none transition ${
+            invalid ? 'border-[#ff6275]' : 'border-(--border-subtle)'
+          }`}
+        />
+        {invalid && (
+          <p className="mt-1 text-xs text-[#ff6275]">A reason is required to proceed.</p>
+        )}
+        <div className="mt-4 flex justify-end gap-2">
+          <button onClick={onCancel} className="rounded border border-(--border-subtle) bg-transparent px-5 py-2 text-xs font-semibold text-(--text-muted)">
+            CANCEL
+          </button>
+          <button
+            onClick={() => {
+              setTouched(true)
+              if (note.trim().length > 0) onConfirm(note.trim())
+            }}
+            className="rounded border-none bg-[#ff6275] px-5 py-2 text-xs font-bold text-white shadow-[0_4px_12px_rgba(255,98,117,0.3)] hover:scale-105 transition-transform"
+          >
+            CONFIRM DISQUALIFY
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function ModeratorContent() {
   const [submissions, setSubmissions] = useState<Submission[]>([])
   const [teamOverview, setTeamOverview] = useState<TeamOverviewRow[]>([])
@@ -40,6 +96,7 @@ function ModeratorContent() {
   const [statusFilter, setStatusFilter] = useState('')
   const [search, setSearch] = useState('')
   const [previewSubmissionId, setPreviewSubmissionId] = useState<string | null>(null)
+  const [rejectionTarget, setRejectionTarget] = useState<Submission | null>(null)
   const TEAM_OVERVIEW_LIMIT = 10
   const totalTeamOverviewPages = Math.max(1, Math.ceil(teamOverviewTotal / TEAM_OVERVIEW_LIMIT))
 
@@ -75,14 +132,23 @@ function ModeratorContent() {
 
   useEffect(() => { fetchSubmissions() }, [fetchSubmissions])
 
-  const submitReview = async (submissionId: string, status: 'PASS' | 'DISQUALIFIED') => {
+  const submitReview = async (submissionId: string, status: 'PASS' | 'DISQUALIFIED', note = '') => {
     try {
       const res = await fetch(`${API}/api/v1/mod/submissions/${submissionId}/review`, {
         method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status, note: '' })
+        body: JSON.stringify({ status, note })
       })
-      if (res.ok) fetchSubmissions()
-    } catch (e) { console.error('Review error:', e) }
+      if (res.ok) {
+        fetchSubmissions()
+        setRejectionTarget(null)
+      } else {
+        const d = await res.json().catch(() => ({}))
+        alert(d.error || 'Failed to submit review')
+      }
+    } catch (e) { 
+      console.error('Review error:', e)
+      alert('Network error during review submission')
+    }
   }
 
   const visibleSubmissions = submissions.filter((sub) => {
@@ -247,6 +313,7 @@ function ModeratorContent() {
               <th className="py-2 sm:py-3 px-2 sm:px-3 text-[8px] sm:text-xs text-(--text-muted) font-semibold tracking-widest hidden sm:table-cell">TRACK</th>
               <th className="py-2 sm:py-3 px-2 sm:px-3 text-[8px] sm:text-xs text-(--text-muted) font-semibold tracking-widest hidden md:table-cell">SUBMITTED</th>
               <th className="py-2 sm:py-3 px-2 sm:px-3 text-[8px] sm:text-xs text-(--text-muted) font-semibold tracking-widest">STATUS</th>
+              <th className="py-2 sm:py-3 px-2 sm:px-3 text-[8px] sm:text-xs text-(--text-muted) font-semibold tracking-widest">NOTE</th>
               <th className="py-2 sm:py-3 px-2 sm:px-3 text-[8px] sm:text-xs text-(--text-muted) font-semibold tracking-widest text-right">ACTION</th>
             </tr>
           </thead>
@@ -263,10 +330,19 @@ function ModeratorContent() {
                     </span>
                   ) : sub.version > 1 ? (
                     <span className="inline-block text-[8px] sm:text-xs font-bold py-1 px-2 rounded border text-[rgba(255,167,38,1)] border-[rgba(255,167,38,0.3)] bg-[rgba(255,167,38,0.1)] text-center w-full max-w-[80px]">
-                      EDITING
+                      PENDING
                     </span>
                   ) : (
                     <span className="text-(--text-muted) text-[8px] sm:text-xs font-semibold">PENDING</span>
+                  )}
+                </td>
+                <td className="py-2 sm:py-3 px-2 sm:px-3">
+                  {sub.moderatorReview?.note ? (
+                    <div className="text-[10px] sm:text-xs text-(--text-secondary) italic whitespace-pre-wrap max-w-[250px] leading-relaxed">
+                      &quot;{sub.moderatorReview.note}&quot;
+                    </div>
+                  ) : (
+                    <span className="text-(--text-muted) opacity-20">—</span>
                   )}
                 </td>
                 <td className="py-2 sm:py-3 px-2 sm:px-3 text-right">
@@ -278,10 +354,20 @@ function ModeratorContent() {
                     >
                       <FileText size={14} />
                     </button>
-                    <button onClick={() => submitReview(sub.id, 'PASS')} className="p-1 sm:p-1.5 bg-[rgba(0,230,118,0.1)] border border-(--accent-green) text-(--accent-green) rounded hover:bg-[rgba(0,230,118,0.2)] transition" title={sub.moderatorReview ? 'Re-review and approve' : 'Approve'}>
+                    <button 
+                      disabled={sub.moderatorReview?.status === 'PASS'}
+                      onClick={() => submitReview(sub.id, 'PASS')} 
+                      className={`p-1 sm:p-1.5 border rounded transition ${sub.moderatorReview?.status === 'PASS' ? 'opacity-30 cursor-not-allowed bg-transparent border-(--border-subtle) text-(--text-muted)' : 'bg-[rgba(0,230,118,0.1)] border-(--accent-green) text-(--accent-green) hover:bg-(--accent-green) hover:text-black'}`} 
+                      title="Approve Submission"
+                    >
                       <Check size={14} />
                     </button>
-                    <button onClick={() => submitReview(sub.id, 'DISQUALIFIED')} className="p-1 sm:p-1.5 bg-[rgba(255,98,117,0.1)] border border-[#ff6275] text-[#ff6275] rounded hover:bg-[rgba(255,98,117,0.2)] transition" title={sub.moderatorReview ? 'Re-review and disqualify' : 'Disqualify'}>
+                    <button 
+                      disabled={sub.moderatorReview?.status === 'DISQUALIFIED'}
+                      onClick={() => setRejectionTarget(sub)} 
+                      className={`p-1 sm:p-1.5 border rounded transition ${sub.moderatorReview?.status === 'DISQUALIFIED' ? 'opacity-30 cursor-not-allowed bg-transparent border-(--border-subtle) text-(--text-muted)' : 'bg-[rgba(255,98,117,0.1)] border-[#ff6275] text-[#ff6275] hover:bg-[#ff6275] hover:text-white'}`} 
+                      title="Disqualify Submission"
+                    >
                       <X size={14} />
                     </button>
                     {sub.moderatorReview && (
@@ -294,6 +380,14 @@ function ModeratorContent() {
           </tbody>
         </table>
       </div>
+
+      {rejectionTarget && (
+        <RejectionModal
+          teamName={rejectionTarget.team.name}
+          onConfirm={(note) => submitReview(rejectionTarget.id, 'DISQUALIFIED', note)}
+          onCancel={() => setRejectionTarget(null)}
+        />
+      )}
 
       {previewSubmission && (
         <div className="fixed inset-0 z-[140] bg-black/80 p-3 sm:p-6">

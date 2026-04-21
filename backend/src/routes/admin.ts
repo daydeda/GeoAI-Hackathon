@@ -39,6 +39,7 @@ const BulkEmailSendSchema = z.object({
   filters: z.object({
     statuses: z.array(z.string()).optional(),
     teamId: z.string().optional(),
+    recipientIds: z.array(z.string()).optional(),
   }).optional(),
 })
 
@@ -354,7 +355,7 @@ export async function adminRoutes(app: FastifyInstance) {
       ? normalizedCompStatus as CompetitorStatus
       : null
 
-    const where: Prisma.UserWhereInput = {
+    const where: any = {
       ...(normalizedSearch
         ? {
             OR: [
@@ -364,18 +365,26 @@ export async function adminRoutes(app: FastifyInstance) {
             ],
           }
         : {}),
-      ...(roleFilter
-        ? {
-            userRoles: {
-              some: {
-                role: {
-                  name: roleFilter as never,
-                },
-              },
-            },
-          }
-        : {}),
-      ...(compStatusFilter ? { competitorStatus: compStatusFilter } : {}),
+    }
+
+    if (roleFilter) {
+      where.userRoles = { some: { role: { name: roleFilter as never } } }
+    }
+
+    if (compStatusFilter) {
+      if (compStatusFilter === 'QUALIFIED') {
+        where.OR = [
+          { teamMembers: { some: { team: { currentStatus: 'FINALIST' } } } },
+          { ledTeams: { some: { currentStatus: 'FINALIST' } } }
+        ]
+      } else if (compStatusFilter === 'DISQUALIFIED') {
+        where.OR = [
+          { teamMembers: { some: { team: { currentStatus: 'REJECTED' } } } },
+          { ledTeams: { some: { currentStatus: 'REJECTED' } } }
+        ]
+      } else {
+        where.competitorStatus = compStatusFilter
+      }
     }
 
     const [users, total] = await Promise.all([
@@ -749,14 +758,24 @@ export async function adminRoutes(app: FastifyInstance) {
       ? statuses.split(',').map((s) => s.trim().toUpperCase()).filter((s) => ALLOWED_COMPETITOR_STATUSES.has(s)) as CompetitorStatus[]
       : []
 
-    // Expand statuses for inclusive filtering in Email Dispatch
-    const finalStatusSet = new Set<CompetitorStatus>(statusList)
-    if (finalStatusSet.has('QUALIFIED')) finalStatusSet.add('VERIFIED_COMPETITOR')
-    if (finalStatusSet.has('DISQUALIFIED')) finalStatusSet.add('INCORRECT_COMPETITOR')
-    const queryStatusList = Array.from(finalStatusSet)
+    const statusWhere: Prisma.UserWhereInput[] = statusList.map((s) => {
+      if (s === 'QUALIFIED') return {
+        OR: [
+          { teamMembers: { some: { team: { currentStatus: 'FINALIST' } } } },
+          { ledTeams: { some: { currentStatus: 'FINALIST' } } }
+        ]
+      } as Prisma.UserWhereInput
+      if (s === 'DISQUALIFIED') return {
+        OR: [
+          { teamMembers: { some: { team: { currentStatus: 'REJECTED' } } } },
+          { ledTeams: { some: { currentStatus: 'REJECTED' } } }
+        ]
+      } as Prisma.UserWhereInput
+      return { competitorStatus: s } as Prisma.UserWhereInput
+    })
 
     const where: Prisma.UserWhereInput = {
-      ...(queryStatusList.length > 0 ? { competitorStatus: { in: queryStatusList } } : {}),
+      ...(statusWhere.length > 0 ? { OR: statusWhere } : {}),
       ...(teamId
         ? {
             OR: [
@@ -788,14 +807,24 @@ export async function adminRoutes(app: FastifyInstance) {
       .filter((s) => ALLOWED_COMPETITOR_STATUSES.has(s)) as CompetitorStatus[]
     const teamId = filters?.teamId
 
-    // Expand statuses for inclusive filtering in Email Dispatch
-    const finalStatusSet = new Set<CompetitorStatus>(statusList)
-    if (finalStatusSet.has('QUALIFIED')) finalStatusSet.add('VERIFIED_COMPETITOR')
-    if (finalStatusSet.has('DISQUALIFIED')) finalStatusSet.add('INCORRECT_COMPETITOR')
-    const queryStatusList = Array.from(finalStatusSet)
+    const statusWhere: Prisma.UserWhereInput[] = statusList.map((s) => {
+      if (s === 'QUALIFIED') return {
+        OR: [
+          { teamMembers: { some: { team: { currentStatus: 'FINALIST' } } } },
+          { ledTeams: { some: { currentStatus: 'FINALIST' } } }
+        ]
+      } as Prisma.UserWhereInput
+      if (s === 'DISQUALIFIED') return {
+        OR: [
+          { teamMembers: { some: { team: { currentStatus: 'REJECTED' } } } },
+          { ledTeams: { some: { currentStatus: 'REJECTED' } } }
+        ]
+      } as Prisma.UserWhereInput
+      return { competitorStatus: s } as Prisma.UserWhereInput
+    })
 
     const where: Prisma.UserWhereInput = {
-      ...(queryStatusList.length > 0 ? { competitorStatus: { in: queryStatusList } } : {}),
+      ...(statusWhere.length > 0 ? { OR: statusWhere } : {}),
       ...(teamId
         ? {
             OR: [
@@ -811,13 +840,19 @@ export async function adminRoutes(app: FastifyInstance) {
       return reply.status(400).send({ error: 'At least one status filter or a team must be specified.' })
     }
 
-    const userRows = await prisma.user.findMany({
+    let userRows = await prisma.user.findMany({
       where,
       select: { id: true, email: true, fullName: true },
     })
 
+    // Manual filtering if recipientIds provided
+    if (filters?.recipientIds && filters.recipientIds.length > 0) {
+      const idSet = new Set(filters.recipientIds)
+      userRows = userRows.filter(u => idSet.has(u.id))
+    }
+
     if (userRows.length === 0) {
-      return { message: 'No recipients matched the filters.', sent: 0, failed: 0, failures: [] }
+      return { message: 'No recipients matched the selection.', sent: 0, failed: 0, failures: [] }
     }
 
     const result = await sendBulkEmail({
