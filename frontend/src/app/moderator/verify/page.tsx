@@ -1,9 +1,9 @@
 'use client'
 
-import { useEffect, useState, useCallback, useMemo } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { AuthProvider } from '@/contexts/AuthContext'
 import AppShell from '@/components/AppShell'
-import { Check, X, RefreshCw, Eye, FileText, AlertCircle, Search, Filter, ShieldCheck, User } from 'lucide-react'
+import { Check, X, RefreshCw, Eye, FileText, AlertCircle, Search, ShieldCheck, User } from 'lucide-react'
 import CustomDropdown from '@/components/CustomDropdown'
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
@@ -116,6 +116,26 @@ function ModeratorVerifyContent() {
 
   useEffect(() => {
     fetchUsers()
+
+    const intervalId = window.setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        fetchUsers()
+      }
+    }, 8000)
+
+    const onFocus = () => fetchUsers()
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') fetchUsers()
+    }
+
+    window.addEventListener('focus', onFocus)
+    document.addEventListener('visibilitychange', onVisibilityChange)
+
+    return () => {
+      window.clearInterval(intervalId)
+      window.removeEventListener('focus', onFocus)
+      document.removeEventListener('visibilitychange', onVisibilityChange)
+    }
   }, [fetchUsers])
 
   const handleVerify = async (userId: string, isApprove: boolean, note?: string) => {

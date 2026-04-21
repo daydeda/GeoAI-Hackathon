@@ -11,7 +11,7 @@ const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
 interface Team { name: string; track: string }
 interface File { fileKey: string; originalName: string }
 interface Review { status: 'PASS' | 'DISQUALIFIED' }
-interface Submission { id: string; submittedAt: string; team: Team; files: File[]; moderatorReview: Review | null }
+interface Submission { id: string; submittedAt: string; team: Team; files: File[]; moderatorReview: Review | null; version: number }
 interface TeamOverviewRow {
   id: string
   name: string
@@ -173,32 +173,35 @@ function ModeratorContent() {
               Verify team member completeness before moderation decisions.
             </p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {teamOverview.map((team) => {
               const missingMembers = team.members.filter((member) => !member.user.idCardUploaded).length
               return (
-                <div key={team.id} className="rounded border border-(--border-subtle) bg-(--bg-base) p-3">
-                  <div className="text-xs font-semibold text-white truncate">{team.name}</div>
-                  <div className="text-[11px] text-(--text-muted) truncate">{team.institution || 'Institution not set'}</div>
-                  <div className="mt-2 text-[11px] text-(--text-secondary)">
-                    Leader: {team.leader?.fullName || team.leader?.email || '-'}
+                <div key={team.id} className="rounded-lg border border-(--border-subtle) bg-(--bg-base) p-4 sm:p-5 flex flex-col">
+                  <div className="text-sm font-bold text-white break-words">{team.name}</div>
+                  <div className="text-xs text-(--text-secondary) mt-1 break-words">{team.institution || 'Institution not set'}</div>
+                  <div className="mt-3 text-xs text-(--text-secondary) break-words">
+                    <span className="font-semibold text-white">Leader:</span> {team.leader?.fullName || team.leader?.email || '-'}
                   </div>
-                  <div className="text-[11px] text-(--text-secondary)">
-                    Members: {team.members.length} · Missing ID: {missingMembers}
+                  <div className="text-xs text-(--text-secondary) mb-3">
+                    <span className="font-semibold text-white">Members:</span> {team.members.length} <span className="text-(--text-muted) mx-1">·</span> <span className={missingMembers > 0 ? 'text-[#ff6275] font-semibold' : 'text-(--accent-green)'}>Missing ID: {missingMembers}</span>
                   </div>
-                  <div className="mt-2 space-y-1 border-t border-(--border-subtle) pt-2">
+                  <div className="mt-auto space-y-3 border-t border-[rgba(255,255,255,0.05)] pt-3">
                     {team.members.map((member, idx) => (
-                      <div key={`${team.id}-${idx}`} className="flex items-center justify-between gap-2 text-[10px] text-(--text-muted)">
-                        <span className="truncate">
-                          {member.user.fullName || member.user.email || 'Unnamed member'} · Gmail: {member.user.email || '-'} · ID{' '}
-                          {member.user.idCardUploaded ? 'Uploaded' : 'Missing'}
-                        </span>
+                      <div key={`${team.id}-${idx}`} className="flex flex-col sm:flex-row sm:items-start justify-between gap-2 text-xs text-(--text-muted)">
+                        <div className="break-words max-w-full">
+                          <div className="font-medium text-[13px] text-gray-200">{member.user.fullName || member.user.email || 'Unnamed member'}</div>
+                          <div className="text-[11px] text-(--text-muted)">Gmail: {member.user.email || '-'}</div>
+                          <div className={`text-[11px] font-medium mt-0.5 ${member.user.idCardUploaded ? 'text-[rgba(0,230,118,0.8)]' : 'text-[rgba(255,98,117,0.8)]'}`}>
+                            ID {member.user.idCardUploaded ? 'Uploaded' : 'Missing'}
+                          </div>
+                        </div>
                         {member.user.idCardUploaded ? (
                           <a
                             href={`${API}/api/v1/admin/users/${member.user.id}/uploads/id-card/view`}
                             target="_blank"
                             rel="noreferrer"
-                            className="shrink-0 rounded border border-(--accent-cyan) px-1.5 py-0.5 text-[9px] text-(--accent-cyan) no-underline"
+                            className="shrink-0 rounded border border-(--accent-cyan) px-2 py-1 text-[10px] font-medium text-(--accent-cyan) no-underline hover:bg-[rgba(0,229,255,0.1)] transition"
                           >
                             View ID
                           </a>
@@ -258,8 +261,12 @@ function ModeratorContent() {
                     <span className={`inline-block text-[8px] sm:text-xs font-bold py-1 px-2 rounded border ${sub.moderatorReview.status === 'PASS' ? 'text-(--accent-green) border-[rgba(0,230,118,0.3)] bg-[rgba(0,230,118,0.1)]' : 'text-[#ff6275] border-[rgba(255,98,117,0.3)] bg-[rgba(255,98,117,0.1)]'}`}>
                       ■ {sub.moderatorReview.status}
                     </span>
+                  ) : sub.version > 1 ? (
+                    <span className="inline-block text-[8px] sm:text-xs font-bold py-1 px-2 rounded border text-[rgba(255,167,38,1)] border-[rgba(255,167,38,0.3)] bg-[rgba(255,167,38,0.1)] text-center w-full max-w-[80px]">
+                      EDITING
+                    </span>
                   ) : (
-                    <span className="text-(--accent-amber) text-[8px] sm:text-xs font-semibold">PENDING</span>
+                    <span className="text-(--text-muted) text-[8px] sm:text-xs font-semibold">PENDING</span>
                   )}
                 </td>
                 <td className="py-2 sm:py-3 px-2 sm:px-3 text-right">

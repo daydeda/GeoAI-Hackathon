@@ -166,7 +166,7 @@ function SettingsContent() {
         throw new Error(parseProfileError(payload))
       }
 
-      setSuccess('Profile updated successfully.')
+      setSuccess('Profile updated successfully. Your changes are pending review.')
       setIdCardFile(null)
       await refetch()
     } catch (err) {
@@ -239,6 +239,19 @@ function SettingsContent() {
             <div className="mt-2 rounded border border-[rgba(255,98,117,0.3)] bg-[rgba(5,13,26,0.5)] px-3 py-2 text-sm italic text-(--text-secondary)">
               &quot;{moderatorNote}&quot;
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Pending Review indicator */}
+      {competitorStatus === 'PENDING' && (
+        <div className="mb-5 flex gap-3 rounded-lg border border-[rgba(255,167,38,0.4)] bg-[rgba(255,167,38,0.08)] p-4">
+          <AlertTriangle size={18} className="mt-0.5 shrink-0 text-(--accent-amber)" />
+          <div>
+            <div className="mb-1 text-xs font-bold tracking-[0.06em] text-(--accent-amber)">PENDING REVIEW</div>
+            <p className="text-sm leading-relaxed text-(--text-secondary)">
+              Your changes were saved successfully and are currently awaiting moderator approval.
+            </p>
           </div>
         </div>
       )}

@@ -266,6 +266,17 @@ export default function LandingPage() {
               </a>
             ))}
           </div>
+
+          <div className="mx-auto mt-8 max-w-[315px] aspect-[9/16] w-full overflow-hidden rounded-xl border border-(--border-subtle) shadow-[0_0_40px_rgba(0,229,255,0.1)]">
+            <iframe
+              src="https://www.youtube.com/embed/gTkqaq08C4U"
+              title="YouTube shorts player"
+              frameBorder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+              className="w-full h-full"
+            />
+          </div>
         </div>
       </section>
 

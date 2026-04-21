@@ -429,7 +429,7 @@ export async function authRoutes(app: FastifyInstance) {
     // Profile completion is based on required profile fields; ID upload is optional at onboarding.
     const profileCompleted = true
 
-    const updatedUser = await prisma.user.update({
+    const updatedUser = await (prisma.user as any).update({
       where: { id: actor.userId },
       data: {
         firstName,
@@ -443,6 +443,8 @@ export async function authRoutes(app: FastifyInstance) {
         idCardFileName,
         fullName,
         profileCompleted,
+        competitorStatus: 'PENDING',
+        moderatorNote: null,
       },
     }) as {
       university?: string | null

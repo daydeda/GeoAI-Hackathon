@@ -46,9 +46,12 @@ function createTransporter() {
 
 export async function sendBulkEmail(input: BulkEmailInput): Promise<BulkEmailResult> {
   const transporter = createTransporter()
-  const from = process.env.SMTP_FROM
-    ? `"${input.fromName || 'GeoAI Hackathon'}" <${process.env.SMTP_FROM}>`
-    : (process.env.SMTP_USER as string)
+  let envFrom = process.env.SMTP_USER as string
+  if (process.env.SMTP_FROM) {
+    const match = process.env.SMTP_FROM.match(/<([^>]+)>/)
+    envFrom = match ? match[1] : process.env.SMTP_FROM.replace(/["<>]/g, '').trim()
+  }
+  const from = `"${input.fromName || 'GeoAI Hackathon'}" <${envFrom}>`
 
   let sent = 0
   let failed = 0
