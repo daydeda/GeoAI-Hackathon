@@ -2,18 +2,11 @@ import type { Metadata, Viewport } from 'next'
 import './globals.css'
 import { AlertProvider } from '@/contexts/AlertContext'
 import ThaiAutoFont from '@/components/ThaiAutoFont'
-import { Kanit } from 'next/font/google'
+// Font is now loaded via CSS @import in globals.css to bypass build-time network restrictions
 
 const rawBasePath = process.env.NEXT_PUBLIC_BASE_PATH?.trim() || ''
 const basePath = rawBasePath.startsWith('/') ? rawBasePath : ''
 const iconPath = `${basePath}/geoAI-logo.svg`
-
-const kanit = Kanit({
-  subsets: ['thai', 'latin'],
-  weight: ['300', '400', '500', '600', '700'],
-  variable: '--font-kanit',
-  display: 'swap',
-})
 
 export const dynamic = 'force-dynamic'
 
@@ -41,7 +34,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={kanit.variable}>
+    <html lang="en">
       <body className="bg-(--bg-base) text-(--text-primary)">
         <ThaiAutoFont />
         <AlertProvider>{children}</AlertProvider>

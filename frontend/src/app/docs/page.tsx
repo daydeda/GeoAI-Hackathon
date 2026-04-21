@@ -2,12 +2,7 @@
 
 import { AuthProvider } from '@/contexts/AuthContext'
 import AppShell from '@/components/AppShell'
-import { Kanit } from 'next/font/google'
-
-const kanit = Kanit({
-  subsets: ['thai', 'latin'],
-  weight: ['300', '400', '500', '600', '700'],
-})
+// Font is loaded via CSS @import in globals.css
 
 const agricultureIdeas = [
   {
@@ -110,7 +105,6 @@ const rubricItems = [
   { title: 'ผลลัพธ์ที่คาดหวังและการใช้ประโยชน์เชิงตัดสินใจ', score: 10, color: '#f59e0b' },
 ]
 
-const RUBRIC_TOTAL = 50
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH?.trim() || ''
 const TEMPLATE_PROPOSAL_URL = `${basePath}/Proposal_Hackathon_2026_Apr_07.docx`
 const GEO_AI_POSTER_URL = `${basePath}/GeoAIPoster.png`
@@ -165,10 +159,10 @@ const rewardThemes = [
 
 function DocsContent({ enhancedRewards = true }: { enhancedRewards?: boolean }) {
   return (
-    <div className={`${kanit.className} docs-kanit min-h-screen bg-(--bg-base) px-4 py-6 sm:px-6 lg:px-8`} style={{ fontFamily: kanit.style.fontFamily }}>
+    <div className="docs-kanit min-h-screen bg-(--bg-base) px-4 py-6 sm:px-6 lg:px-8" style={{ fontFamily: 'var(--font-kanit)' }}>
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-8">
           <section className="rounded-lg border border-(--border-subtle) bg-(--bg-surface) p-5 sm:p-7">
-            <h1 className="text-2xl font-semibold text-white sm:text-3xl" style={{ fontFamily: kanit.style.fontFamily }}>รายละเอียดการแข่งขัน</h1>
+            <h1 className="text-2xl font-semibold text-white sm:text-3xl" style={{ fontFamily: 'var(--font-kanit)' }}>รายละเอียดการแข่งขัน</h1>
             
             {/* เปลี่ยนจาก <p> เดี่ยวๆ เป็น <div> ครอบ แล้วใช้ text-justify เพื่อให้ข้อความเท่ากัน และ space-y-4 เพื่อเว้นระยะย่อหน้า */}
             <div className="mt-4 space-y-4 text-sm leading-relaxed text-(--text-secondary) text-justify">
@@ -196,14 +190,14 @@ function DocsContent({ enhancedRewards = true }: { enhancedRewards?: boolean }) 
         </section>
 
         <section className="rounded-lg border border-(--border-subtle) bg-(--bg-surface) p-5 sm:p-6">
-          <h2 className="text-lg font-semibold text-(--text-primary) sm:text-xl" style={{ fontFamily: kanit.style.fontFamily }}>
+          <h2 className="text-lg font-semibold text-(--text-primary) sm:text-xl" style={{ fontFamily: 'var(--font-kanit)' }}>
             ตัวอย่างโจทย์ GEO Hackathon (สามารถนำเสนอโจทย์ที่อยากแก้ไขเองได้)
           </h2>
         </section>
 
         <section className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           <div className="rounded-lg border border-(--border-subtle) bg-(--bg-surface) p-5 sm:p-6">
-            <h2 className="text-2xl font-semibold text-(--accent-green)" style={{ fontFamily: kanit.style.fontFamily }}>Agriculture</h2>
+            <h2 className="text-2xl font-semibold text-(--accent-green)" style={{ fontFamily: 'var(--font-kanit)' }}>Agriculture</h2>
             <ol className="mt-4 space-y-3 text-sm text-(--text-secondary)">
               {agricultureIdeas.map((idea) => (
                 <li key={idea.title}>
@@ -215,7 +209,7 @@ function DocsContent({ enhancedRewards = true }: { enhancedRewards?: boolean }) 
           </div>
 
           <div className="rounded-lg border border-(--border-subtle) bg-(--bg-surface) p-5 sm:p-6">
-            <h2 className="text-2xl font-semibold text-(--accent-cyan)" style={{ fontFamily: kanit.style.fontFamily }}>Disasters</h2>
+            <h2 className="text-2xl font-semibold text-(--accent-cyan)" style={{ fontFamily: 'var(--font-kanit)' }}>Disasters</h2>
             <ol className="mt-4 space-y-3 text-sm text-(--text-secondary)">
               {disasterIdeas.map((idea) => (
                 <li key={idea.title}>
@@ -228,7 +222,7 @@ function DocsContent({ enhancedRewards = true }: { enhancedRewards?: boolean }) 
         </section>
 
         <section className="rounded-lg border border-(--border-subtle) bg-(--bg-surface) p-5 sm:p-7">
-          <h2 className="text-xl font-semibold text-white sm:text-2xl" style={{ fontFamily: kanit.style.fontFamily }}>รางวัลการแข่งขัน</h2>
+          <h2 className="text-xl font-semibold text-white sm:text-2xl" style={{ fontFamily: 'var(--font-kanit)' }}>รางวัลการแข่งขัน</h2>
           {enhancedRewards ? (
             <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
               {rewards.map((reward, index) => (
@@ -269,7 +263,7 @@ function DocsContent({ enhancedRewards = true }: { enhancedRewards?: boolean }) 
         </section>
 
         <section className="rounded-lg border border-(--border-subtle) bg-(--bg-surface) p-5 sm:p-7">
-          <h2 className="text-xl font-semibold text-white sm:text-2xl" style={{ fontFamily: kanit.style.fontFamily }}>
+          <h2 className="text-xl font-semibold text-white sm:text-2xl" style={{ fontFamily: 'var(--font-kanit)' }}>
             เกณฑ์การตัดสินรอบแรก
           </h2>
           <div className="mt-4 rounded-xl border border-(--border-subtle) bg-(--bg-base) p-4 sm:p-5">
