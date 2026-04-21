@@ -62,7 +62,7 @@ export async function adminRoutes(app: FastifyInstance) {
     fromDate.setHours(0, 0, 0, 0)
     fromDate.setDate(fromDate.getDate() - (days - 1))
 
-    const [userRows, submissionRows, teamRows] = await Promise.all([
+    const [userRows, submissionRows, teamRows, totalUsers, totalActiveSubmissions, totalTeams] = await Promise.all([
       prisma.$queryRaw<DailyCountRow[]>(Prisma.sql`
         SELECT date_trunc('day', "createdAt") AS day, COUNT(*)::bigint AS count
         FROM "users"
@@ -73,7 +73,7 @@ export async function adminRoutes(app: FastifyInstance) {
       prisma.$queryRaw<DailyCountRow[]>(Prisma.sql`
         SELECT date_trunc('day', "submittedAt") AS day, COUNT(*)::bigint AS count
         FROM "submissions"
-        WHERE "submittedAt" >= ${fromDate}
+        WHERE "submittedAt" >= ${fromDate} AND "isActive" = true
         GROUP BY 1
         ORDER BY 1 ASC
       `),
@@ -84,6 +84,9 @@ export async function adminRoutes(app: FastifyInstance) {
         GROUP BY 1
         ORDER BY 1 ASC
       `),
+      prisma.user.count(),
+      prisma.submission.count({ where: { isActive: true } }),
+      prisma.team.count(),
     ])
 
     const toMap = (rows: DailyCountRow[]) => {
@@ -124,9 +127,9 @@ export async function adminRoutes(app: FastifyInstance) {
       from: fromDate.toISOString(),
       to: new Date().toISOString(),
       totals: {
-        registrations: series.reduce((acc, item) => acc + item.registrations, 0),
-        submissions: series.reduce((acc, item) => acc + item.submissions, 0),
-        teams: series.reduce((acc, item) => acc + item.teams, 0),
+        registrations: totalUsers,
+        submissions: totalActiveSubmissions,
+        teams: totalTeams,
       },
       series,
     }
