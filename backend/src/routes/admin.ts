@@ -612,8 +612,9 @@ export async function adminRoutes(app: FastifyInstance) {
           ? 'image/png'
           : 'image/jpeg'
 
+      const encodedName = encodeURIComponent(fileName)
       reply.header('Content-Type', contentType)
-      reply.header('Content-Disposition', `inline; filename="${fileName}"`)
+      reply.header('Content-Disposition', `inline; filename*=UTF-8''${encodedName}`)
       return reply.send(stream)
     }
 
