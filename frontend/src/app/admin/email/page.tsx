@@ -14,6 +14,7 @@ import {
   AlertTriangle,
   Eye,
   EyeOff,
+  Search,
 } from 'lucide-react'
 import CustomDropdown from '@/components/CustomDropdown'
 
@@ -90,6 +91,7 @@ function BulkEmailContent() {
     message: string;
     failures?: Array<{ email: string; reason: string }>;
   } | null>(null)
+  const [recipientSearch, setRecipientSearch] = useState('')
 
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -173,10 +175,22 @@ function BulkEmailContent() {
       })
       const d = await res.json().catch(() => ({})) as { message?: string; sent?: number; failed?: number; error?: string; failures?: Array<{ email: string; reason: string }> }
       if (res.ok) {
+        const hasFailures = (d.failed ?? 0) > 0
+        const hasSuccess = (d.sent ?? 0) > 0
+        
+        let displayMessage = d.message || 'Done'
+        if (hasFailures && hasSuccess) {
+          displayMessage = `Task completed with ${d.failed} failure(s)`
+        } else if (hasFailures && !hasSuccess) {
+          displayMessage = 'Failed to send bulk email'
+        } else if (!hasFailures && hasSuccess) {
+          displayMessage = 'Successfully sent all emails'
+        }
+
         setSendResult({
           sent: d.sent ?? 0,
           failed: d.failed ?? 0,
-          message: d.message || 'Done',
+          message: displayMessage,
           failures: d.failures,
         })
         if (d.failed === 0) {
@@ -186,7 +200,13 @@ function BulkEmailContent() {
         // Refresh recipients to reflect any changes
         fetchRecipients()
       } else {
-        setSendResult({ sent: 0, failed: 1, message: d.error || 'Failed to send bulk email', failures: [] })
+        const errorMsg = d.error || d.message || 'Failed to send bulk email'
+        setSendResult({ 
+          sent: 0, 
+          failed: (selectedIds.size || 1), 
+          message: errorMsg, 
+          failures: [] 
+        })
       }
     } catch {
       setSendResult({ sent: 0, failed: 1, message: 'Network error. Please try again.', failures: [] })
@@ -350,32 +370,58 @@ function BulkEmailContent() {
                 </button>
                 {showPreview && recipientPreview.length > 0 && (
                   <div className="mt-3 overflow-hidden rounded border border-(--border-subtle) bg-(--bg-base)">
-                    <div className="flex items-center justify-between bg-white/[0.03] px-3 py-1.5 border-b border-white/[0.05]">
-                      <span className="text-[10px] font-bold text-(--text-muted) tracking-wider uppercase">Recipient List</span>
-                      <div className="flex gap-3">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-white/[0.03] px-3 py-2 border-b border-white/[0.05]">
+                      <div className="flex items-center gap-2 flex-1">
+                        <div className="relative flex-1 max-w-[200px]">
+                          <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-(--text-muted)" />
+                          <input 
+                            type="text"
+                            placeholder="Search name/email..."
+                            value={recipientSearch}
+                            onChange={(e) => setRecipientSearch(e.target.value)}
+                            className="w-full bg-black/20 border border-white/10 rounded py-1 pl-8 pr-2 text-[10px] text-white focus:outline-none focus:border-(--accent-cyan)/50"
+                          />
+                        </div>
+                      </div>
+                      <div className="flex gap-3 shrink-0">
                         <button type="button" onClick={() => setSelectedIds(new Set(recipientPreview.map(r => r.id)))} className="text-[10px] font-bold text-(--accent-cyan) hover:underline">SELECT ALL</button>
                         <button type="button" onClick={() => setSelectedIds(new Set())} className="text-[10px] font-bold text-(--text-muted) hover:underline font-mono">CLEAR</button>
                       </div>
                     </div>
                     <div className="max-h-60 overflow-y-auto">
-                      {recipientPreview.map((r) => {
+                      {recipientPreview
+                        .filter(r => 
+                          !recipientSearch || 
+                          r.fullName.toLowerCase().includes(recipientSearch.toLowerCase()) || 
+                          r.email.toLowerCase().includes(recipientSearch.toLowerCase())
+                        )
+                        .map((r) => {
                         const isSelected = selectedIds.has(r.id);
+                        const failure = sendResult?.failures?.find(f => f.email === r.email);
+                        
                         return (
                           <div 
                             key={r.id} 
                             onClick={() => toggleRecipient(r.id)}
-                            className={`flex items-center gap-3 border-b border-white/[0.03] px-3 py-2.5 last:border-0 cursor-pointer transition-colors hover:bg-white/[0.02] ${isSelected ? 'bg-white/[0.01]' : 'opacity-60'}`}
+                            className={`flex items-center gap-3 border-b border-white/[0.03] px-3 py-2.5 last:border-0 cursor-pointer transition-colors hover:bg-white/[0.02] ${isSelected ? 'bg-white/[0.01]' : 'opacity-60'} ${failure ? 'bg-red-500/5' : ''}`}
                           >
                             <div
                               className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border text-[10px] font-bold transition-all ${
-                                isSelected ? 'bg-(--accent-cyan) border-(--accent-cyan) text-black' : 'border-(--border-subtle) text-transparent'
+                                isSelected 
+                                  ? (failure ? 'bg-[#ff6275] border-[#ff6275] text-white' : 'bg-(--accent-cyan) border-(--accent-cyan) text-black') 
+                                  : 'border-(--border-subtle) text-transparent'
                               }`}
                             >
-                              ✓
+                              {failure ? '!' : '✓'}
                             </div>
                             <div className="flex-1 min-w-0">
-                              <div className={`text-xs font-medium truncate ${isSelected ? 'text-white' : 'text-(--text-muted)'}`}>{r.fullName}</div>
-                              <div className="text-[10px] text-(--text-muted) truncate">{r.email}</div>
+                              <div className={`text-xs font-medium truncate ${isSelected ? 'text-white' : 'text-(--text-muted)'} ${failure ? 'text-[#ff6275]' : ''}`}>
+                                {r.fullName}
+                              </div>
+                              <div className="text-[10px] text-(--text-muted) truncate flex items-center gap-2">
+                                {r.email}
+                                {failure && <span className="text-[9px] text-[#ff6275] font-mono italic">({failure.reason})</span>}
+                              </div>
                             </div>
                             <div className="text-[9px] font-mono whitespace-nowrap px-1.5 py-0.5 rounded bg-white/[0.05]" style={{
                               color: STATUS_OPTIONS.find(s => s.value === r.competitorStatus)?.color ?? 'var(--text-muted)',
@@ -474,13 +520,28 @@ function BulkEmailContent() {
                   <div className="mt-0.5 text-[11px] text-(--text-muted)">
                     Sent: {sendResult.sent} · Failed: {sendResult.failed}
                   </div>
-                  {sendResult.failures && sendResult.failures.length > 0 && (
-                    <div className="mt-2 max-h-32 overflow-y-auto rounded bg-black/20 p-2 text-[10px] text-(--accent-amber)">
-                      <div className="mb-1 font-bold">Failure Reasons:</div>
-                      {sendResult.failures.slice(0, 10).map((f: { email: string; reason: string }, i: number) => (
-                        <div key={i}>• {f.email}: {f.reason}</div>
-                      ))}
-                      {sendResult.failures.length > 10 && <div>...and {sendResult.failures.length - 10} more</div>}
+                   {sendResult.failures && sendResult.failures.length > 0 && (
+                    <div className="mt-3">
+                      <div className="mb-2 flex items-center justify-between">
+                        <div className="text-[10px] font-bold text-white tracking-widest uppercase">FAILURE DETAILS</div>
+                        <button 
+                          onClick={() => {
+                            const list = sendResult.failures?.map(f => `${f.email}: ${f.reason}`).join('\n')
+                            if (list) navigator.clipboard.writeText(list).then(() => alert('Failed emails list copied to clipboard'))
+                          }}
+                          className="text-[9px] font-bold text-(--accent-amber) hover:underline"
+                        >
+                          COPY LIST
+                        </button>
+                      </div>
+                      <div className="max-h-40 overflow-y-auto rounded bg-black/30 border border-white/5 p-2 font-mono text-[9px] text-(--accent-amber) leading-relaxed">
+                        {sendResult.failures.map((f: { email: string; reason: string }, i: number) => (
+                          <div key={i} className="mb-1 last:mb-0">
+                            <span className="opacity-50">[{i+1}]</span> <span className="font-bold underline">{f.email}</span>
+                            <div className="pl-4 opacity-80 mt-0.5">↳ {f.reason}</div>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   )}
                 </div>

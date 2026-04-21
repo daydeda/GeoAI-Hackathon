@@ -855,31 +855,39 @@ export async function adminRoutes(app: FastifyInstance) {
       return { message: 'No recipients matched the selection.', sent: 0, failed: 0, failures: [] }
     }
 
-    const result = await sendBulkEmail({
-      subject,
-      htmlBody,
-      recipients: userRows.map(u => ({ userId: u.id, email: u.email, fullName: u.fullName })),
-    })
-
-    await writeAuditLog({
-      actorId: actor.userId,
-      action: 'ANNOUNCEMENT_EMAIL_SEND' as any,
-      entityType: 'bulk_email',
-      entityId: actor.userId,
-      metadata: {
+    try {
+      console.log(`Starting bulk email dispatch for ${userRows.length} recipients.`)
+      const result = await sendBulkEmail({
         subject,
-        filters: { statuses: statusList, teamId },
-        recipientCount: userRows.length,
+        htmlBody,
+        recipients: userRows.map(u => ({ userId: u.id, email: u.email, fullName: u.fullName })),
+        fromName: "GeoAI Hackathon 2026 Admin",
+      })
+      console.log(`Bulk email result: Sent=${result.sent}, Failed=${result.failed}`)
+
+      await writeAuditLog({
+        actorId: actor.userId,
+        action: 'ANNOUNCEMENT_EMAIL_SEND' as any,
+        entityType: 'bulk_email',
+        entityId: actor.userId,
+        metadata: {
+          subject,
+          filters: { statuses: statusList, teamId },
+          recipientCount: userRows.length,
+          sent: result.sent,
+          failed: result.failed,
+        },
+      })
+
+      return {
+        message: 'Bulk email task completed',
         sent: result.sent,
         failed: result.failed,
-      },
-    })
-
-    return {
-      message: 'Bulk email task completed',
-      sent: result.sent,
-      failed: result.failed,
-      failures: result.failures,
+        failures: result.failures,
+      }
+    } catch (err: any) {
+      console.error('Fatal Bulk Email Error:', err)
+      return reply.status(500).send({ error: err.message || 'Fatal email error' })
     }
   })
 }

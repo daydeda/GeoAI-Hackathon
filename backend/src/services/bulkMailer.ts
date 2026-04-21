@@ -54,24 +54,32 @@ function createTransporter() {
 }
 
 export async function sendBulkEmail(input: BulkEmailInput): Promise<BulkEmailResult> {
-  const transporter = createTransporter()
-  let envFrom = process.env.SMTP_USER as string
-  if (process.env.SMTP_FROM) {
-    const match = process.env.SMTP_FROM.match(/<([^>]+)>/)
-    envFrom = match ? match[1] : process.env.SMTP_FROM.replace(/["<>]/g, '').trim()
-  }
-  const from = `"${input.fromName || 'GeoAI Hackathon'}" <${envFrom}>`
-
   let sent = 0
   let failed = 0
   const failures: Array<{ email: string; reason: string }> = []
+
+  let transporter: nodemailer.Transporter | null = null
+  let from = ''
+
+  try {
+    transporter = createTransporter()
+    let envFrom = process.env.SMTP_USER as string
+    if (process.env.SMTP_FROM) {
+      const match = process.env.SMTP_FROM.match(/<([^>]+)>/)
+      envFrom = match ? match[1] : process.env.SMTP_FROM.replace(/["<>]/g, '').trim()
+    }
+    from = `"${input.fromName || 'GeoAI Hackathon'}" <${envFrom}>`
+  } catch (err: any) {
+    console.error('BulkMailer: Setup failed:', err)
+    throw new Error(`Email setup failed: ${err.message}`)
+  }
 
   // Process in limited concurrency batches
   const BATCH_SIZE = 10
   for (let i = 0; i < input.recipients.length; i += BATCH_SIZE) {
     const batch = input.recipients.slice(i, i + BATCH_SIZE)
     
-    await Promise.all(batch.map(async (recipient) => {
+    const results = await Promise.all(batch.map(async (recipient) => {
       try {
         const personalHtml = input.htmlBody
           .replace(/\{\{name\}\}/gi, escapeHtml(recipient.fullName))
@@ -81,6 +89,8 @@ export async function sendBulkEmail(input: BulkEmailInput): Promise<BulkEmailRes
           .replace(/\{\{name\}\}/gi, recipient.fullName)
           .replace(/\{\{email\}\}/gi, recipient.email)
 
+        if (!transporter) throw new Error('Transporter not initialized')
+
         await transporter.sendMail({
           from,
           to: recipient.email,
@@ -88,22 +98,29 @@ export async function sendBulkEmail(input: BulkEmailInput): Promise<BulkEmailRes
           html: personalHtml,
           text: textBody,
         })
-        sent++
-      } catch (err) {
-        const reason = err instanceof Error ? err.message : 'Unknown error'
-        failures.push({ email: recipient.email, reason })
-        failed++
+        return { success: true, email: recipient.email }
+      } catch (err: any) {
+        return { success: false, email: recipient.email, reason: err.message || 'Unknown error' }
       }
     }))
 
-    // Safety pause: Wait 1 second between batches to prevent spam-triggering
+    for (const r of results) {
+      if (r.success) {
+        sent++
+      } else {
+        failed++
+        failures.push({ email: r.email, reason: r.reason! })
+      }
+    }
+
+    // Safety pause: Wait 1 second between batches
     if (i + BATCH_SIZE < input.recipients.length) {
       await new Promise((r) => setTimeout(r, 1000))
     }
   }
 
   // Close the pool since we're done
-  transporter.close()
+  if (transporter) transporter.close()
 
   return { sent, failed, failures }
 }

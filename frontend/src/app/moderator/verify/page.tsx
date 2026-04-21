@@ -17,6 +17,9 @@ interface Competitor {
   idCardFileKey?: string | null
   university?: string | null
   yearOfStudy?: number | null
+  phoneNumber?: string | null
+  address?: string | null
+  experience?: string | null
   createdAt: string
 }
 
@@ -258,6 +261,7 @@ function ModeratorVerifyContent() {
               <tr className="border-b border-(--border-subtle) bg-[rgba(255,255,255,0.02)]">
                 <th className="py-4 px-4 text-[10px] text-(--text-muted) font-bold tracking-widest uppercase">Competitor Information</th>
                 <th className="py-4 px-4 text-[10px] text-(--text-muted) font-bold tracking-widest uppercase">Affiliation</th>
+                <th className="py-4 px-4 text-[10px] text-(--text-muted) font-bold tracking-widest uppercase">Contact & Background</th>
                 <th className="py-4 px-4 text-[10px] text-(--text-muted) font-bold tracking-widest uppercase">Status</th>
                 <th className="py-4 px-4 text-[10px] text-(--text-muted) font-bold tracking-widest uppercase">Note</th>
                 <th className="py-4 px-4 text-[10px] text-(--text-muted) font-bold tracking-widest uppercase text-right">Actions</th>
@@ -288,7 +292,29 @@ function ModeratorVerifyContent() {
                       <div className="text-white font-medium">{user.university || '—'}</div>
                       <div className="text-[11px] text-(--text-muted)">Year {user.yearOfStudy || '—'}</div>
                     </td>
-                    <td className="py-4 px-4">
+                    <td className="py-4 px-4 max-w-[300px]">
+                      {user.phoneNumber && (
+                        <div className="text-[11px] text-(--accent-cyan) font-mono mb-1.5 flex items-center gap-1">
+                          <Eye size={10} /> {user.phoneNumber}
+                        </div>
+                      )}
+                      {user.address && (
+                        <div className="mb-2">
+                          <div className="text-[9px] text-(--text-muted) font-bold tracking-wider uppercase mb-0.5">Address</div>
+                          <div className="text-[11px] text-white/80 whitespace-pre-wrap leading-tight">{user.address}</div>
+                        </div>
+                      )}
+                      {user.experience && (
+                        <div>
+                          <div className="text-[9px] text-(--text-muted) font-bold tracking-wider uppercase mb-0.5">Experience</div>
+                          <div className="text-[11px] text-white/80 whitespace-pre-wrap leading-tight">{user.experience}</div>
+                        </div>
+                      )}
+                      {!user.phoneNumber && !user.address && !user.experience && (
+                        <span className="text-(--text-muted) opacity-30">—</span>
+                      )}
+                    </td>
+                    <td className="py-4 px-4 whitespace-nowrap">
                       {statusBadge(user.competitorStatus)}
                     </td>
                     <td className="py-4 px-4">
