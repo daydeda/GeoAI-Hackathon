@@ -36,14 +36,14 @@ function parseProfileError(payload: unknown): string {
   return 'Profile update failed'
 }
 
-const REQUIRED_FIELDS: Array<{ key: keyof FormState; label: string; multiline?: boolean; inputType?: string; min?: number; max?: number }> = [
+const REQUIRED_FIELDS: Array<{ key: keyof FormState; label: string; multiline?: boolean; inputType?: string; min?: number; max?: number; optional?: boolean }> = [
   { key: 'firstName', label: 'First Name' },
   { key: 'lastName', label: 'Last Name' },
   { key: 'university', label: 'University' },
   { key: 'yearOfStudy', label: 'Year of Study', inputType: 'number', min: 1, max: 12 },
   { key: 'phoneNumber', label: 'Phone Number' },
   { key: 'address', label: 'Address', multiline: true },
-  { key: 'experience', label: 'Experience', multiline: true },
+  { key: 'experience', label: 'Experience (Optional)', multiline: true, optional: true },
 ]
 
 function SettingsContent() {
@@ -115,18 +115,17 @@ function SettingsContent() {
     checkDeadlineLock()
   }, [checkDeadlineLock])
 
-  const hasExperience = useMemo(() => Boolean(user?.profile?.experience?.trim()), [user?.profile?.experience])
-  const hasStudentId = useMemo(() => Boolean(user?.profile?.idCardFileUploaded), [user?.profile?.idCardFileUploaded])
-  const settingsProfileCompleted = hasExperience && hasStudentId
-
   // Compute which required fields are missing
   const missingFields = useMemo(() => {
     const missing = new Set<keyof FormState>()
     for (const f of REQUIRED_FIELDS) {
-      if (!form[f.key]?.trim()) missing.add(f.key)
+      if (!f.optional && !form[f.key]?.trim()) missing.add(f.key)
     }
     return missing
   }, [form])
+
+  const hasStudentId = useMemo(() => Boolean(user?.profile?.idCardFileUploaded), [user?.profile?.idCardFileUploaded])
+  const settingsProfileCompleted = missingFields.size === 0 && hasStudentId
 
   const competitorStatus = user?.competitorStatus
   const moderatorNote = user?.moderatorNote
@@ -352,7 +351,7 @@ function SettingsContent() {
           />
           {idCardFile && <div className="mt-2 text-[11px] text-(--accent-cyan)">Selected: {idCardFile.name}</div>}
           <p className="mt-2 text-[11px] text-(--text-muted)">
-            All team members must complete Experience and upload Student ID before proposal submission.
+            All team members must upload their Student ID before proposal submission.
           </p>
         </div>
 

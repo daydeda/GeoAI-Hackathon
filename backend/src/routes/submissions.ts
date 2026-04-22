@@ -74,7 +74,7 @@ async function ensureCompetitorProfileCompleted(userId: string) {
   return { ok: true as const }
 }
 
-type MissingPrerequisite = 'experience' | 'studentId'
+type MissingPrerequisite = 'studentId'
 
 async function getMembersMissingSubmissionPrerequisites(teamId: string): Promise<Array<{
   userId: string
@@ -102,10 +102,8 @@ async function getMembersMissingSubmissionPrerequisites(teamId: string): Promise
     .map((member) => {
       const key = (member.user.idCardFileKey || '').trim()
       const legacyName = (member.user.idCardFileName || '').trim()
-      const experience = String((member.user as { experience?: string | null }).experience || '').trim()
       const missing: MissingPrerequisite[] = []
-
-      if (experience.length === 0) missing.push('experience')
+      // experience is now optional
       if (key.length === 0 && legacyName.length === 0) missing.push('studentId')
 
       return {
@@ -205,7 +203,7 @@ export async function submissionRoutes(app: FastifyInstance) {
     const missingMembers = await getMembersMissingSubmissionPrerequisites(membership.teamId)
     if (missingMembers.length > 0) {
       return reply.status(409).send({
-        error: 'Submission blocked: all team members must complete Experience and upload Student ID before proposal upload',
+        error: 'Submission blocked: all team members must upload their Student ID before proposal upload',
         missingMembers,
       })
     }
@@ -278,7 +276,7 @@ export async function submissionRoutes(app: FastifyInstance) {
     const missingMembers = await getMembersMissingSubmissionPrerequisites(teamId)
     if (missingMembers.length > 0) {
       return reply.status(409).send({
-        error: 'Submission blocked: all team members must complete Experience and upload Student ID before proposal upload',
+        error: 'Submission blocked: all team members must upload their Student ID before proposal upload',
         missingMembers,
       })
     }

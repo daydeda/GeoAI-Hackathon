@@ -187,7 +187,7 @@ function ModeratorVerifyContent() {
   const previewUrl = previewUserId ? `${API}/api/v1/admin/users/${previewUserId}/uploads/id-card/view` : ''
 
   return (
-    <div className="flex flex-col min-h-screen bg-(--bg-base)">
+    <div className="flex flex-col flex-1 min-h-0 bg-(--bg-base)">
       {/* Rejection Modal */}
       {rejectionTarget && (
         <RejectionModal
@@ -253,13 +253,14 @@ function ModeratorVerifyContent() {
         </div>
       </div>
 
-      {/* Main Content Table */}
-      <div className="flex-1 overflow-x-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="rounded-lg border border-(--border-subtle) bg-(--bg-surface) overflow-hidden">
-          <table className="w-full text-left text-xs sm:text-sm border-collapse" style={{ minWidth: 800 }}>
+      {/* Table & Cards container */}
+      <div className="flex-1 px-4 sm:px-6 lg:px-8 py-6">
+        {/* Desktop Table View */}
+        <div className="hidden lg:block rounded-lg border border-(--border-subtle) bg-(--bg-surface) overflow-hidden">
+          <table className="w-full text-left text-xs sm:text-sm border-collapse">
             <thead>
               <tr className="border-b border-(--border-subtle) bg-[rgba(255,255,255,0.02)]">
-                <th className="py-4 px-4 text-[10px] text-(--text-muted) font-bold tracking-widest uppercase">Competitor Information</th>
+                <th className="py-4 px-4 text-[10px] text-(--text-muted) font-bold tracking-widest uppercase">Competitor</th>
                 <th className="py-4 px-4 text-[10px] text-(--text-muted) font-bold tracking-widest uppercase">Affiliation</th>
                 <th className="py-4 px-4 text-[10px] text-(--text-muted) font-bold tracking-widest uppercase">Contact & Background</th>
                 <th className="py-4 px-4 text-[10px] text-(--text-muted) font-bold tracking-widest uppercase">Status</th>
@@ -270,7 +271,7 @@ function ModeratorVerifyContent() {
             <tbody>
               {users.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="py-12 text-center text-(--text-muted) italic">
+                  <td colSpan={6} className="py-12 text-center text-(--text-muted) italic">
                     {loading ? 'Scanning database...' : 'No competitors found matching your criteria.'}
                   </td>
                 </tr>
@@ -310,9 +311,6 @@ function ModeratorVerifyContent() {
                           <div className="text-[11px] text-white/80 whitespace-pre-wrap leading-tight">{user.experience}</div>
                         </div>
                       )}
-                      {!user.phoneNumber && !user.address && !user.experience && (
-                        <span className="text-(--text-muted) opacity-30">—</span>
-                      )}
                     </td>
                     <td className="py-4 px-4 whitespace-nowrap">
                       {statusBadge(user.competitorStatus)}
@@ -332,28 +330,25 @@ function ModeratorVerifyContent() {
                            <button
                              onClick={() => setPreviewUserId(user.id)}
                              className="p-1.5 bg-[rgba(0,229,255,0.1)] border border-(--accent-cyan) text-(--accent-cyan) rounded hover:bg-(--accent-cyan) hover:text-black transition-all flex items-center gap-1"
-                             title="View Student ID"
                            >
                              <Eye size={14} />
-                             <span className="hidden sm:inline text-[10px] font-bold">VIEW ID</span>
+                             <span className="text-[10px] font-bold">VIEW ID</span>
                            </button>
                         ) : (
-                           <span className="text-[10px] text-(--text-muted) italic px-2">No ID uploaded</span>
+                           <span className="text-[10px] text-(--text-muted) italic px-2">No ID</span>
                         )}
                         <div className="h-6 w-[1px] bg-(--border-subtle) mx-1"></div>
                         <button
                           disabled={user.competitorStatus === 'VERIFIED_COMPETITOR'}
                           onClick={() => handleVerify(user.id, true)}
-                          className={`p-1.5 border rounded transition-all ${user.competitorStatus === 'VERIFIED_COMPETITOR' ? 'opacity-30 cursor-not-allowed bg-transparent border-(--border-subtle) text-(--text-muted)' : 'bg-[rgba(0,230,118,0.1)] border-(--accent-green) text-(--accent-green) hover:bg-(--accent-green) hover:text-black'}`}
-                          title="Verify Competitor"
+                          className={`p-1.5 border rounded transition-all ${user.competitorStatus === 'VERIFIED_COMPETITOR' ? 'opacity-30 bg-transparent border-(--border-subtle) text-(--text-muted)' : 'bg-[rgba(0,230,118,0.1)] border-(--accent-green) text-(--accent-green) hover:bg-(--accent-green) hover:text-black'}`}
                         >
                           <Check size={14} />
                         </button>
                         <button
                           disabled={user.competitorStatus === 'INCORRECT_COMPETITOR'}
                           onClick={() => setRejectionTarget(user)}
-                          className={`p-1.5 border rounded transition-all ${user.competitorStatus === 'INCORRECT_COMPETITOR' ? 'opacity-30 cursor-not-allowed bg-transparent border-(--border-subtle) text-(--text-muted)' : 'bg-[rgba(255,98,117,0.1)] border-[#ff6275] text-[#ff6275] hover:bg-[#ff6275] hover:text-white'}`}
-                          title="Reject (Incorrect Data)"
+                          className={`p-1.5 border rounded transition-all ${user.competitorStatus === 'INCORRECT_COMPETITOR' ? 'opacity-30 bg-transparent border-(--border-subtle) text-(--text-muted)' : 'bg-[rgba(255,98,117,0.1)] border-[#ff6275] text-[#ff6275] hover:bg-[#ff6275] hover:text-white'}`}
                         >
                           <X size={14} />
                         </button>
@@ -364,6 +359,100 @@ function ModeratorVerifyContent() {
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* Mobile Card View */}
+        <div className="grid grid-cols-1 gap-4 lg:hidden">
+          {users.length === 0 ? (
+            <div className="py-12 text-center text-(--text-muted) italic bg-(--bg-surface) rounded-lg border border-(--border-subtle)">
+              {loading ? 'Scanning database...' : 'No competitors found.'}
+            </div>
+          ) : (
+            users.map(user => (
+              <div key={user.id} className="rounded-lg border border-(--border-subtle) bg-(--bg-surface) p-4 flex flex-col gap-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-full bg-[rgba(0,229,255,0.1)] flex items-center justify-center text-(--accent-cyan) shrink-0">
+                      <User size={20} />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="font-bold text-white truncate">{user.fullName}</div>
+                      <div className="text-[11px] text-(--text-muted) font-mono truncate">{user.email}</div>
+                    </div>
+                  </div>
+                  {statusBadge(user.competitorStatus)}
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 border-t border-(--border-subtle) pt-4">
+                  <div>
+                    <div className="text-[9px] text-(--text-muted) font-bold tracking-wider uppercase mb-0.5">Affiliation</div>
+                    <div className="text-xs text-white font-medium">{user.university || '—'}</div>
+                    <div className="text-[10px] text-(--text-muted)">Year {user.yearOfStudy || '—'}</div>
+                  </div>
+                  <div>
+                    <div className="text-[9px] text-(--text-muted) font-bold tracking-wider uppercase mb-0.5">Contact</div>
+                    <div className="text-xs text-(--accent-cyan) font-mono">{user.phoneNumber || '—'}</div>
+                  </div>
+                </div>
+
+                {(user.address || user.experience) && (
+                  <div className="space-y-3 border-t border-(--border-subtle) pt-4">
+                    {user.address && (
+                      <div>
+                        <div className="text-[9px] text-(--text-muted) font-bold tracking-wider uppercase mb-0.5">Address</div>
+                        <div className="text-[11px] text-white/80 whitespace-pre-wrap leading-tight">{user.address}</div>
+                      </div>
+                    )}
+                    {user.experience && (
+                      <div>
+                        <div className="text-[9px] text-(--text-muted) font-bold tracking-wider uppercase mb-0.5">Experience</div>
+                        <div className="text-[11px] text-white/80 whitespace-pre-wrap leading-tight">{user.experience}</div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {user.moderatorNote && (
+                  <div className="border-t border-(--border-subtle) pt-4">
+                    <div className="text-[9px] text-[#ff6275] font-bold tracking-wider uppercase mb-1">REJECTION NOTE</div>
+                    <div className="text-[11px] text-[#ff6275] italic leading-relaxed bg-[rgba(255,98,117,0.05)] p-2 rounded border border-[rgba(255,98,117,0.2)]">
+                      &quot;{user.moderatorNote}&quot;
+                    </div>
+                  </div>
+                )}
+
+                <div className="border-t border-(--border-subtle) pt-4 flex items-center justify-between gap-2">
+                  {user.idCardFileKey ? (
+                    <button
+                      onClick={() => setPreviewUserId(user.id)}
+                      className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-[rgba(0,229,255,0.1)] border border-(--accent-cyan) text-(--accent-cyan) rounded text-xs font-bold transition-all"
+                    >
+                      <Eye size={16} /> VIEW ID
+                    </button>
+                  ) : (
+                    <div className="flex-1 text-center py-2.5 text-[11px] text-(--text-muted) italic bg-(--bg-base) rounded">No ID uploaded</div>
+                  )}
+
+                  <div className="flex gap-2">
+                    <button
+                      disabled={user.competitorStatus === 'VERIFIED_COMPETITOR'}
+                      onClick={() => handleVerify(user.id, true)}
+                      className={`p-2.5 border rounded transition-all ${user.competitorStatus === 'VERIFIED_COMPETITOR' ? 'opacity-30 bg-transparent border-(--border-subtle) text-(--text-muted)' : 'bg-[rgba(0,230,118,0.1)] border-(--accent-green) text-(--accent-green)'}`}
+                    >
+                      <Check size={18} />
+                    </button>
+                    <button
+                      disabled={user.competitorStatus === 'INCORRECT_COMPETITOR'}
+                      onClick={() => setRejectionTarget(user)}
+                      className={`p-2.5 border rounded transition-all ${user.competitorStatus === 'INCORRECT_COMPETITOR' ? 'opacity-30 bg-transparent border-(--border-subtle) text-(--text-muted)' : 'bg-[rgba(255,98,117,0.1)] border-[#ff6275] text-[#ff6275]'}`}
+                    >
+                      <X size={18} />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
         </div>
 
         {/* Pagination */}
@@ -414,10 +503,10 @@ function ModeratorVerifyContent() {
               className="w-full h-full border-none"
             />
           </div>
-          <div className="mt-4 flex justify-center gap-4">
+          <div className="mt-4 flex flex-col sm:flex-row justify-center gap-3 sm:gap-4">
              <button
                onClick={() => { handleVerify(previewUserId, true); setPreviewUserId(null); }}
-               className="bg-(--accent-green) text-black font-bold px-8 py-2 rounded-full hover:scale-105 transition-transform"
+               className="bg-(--accent-green) text-black font-bold px-6 py-3 rounded-full hover:scale-105 transition-transform text-xs sm:text-sm"
              >
                VERIFY & CLOSE
              </button>
@@ -427,7 +516,7 @@ function ModeratorVerifyContent() {
                  if (u) setRejectionTarget(u);
                  setPreviewUserId(null);
                }}
-               className="bg-[#ff6275] text-white font-bold px-8 py-2 rounded-full hover:scale-105 transition-transform"
+               className="bg-[#ff6275] text-white font-bold px-6 py-3 rounded-full hover:scale-105 transition-transform text-xs sm:text-sm"
              >
                REJECT & CLOSE
              </button>

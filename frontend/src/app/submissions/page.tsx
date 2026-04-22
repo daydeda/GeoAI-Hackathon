@@ -32,7 +32,7 @@ interface UploadErrorPayload {
     fullName?: string
     email?: string
     userId?: string
-    missing?: Array<'experience' | 'studentId'>
+    missing?: Array<'studentId'>
   }>
 }
 
@@ -153,9 +153,8 @@ function SubmissionsContent() {
               const displayName = member.fullName || member.email || `Member ${index + 1}`
               const missingItems = new Set(member.missing || [])
               const labels: string[] = []
-              if (missingItems.has('experience')) labels.push('Experience')
               if (missingItems.has('studentId')) labels.push('Student ID')
-              const suffix = labels.length > 0 ? ` (${labels.join(' + ')} missing)` : ''
+              const suffix = labels.length > 0 ? ` (${labels.join(', ')} missing)` : ''
               return `${displayName}${suffix}`
             })
             .join(', ')
