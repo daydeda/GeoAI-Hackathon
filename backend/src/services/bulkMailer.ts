@@ -62,70 +62,92 @@ export async function sendBulkEmail(input: BulkEmailInput): Promise<BulkEmailRes
   let from = ''
 
   try {
-    transporter = createTransporter()
-    let envFrom = process.env.SMTP_USER as string
-    if (process.env.SMTP_FROM) {
-      const match = process.env.SMTP_FROM.match(/<([^>]+)>/)
-      envFrom = match ? match[1] : process.env.SMTP_FROM.replace(/["<>]/g, '').trim()
+    try {
+      transporter = createTransporter()
+      let envFrom = process.env.SMTP_USER as string
+      if (process.env.SMTP_FROM) {
+        const match = process.env.SMTP_FROM.match(/<([^>]+)>/)
+        envFrom = match ? match[1] : process.env.SMTP_FROM.replace(/["<>]/g, '').trim()
+      }
+      from = `"${input.fromName || 'GeoAI Hackathon'}" <${envFrom}>`
+    } catch (err: any) {
+      console.error('BulkMailer: Setup failed:', err)
+      throw new Error(`Email setup failed: ${err.message}`)
     }
-    from = `"${input.fromName || 'GeoAI Hackathon'}" <${envFrom}>`
-  } catch (err: any) {
-    console.error('BulkMailer: Setup failed:', err)
-    throw new Error(`Email setup failed: ${err.message}`)
-  }
 
-  // Process in limited concurrency batches
-  const BATCH_SIZE = 10
-  for (let i = 0; i < input.recipients.length; i += BATCH_SIZE) {
-    const batch = input.recipients.slice(i, i + BATCH_SIZE)
+    // Process in limited concurrency batches
+    const BATCH_SIZE = 10
     
-    const results = await Promise.all(batch.map(async (recipient) => {
-      try {
-        const personalHtml = input.htmlBody
-          .replace(/\{\{name\}\}/gi, escapeHtml(recipient.fullName))
-          .replace(/\{\{email\}\}/gi, escapeHtml(recipient.email))
+    // Pre-calculate plain text body once to save CPU
+    const basePlainText = htmlToPlainText(input.htmlBody)
+    console.log(`BulkMailer: Processing ${input.recipients.length} recipients in batches of ${BATCH_SIZE}`)
 
-        const textBody = htmlToPlainText(input.htmlBody)
-          .replace(/\{\{name\}\}/gi, recipient.fullName)
-          .replace(/\{\{email\}\}/gi, recipient.email)
+    for (let i = 0; i < input.recipients.length; i += BATCH_SIZE) {
+      const batch = input.recipients.slice(i, i + BATCH_SIZE)
+      console.log(`BulkMailer: Sending batch ${Math.floor(i / BATCH_SIZE) + 1} (${batch.length} recipients)...`)
+      
+      const results = await Promise.all(batch.map(async (recipient) => {
+        try {
+          const name = recipient.fullName || 'Competitor'
+          const email = recipient.email || ''
+          
+          if (!email) throw new Error('Recipient email is missing')
 
-        if (!transporter) throw new Error('Transporter not initialized')
+          const personalHtml = input.htmlBody
+            .replace(/\{\{name\}\}/gi, escapeHtml(name))
+            .replace(/\{\{email\}\}/gi, escapeHtml(email))
 
-        await transporter.sendMail({
-          from,
-          to: recipient.email,
-          subject: input.subject,
-          html: personalHtml,
-          text: textBody,
-        })
-        return { success: true, email: recipient.email }
-      } catch (err: any) {
-        return { success: false, email: recipient.email, reason: err.message || 'Unknown error' }
+          const textBody = basePlainText
+            .replace(/\{\{name\}\}/gi, name)
+            .replace(/\{\{email\}\}/gi, email)
+
+          if (!transporter) throw new Error('Transporter not initialized')
+
+          await transporter.sendMail({
+            from,
+            to: email,
+            subject: input.subject,
+            html: personalHtml,
+            text: textBody,
+          })
+          return { success: true, email }
+        } catch (err: any) {
+          let reason = err.message || 'Unknown error'
+          if (err.code) reason += ` (${err.code})`
+          if (err.response) reason += ` - ${err.response}`
+          
+          console.error(`BulkMailer: Failed for ${recipient.email}:`, reason)
+          return { success: false, email: recipient.email, reason }
+        }
+      }))
+
+      for (const r of results) {
+        if (r.success) {
+          sent++
+        } else {
+          failed++
+          failures.push({ email: r.email, reason: r.reason! })
+        }
       }
-    }))
 
-    for (const r of results) {
-      if (r.success) {
-        sent++
-      } else {
-        failed++
-        failures.push({ email: r.email, reason: r.reason! })
+      // Safety pause: Wait 1 second between batches
+      if (i + BATCH_SIZE < input.recipients.length) {
+        await new Promise((r) => setTimeout(r, 1000))
       }
     }
-
-    // Safety pause: Wait 1 second between batches
-    if (i + BATCH_SIZE < input.recipients.length) {
-      await new Promise((r) => setTimeout(r, 1000))
+  } finally {
+    // Close the pool since we're done
+    if (transporter) {
+      console.log('BulkMailer: Closing transporter pool.')
+      transporter.close()
     }
   }
-
-  // Close the pool since we're done
-  if (transporter) transporter.close()
 
   return { sent, failed, failures }
 }
 
-function escapeHtml(value: string): string {
+function escapeHtml(value: any): string {
+  if (typeof value !== 'string') return String(value || '')
   return value
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
@@ -135,7 +157,8 @@ function escapeHtml(value: string): string {
 }
 
 /** Very lightweight HTML-to-plaintext strip for fallback text part */
-function htmlToPlainText(html: string): string {
+function htmlToPlainText(html: any): string {
+  if (typeof html !== 'string') return ''
   return html
     .replace(/<br\s*\/?>/gi, '\n')
     .replace(/<p[^>]*>/gi, '\n')

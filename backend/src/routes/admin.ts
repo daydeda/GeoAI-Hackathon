@@ -869,10 +869,13 @@ export async function adminRoutes(app: FastifyInstance) {
         fromName: "GeoAI Hackathon 2026 Admin",
       })
       console.log(`Bulk email result: Sent=${result.sent}, Failed=${result.failed}`)
+      if (result.failed > 0) {
+        console.warn(`Bulk email failures: ${result.failures.length} recipients failed.`)
+      }
 
       await writeAuditLog({
         actorId: actor.userId,
-        action: 'ANNOUNCEMENT_EMAIL_SEND' as any,
+        action: 'SUBMISSION_ANNOUNCEMENT_SENT',
         entityType: 'bulk_email',
         entityId: actor.userId,
         metadata: {
@@ -885,7 +888,7 @@ export async function adminRoutes(app: FastifyInstance) {
       })
 
       return {
-        message: 'Bulk email task completed',
+        message: result.failed > 0 ? `Task completed with ${result.failed} failure(s)` : 'Bulk email task completed',
         sent: result.sent,
         failed: result.failed,
         failures: result.failures,

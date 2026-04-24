@@ -202,10 +202,10 @@ function BulkEmailContent() {
       } else {
         const errorMsg = d.error || d.message || 'Failed to send bulk email'
         setSendResult({ 
-          sent: 0, 
-          failed: (selectedIds.size || 1), 
+          sent: d.sent ?? 0, 
+          failed: d.failed ?? (selectedIds.size || 1), 
           message: errorMsg, 
-          failures: [] 
+          failures: d.failures ?? [] 
         })
       }
     } catch {
