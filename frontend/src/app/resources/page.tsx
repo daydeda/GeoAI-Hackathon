@@ -221,7 +221,11 @@ function ResourcesContent() {
   const toggleSection = (idx: number) => {
     setExpandedSections(prev => {
       const next = new Set(prev)
-      next.has(idx) ? next.delete(idx) : next.add(idx)
+      if (next.has(idx)) {
+        next.delete(idx)
+      } else {
+        next.add(idx)
+      }
       return next
     })
   }
@@ -229,7 +233,11 @@ function ResourcesContent() {
   const toggleTag = (tag: string) => {
     setActiveTags(prev => {
       const next = new Set(prev)
-      next.has(tag) ? next.delete(tag) : next.add(tag)
+      if (next.has(tag)) {
+        next.delete(tag)
+      } else {
+        next.add(tag)
+      }
       return next
     })
   }
@@ -427,8 +435,8 @@ function ResourcesContent() {
 
       {/* Main grid */}
       {filteredSections.length > 0 && (
-        <div className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 mb-8 sm:mb-12 items-start">
-          {filteredSections.map((sec, secIdx) => {
+        <div className="flex-1 flex flex-col gap-10 sm:gap-16 mb-8 sm:mb-12">
+          {filteredSections.map((sec) => {
             // Use original section index for expand state (so it doesn't shift when filtering)
             const originalIdx = sections.findIndex(s => s.title === sec.title)
             const isExpanded = expandedSections.has(originalIdx)
@@ -442,11 +450,11 @@ function ResourcesContent() {
             const hasMore = !isFiltering && sec.items.length > ITEMS_LIMIT
 
             return (
-              <div key={sec.title} className="flex flex-col gap-3 sm:gap-4">
+              <div key={sec.title} className="flex flex-col gap-6">
                 {/* Section header */}
-                <div className="flex items-center gap-2 sm:gap-3 mb-2">
+                <div className="flex items-center gap-3 border-b border-[rgba(255,255,255,0.05)] pb-4">
                   <span
-                    className={`text-[8px] sm:text-xs font-bold tracking-widest px-2 py-1 rounded ${
+                    className={`text-xs font-bold tracking-[0.2em] px-2 py-1 rounded ${
                       sec.color === 'var(--accent-green)'
                         ? 'bg-[rgba(0,230,118,0.1)] text-(--accent-green)'
                         : sec.color === 'var(--accent-cyan)'
@@ -456,110 +464,123 @@ function ResourcesContent() {
                   >
                     {sec.icon}
                   </span>
-                  <div className="text-sm sm:text-base font-semibold text-white tracking-wider">
+                  <div className="text-base sm:text-xl font-display font-semibold text-white tracking-widest uppercase">
                     {sec.title}
                   </div>
-                  <div className="font-mono text-[8px] text-(--text-muted) ml-auto">
-                    {sec.items.length} items
+                  <div className="font-mono text-[10px] text-(--text-muted) ml-auto flex items-center gap-2">
+                    <span className="w-1 h-1 rounded-full bg-(--text-muted)" />
+                    {sec.items.length} DATAPOINTS
                   </div>
                 </div>
 
-                {/* Cards */}
-                {visibleItems.map((item, i) => (
-                  <div
-                    key={i}
-                    className="bg-(--bg-surface) border border-[rgba(255,255,255,0.05)] rounded p-4 sm:p-6 flex flex-col hover:border-[rgba(255,255,255,0.1)] transition"
-                  >
-                    <div className="flex justify-between items-start gap-2 mb-3 sm:mb-4">
-                      <div className="text-2xl sm:text-3xl">{item.icon}</div>
-                      <div className="flex gap-1.5 flex-wrap justify-end">
-                        {item.tag1 && (
-                          <button
-                            onClick={() => {
-                              toggleTag(item.tag1!)
-                              setFilterOpen(false)
-                            }}
-                            className={`text-[7px] sm:text-[8px] tracking-widest px-1.5 py-1 rounded border transition ${
-                              activeTags.has(item.tag1)
-                                ? 'bg-(--accent-cyan) border-(--accent-cyan) text-black'
-                                : 'bg-[rgba(255,255,255,0.05)] border-[rgba(255,255,255,0.1)] text-(--text-secondary) hover:border-[rgba(255,255,255,0.25)] hover:text-white'
-                            }`}
-                          >
-                            {item.tag1}
-                          </button>
-                        )}
-                        {item.tag2 && (
-                          <button
-                            onClick={() => {
-                              toggleTag(item.tag2!)
-                              setFilterOpen(false)
-                            }}
-                            className={`text-[7px] sm:text-[8px] tracking-widest px-1.5 py-1 rounded border transition ${
-                              activeTags.has(item.tag2)
-                                ? 'bg-(--accent-cyan) border-(--accent-cyan) text-black'
-                                : 'bg-[rgba(255,255,255,0.05)] border-[rgba(255,255,255,0.1)] text-(--text-secondary) hover:border-[rgba(255,255,255,0.25)] hover:text-white'
-                            }`}
-                          >
-                            {item.tag2}
-                          </button>
-                        )}
+                {/* Cards Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {visibleItems.map((item, i) => (
+                    <div
+                      key={i}
+                      className="bg-(--bg-surface) border border-[rgba(255,255,255,0.05)] rounded p-4 sm:p-6 flex flex-col hover:border-[rgba(255,255,255,0.12)] hover:shadow-[0_8px_32px_rgba(0,0,0,0.4)] transition-all duration-300 group"
+                    >
+                      <div className="flex justify-between items-start gap-2 mb-4">
+                        <div className="text-2xl sm:text-3xl group-hover:scale-110 transition-transform duration-300">{item.icon}</div>
+                        <div className="flex gap-1.5 flex-wrap justify-end">
+                          {item.tag1 && (
+                            <button
+                              onClick={() => {
+                                toggleTag(item.tag1!)
+                                setFilterOpen(false)
+                              }}
+                              className={`text-[8px] tracking-[0.1em] px-2 py-1 rounded border transition-all ${
+                                activeTags.has(item.tag1)
+                                  ? 'bg-(--accent-cyan) border-(--accent-cyan) text-black font-bold'
+                                  : 'bg-[rgba(255,255,255,0.03)] border-[rgba(255,255,255,0.08)] text-(--text-secondary) hover:border-[rgba(255,255,255,0.2)] hover:text-white'
+                              }`}
+                            >
+                              {item.tag1}
+                            </button>
+                          )}
+                          {item.tag2 && (
+                            <button
+                              onClick={() => {
+                                toggleTag(item.tag2!)
+                                setFilterOpen(false)
+                              }}
+                              className={`text-[8px] tracking-[0.1em] px-2 py-1 rounded border transition-all ${
+                                activeTags.has(item.tag2)
+                                  ? 'bg-(--accent-cyan) border-(--accent-cyan) text-black font-bold'
+                                  : 'bg-[rgba(255,255,255,0.03)] border-[rgba(255,255,255,0.08)] text-(--text-secondary) hover:border-[rgba(255,255,255,0.2)] hover:text-white'
+                              }`}
+                            >
+                              {item.tag2}
+                            </button>
+                          )}
+                        </div>
                       </div>
+
+                      <h3 className="font-display text-base sm:text-lg text-white mb-2 sm:mb-3 whitespace-pre-line leading-tight group-hover:text-(--accent-cyan) transition-colors">
+                        {item.title}
+                      </h3>
+                      <p className="text-xs lg:text-sm text-(--text-secondary) leading-relaxed mb-6 flex-1 whitespace-pre-line opacity-80 group-hover:opacity-100 transition-opacity">
+                        {item.desc}
+                      </p>
+
+                      {item.linkUrl ? (
+                        <a
+                          href={item.linkUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="mt-auto border-t border-[rgba(255,255,255,0.05)] pt-4 flex items-center justify-between group/link"
+                        >
+                          <div className="flex items-center gap-2">
+                            {item.linkIcon && <span className="text-lg">{item.linkIcon}</span>}
+                            <div
+                              className="text-[10px] font-bold tracking-widest uppercase"
+                              style={{ color: item.linkColor }}
+                            >
+                              {item.linkText}
+                            </div>
+                          </div>
+                          <div className="text-(--text-muted) group-hover/link:text-(--accent-cyan) group-hover/link:translate-x-1 transition-all">
+                            <ExternalLink size={14} />
+                          </div>
+                        </a>
+                      ) : (
+                        <div className="mt-auto border-t border-[rgba(255,255,255,0.05)] pt-4 flex items-center justify-between cursor-pointer group/link">
+                          <div className="flex items-center gap-2">
+                            {item.linkIcon && <span className="text-lg">{item.linkIcon}</span>}
+                            <div
+                              className="text-[10px] font-bold tracking-widest uppercase"
+                              style={{ color: item.linkColor }}
+                            >
+                              {item.linkText}
+                            </div>
+                          </div>
+                          <div className="text-(--text-muted) group-hover/link:text-(--accent-cyan) group-hover/link:translate-x-1 transition-all">
+                            <ExternalLink size={14} />
+                          </div>
+                        </div>
+                      )}
                     </div>
-
-                    <h3 className="font-display text-base sm:text-lg text-white mb-2 sm:mb-3 whitespace-pre-line">
-                      {item.title}
-                    </h3>
-                    <p className="text-[8px] sm:text-xs lg:text-sm text-(--text-secondary) leading-relaxed mb-4 sm:mb-6 flex-1 whitespace-pre-line">
-                      {item.desc}
-                    </p>
-
-                    {item.linkUrl ? (
-                      <a
-                        href={item.linkUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="border-t border-[rgba(255,255,255,0.05)] pt-3 sm:pt-4 flex items-center gap-2 hover:text-(--accent-cyan) transition"
-                      >
-                        {item.linkIcon && <span className="text-lg">{item.linkIcon}</span>}
-                        <div
-                          className="text-[8px] sm:text-xs font-bold tracking-widest"
-                          style={{ color: item.linkColor }}
-                        >
-                          {item.linkText}
-                        </div>
-                        {item.isExternal && <ExternalLink size={12} />}
-                      </a>
-                    ) : (
-                      <div className="border-t border-[rgba(255,255,255,0.05)] pt-3 sm:pt-4 flex items-center gap-2 cursor-pointer hover:text-(--accent-cyan) transition">
-                        {item.linkIcon && <span className="text-lg">{item.linkIcon}</span>}
-                        <div
-                          className="text-[8px] sm:text-xs font-bold tracking-widest"
-                          style={{ color: item.linkColor }}
-                        >
-                          {item.linkText}
-                        </div>
-                        {item.isExternal && <ExternalLink size={12} />}
-                      </div>
-                    )}
-                  </div>
-                ))}
+                  ))}
+                </div>
 
                 {/* Show more / less — hidden when actively filtering */}
                 {hasMore && (
-                  <button
-                    onClick={() => toggleSection(originalIdx)}
-                    className="w-full border border-[rgba(255,255,255,0.08)] rounded py-2.5 flex items-center justify-center gap-2 text-[8px] sm:text-xs tracking-widest font-semibold text-(--text-secondary) hover:text-white hover:border-[rgba(255,255,255,0.2)] transition"
-                  >
-                    {isExpanded ? (
-                      <>
-                        <ChevronUp size={12} /> SHOW LESS
-                      </>
-                    ) : (
-                      <>
-                        <ChevronDown size={12} /> {hiddenCount} MORE ITEMS
-                      </>
-                    )}
-                  </button>
+                  <div className="flex justify-center mt-4">
+                    <button
+                      onClick={() => toggleSection(originalIdx)}
+                      className="px-8 py-2.5 rounded-full border border-[rgba(255,255,255,0.1)] flex items-center justify-center gap-3 text-[10px] tracking-[0.2em] font-bold text-(--text-secondary) hover:text-white hover:border-(--accent-cyan) hover:bg-[rgba(0,229,255,0.05)] transition-all duration-300"
+                    >
+                      {isExpanded ? (
+                        <>
+                          <ChevronUp size={14} /> COLLAPSE REGISTRY
+                        </>
+                      ) : (
+                        <>
+                          <ChevronDown size={14} /> DECRYPT {hiddenCount} ADDITIONAL ENTRIES
+                        </>
+                      )}
+                    </button>
+                  </div>
                 )}
               </div>
             )
