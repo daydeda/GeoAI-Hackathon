@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { AuthProvider } from '@/contexts/AuthContext'
 import AppShell from '@/components/AppShell'
-import { Check, X, RefreshCw, Eye, FileText, AlertCircle, Search, ShieldCheck, User } from 'lucide-react'
+import { Check, X, RefreshCw, Eye, FileText, AlertCircle, Search, ShieldCheck, User, Trash2 } from 'lucide-react'
 import CustomDropdown from '@/components/CustomDropdown'
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
@@ -83,6 +83,45 @@ function RejectionModal({
   )
 }
 
+function DeleteModal({
+  userName,
+  onConfirm,
+  onCancel,
+}: {
+  userName: string
+  onConfirm: () => void
+  onCancel: () => void
+}) {
+  return (
+    <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm">
+      <div className="w-full max-w-md rounded-lg border border-[rgba(255,98,117,0.4)] bg-(--bg-surface) p-6 shadow-[0_24px_64px_rgba(0,0,0,0.5)]">
+        <div className="mb-2 flex items-center gap-2 text-[#ff6275]">
+          <AlertCircle size={20} />
+          <h2 className="text-lg font-bold tracking-tight text-white uppercase">Confirm Account Deletion</h2>
+        </div>
+        <p className="mb-6 text-sm text-(--text-secondary) leading-relaxed">
+          You are about to <strong className="text-[#ff6275]">permanently delete</strong> the account for <strong className="text-white">{userName}</strong>. 
+          This action cannot be undone and will remove all associated data for this user.
+        </p>
+        <div className="flex justify-end gap-3">
+          <button
+            onClick={onCancel}
+            className="flex-1 sm:flex-none rounded border border-(--border-subtle) bg-transparent px-5 py-2.5 text-xs font-semibold text-(--text-muted) hover:bg-(--bg-base) transition"
+          >
+            CANCEL
+          </button>
+          <button
+            onClick={onConfirm}
+            className="flex-1 sm:flex-none rounded border-none bg-[#ff6275] px-5 py-2.5 text-xs font-bold text-white hover:bg-[#ff3b53] transition shadow-[0_4px_12px_rgba(255,98,117,0.3)]"
+          >
+            DELETE PERMANENTLY
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function ModeratorVerifyContent() {
   const [users, setUsers] = useState<Competitor[]>([])
   const [total, setTotal] = useState(0)
@@ -91,6 +130,7 @@ function ModeratorVerifyContent() {
   const [statusFilter, setStatusFilter] = useState('')
   const [search, setSearch] = useState('')
   const [rejectionTarget, setRejectionTarget] = useState<Competitor | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<Competitor | null>(null)
   const [previewUserId, setPreviewUserId] = useState<string | null>(null)
 
   const LIMIT = 20
@@ -168,6 +208,24 @@ function ModeratorVerifyContent() {
     await handleVerify(uid, false, note)
   }
 
+  const handleDeleteUser = async (userId: string) => {
+    try {
+      const res = await fetch(`${API}/api/v1/admin/users/${userId}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      })
+      if (res.ok) {
+        fetchUsers()
+        setDeleteTarget(null)
+      } else {
+        const d = await res.json()
+        alert(d.error || 'Deletion failed')
+      }
+    } catch (e) {
+      console.error('Delete error:', e)
+    }
+  }
+
   const statusBadge = (status: string) => {
     const map: Record<string, { label: string; color: string; bg: string }> = {
       PENDING: { label: 'PENDING', color: 'text-(--accent-amber)', bg: 'bg-[rgba(255,167,38,0.1)]' },
@@ -194,6 +252,15 @@ function ModeratorVerifyContent() {
           userName={rejectionTarget.fullName}
           onConfirm={handleRejectionConfirm}
           onCancel={() => setRejectionTarget(null)}
+        />
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deleteTarget && (
+        <DeleteModal
+          userName={deleteTarget.fullName}
+          onConfirm={() => handleDeleteUser(deleteTarget.id)}
+          onCancel={() => setDeleteTarget(null)}
         />
       )}
 
@@ -352,6 +419,14 @@ function ModeratorVerifyContent() {
                         >
                           <X size={14} />
                         </button>
+                        <div className="h-6 w-[1px] bg-(--border-subtle) mx-1"></div>
+                        <button
+                          onClick={() => setDeleteTarget(user)}
+                          className="p-1.5 border border-[rgba(255,255,255,0.1)] text-(--text-muted) rounded hover:bg-[#ff3b53] hover:border-[#ff3b53] hover:text-white transition-all"
+                          title="Delete User"
+                        >
+                          <Trash2 size={14} />
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -447,6 +522,12 @@ function ModeratorVerifyContent() {
                       className={`p-2.5 border rounded transition-all ${user.competitorStatus === 'INCORRECT_COMPETITOR' ? 'opacity-30 bg-transparent border-(--border-subtle) text-(--text-muted)' : 'bg-[rgba(255,98,117,0.1)] border-[#ff6275] text-[#ff6275]'}`}
                     >
                       <X size={18} />
+                    </button>
+                    <button
+                      onClick={() => setDeleteTarget(user)}
+                      className="p-2.5 border border-[rgba(255,255,255,0.1)] text-(--text-muted) rounded hover:bg-[#ff3b53] hover:border-[#ff3b53] hover:text-white transition-all"
+                    >
+                      <Trash2 size={18} />
                     </button>
                   </div>
                 </div>
