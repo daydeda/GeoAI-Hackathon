@@ -249,6 +249,7 @@ export async function moderatorRoutes(app: FastifyInstance) {
           phoneNumber: true,
           address: true,
           experience: true,
+          lastLoginAt: true,
           createdAt: true,
         },
         orderBy: { createdAt: 'desc' },

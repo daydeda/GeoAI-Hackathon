@@ -18,6 +18,14 @@ export async function authenticate(
 ) {
   try {
     await request.jwtVerify()
+    const payload = request.user as JwtPayload
+    if (payload.userId) {
+      // Update activity timestamp (non-blocking)
+      prisma.user.update({
+        where: { id: payload.userId },
+        data: { lastLoginAt: new Date() }
+      }).catch(err => console.error('Last activity update failed:', err))
+    }
   } catch (err) {
     return reply.status(401).send({ 
       error: 'Unauthorized',
@@ -35,6 +43,13 @@ export function authorize(...allowedRoles: RoleType[]) {
     // First, ensure they are authenticated
     try {
       await request.jwtVerify()
+      const payload = request.user as JwtPayload
+      if (payload.userId) {
+        prisma.user.update({
+          where: { id: payload.userId },
+          data: { lastLoginAt: new Date() }
+        }).catch(() => null)
+      }
     } catch {
       return reply.status(401).send({ error: 'Unauthorized' })
     }

@@ -168,6 +168,7 @@ async function syncUserProfileSafely(input: {
       fullName: persistedProfileName || existingUser?.fullName || fullName,
       avatarUrl,
       oauthProvider: 'google',
+      lastLoginAt: new Date(),
     },
   })
 }

@@ -35,6 +35,7 @@ model User {
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt
   competitorStatus CompetitorStatus @default(PENDING)
+  lastLoginAt      DateTime?        @map("last_login_at")
   moderatorNote    String?          // Rejection reason from moderator, shown to competitor
 
   // Relations

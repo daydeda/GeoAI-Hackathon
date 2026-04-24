@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { AuthProvider } from '@/contexts/AuthContext'
 import AppShell from '@/components/AppShell'
-import { Check, X, RefreshCw, Eye, FileText, AlertCircle, Search, ShieldCheck, User, Trash2 } from 'lucide-react'
+import { Check, X, RefreshCw, Eye, FileText, AlertCircle, Search, ShieldCheck, User, Trash2, Clock } from 'lucide-react'
 import CustomDropdown from '@/components/CustomDropdown'
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
@@ -20,6 +20,7 @@ interface Competitor {
   phoneNumber?: string | null
   address?: string | null
   experience?: string | null
+  lastLoginAt?: string | null
   createdAt: string
 }
 
@@ -120,6 +121,20 @@ function DeleteModal({
       </div>
     </div>
   )
+}
+
+
+const formatLastLogin = (dateString?: string | null) => {
+  if (!dateString) return 'Never'
+  const date = new Date(dateString)
+  const now = new Date()
+  const diffInMs = now.getTime() - date.getTime()
+  const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24))
+  
+  if (diffInDays === 0) return 'Today'
+  if (diffInDays === 1) return 'Yesterday'
+  if (diffInDays < 30) return `${diffInDays}d ago`
+  return date.toLocaleDateString()
 }
 
 function ModeratorVerifyContent() {
@@ -353,6 +368,9 @@ function ModeratorVerifyContent() {
                         <div>
                           <div className="font-bold text-white group-hover:text-(--accent-cyan) transition-colors">{user.fullName}</div>
                           <div className="text-[11px] text-(--text-muted) font-mono">{user.email}</div>
+                          <div className="text-[9px] text-(--text-muted) mt-1 flex items-center gap-1 opacity-70">
+                            <Clock size={10} /> Active: {formatLastLogin(user.lastLoginAt)}
+                          </div>
                         </div>
                       </div>
                     </td>
@@ -453,6 +471,9 @@ function ModeratorVerifyContent() {
                     <div className="min-w-0">
                       <div className="font-bold text-white truncate">{user.fullName}</div>
                       <div className="text-[11px] text-(--text-muted) font-mono truncate">{user.email}</div>
+                      <div className="text-[10px] text-(--text-muted) mt-1 flex items-center gap-1">
+                        <Clock size={10} /> Active: {formatLastLogin(user.lastLoginAt)}
+                      </div>
                     </div>
                   </div>
                   {statusBadge(user.competitorStatus)}

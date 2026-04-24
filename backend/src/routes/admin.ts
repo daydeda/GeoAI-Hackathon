@@ -413,6 +413,7 @@ export async function adminRoutes(app: FastifyInstance) {
       idCardUploaded: Boolean(u.idCardFileKey),
       competitorStatus: (u as { competitorStatus?: string | null }).competitorStatus ?? null,
       moderatorNote: (u as { moderatorNote?: string | null }).moderatorNote ?? null,
+      lastLoginAt: (u as any).lastLoginAt ?? null,
       roles: u.userRoles.map(ur => ur.role.name), createdAt: u.createdAt,
     })), total }
   })
