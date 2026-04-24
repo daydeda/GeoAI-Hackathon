@@ -5,7 +5,7 @@ import { AuthProvider } from '@/contexts/AuthContext'
 import AppShell from '@/components/AppShell'
 import { Search, ExternalLink, ChevronDown, ChevronUp, X } from 'lucide-react'
 
-const ITEMS_LIMIT = 4
+
 
 interface ResourceItem {
   title: string
@@ -211,24 +211,11 @@ function getAllTags(sections: Section[]): string[] {
 }
 
 function ResourcesContent() {
-  const [expandedSections, setExpandedSections] = useState<Set<number>>(new Set())
   const [searchQuery, setSearchQuery] = useState('')
   const [activeTags, setActiveTags] = useState<Set<string>>(new Set())
   const [filterOpen, setFilterOpen] = useState(false)
 
   const allTags = useMemo(() => getAllTags(sections), [])
-
-  const toggleSection = (idx: number) => {
-    setExpandedSections(prev => {
-      const next = new Set(prev)
-      if (next.has(idx)) {
-        next.delete(idx)
-      } else {
-        next.add(idx)
-      }
-      return next
-    })
-  }
 
   const toggleTag = (tag: string) => {
     setActiveTags(prev => {
@@ -437,18 +424,6 @@ function ResourcesContent() {
       {filteredSections.length > 0 && (
         <div className="flex-1 flex flex-col gap-10 sm:gap-16 mb-8 sm:mb-12">
           {filteredSections.map((sec) => {
-            // Use original section index for expand state (so it doesn't shift when filtering)
-            const originalIdx = sections.findIndex(s => s.title === sec.title)
-            const isExpanded = expandedSections.has(originalIdx)
-
-            // When search/filter is active → show all matches (no limit)
-            const isFiltering = hasFilters
-            const visibleItems = isFiltering || isExpanded
-              ? sec.items
-              : sec.items.slice(0, ITEMS_LIMIT)
-            const hiddenCount = sec.items.length - ITEMS_LIMIT
-            const hasMore = !isFiltering && sec.items.length > ITEMS_LIMIT
-
             return (
               <div key={sec.title} className="flex flex-col gap-6">
                 {/* Section header */}
@@ -475,7 +450,7 @@ function ResourcesContent() {
 
                 {/* Cards Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {visibleItems.map((item, i) => (
+                  {sec.items.map((item, i) => (
                     <div
                       key={i}
                       className="bg-(--bg-surface) border border-[rgba(255,255,255,0.05)] rounded p-4 sm:p-6 flex flex-col hover:border-[rgba(255,255,255,0.12)] hover:shadow-[0_8px_32px_rgba(0,0,0,0.4)] transition-all duration-300 group"
@@ -563,25 +538,7 @@ function ResourcesContent() {
                   ))}
                 </div>
 
-                {/* Show more / less — hidden when actively filtering */}
-                {hasMore && (
-                  <div className="flex justify-center mt-4">
-                    <button
-                      onClick={() => toggleSection(originalIdx)}
-                      className="px-8 py-2.5 rounded-full border border-[rgba(255,255,255,0.1)] flex items-center justify-center gap-3 text-[10px] tracking-[0.2em] font-bold text-(--text-secondary) hover:text-white hover:border-(--accent-cyan) hover:bg-[rgba(0,229,255,0.05)] transition-all duration-300"
-                    >
-                      {isExpanded ? (
-                        <>
-                          <ChevronUp size={14} /> COLLAPSE REGISTRY
-                        </>
-                      ) : (
-                        <>
-                          <ChevronDown size={14} /> DECRYPT {hiddenCount} ADDITIONAL ENTRIES
-                        </>
-                      )}
-                    </button>
-                  </div>
-                )}
+
               </div>
             )
           })}
