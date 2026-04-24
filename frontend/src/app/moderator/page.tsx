@@ -312,6 +312,7 @@ function ModeratorContent() {
               <th className="py-2 sm:py-3 px-2 sm:px-3 text-[8px] sm:text-xs text-(--text-muted) font-semibold tracking-widest">TEAM</th>
               <th className="py-2 sm:py-3 px-2 sm:px-3 text-[8px] sm:text-xs text-(--text-muted) font-semibold tracking-widest hidden sm:table-cell">TRACK</th>
               <th className="py-2 sm:py-3 px-2 sm:px-3 text-[8px] sm:text-xs text-(--text-muted) font-semibold tracking-widest hidden md:table-cell">SUBMITTED</th>
+              <th className="py-2 sm:py-3 px-2 sm:px-3 text-[8px] sm:text-xs text-(--text-muted) font-semibold tracking-widest text-center">VERSION</th>
               <th className="py-2 sm:py-3 px-2 sm:px-3 text-[8px] sm:text-xs text-(--text-muted) font-semibold tracking-widest">STATUS</th>
               <th className="py-2 sm:py-3 px-2 sm:px-3 text-[8px] sm:text-xs text-(--text-muted) font-semibold tracking-widest">NOTE</th>
               <th className="py-2 sm:py-3 px-2 sm:px-3 text-[8px] sm:text-xs text-(--text-muted) font-semibold tracking-widest text-right">ACTION</th>
@@ -323,17 +324,20 @@ function ModeratorContent() {
                 <td className="py-2 sm:py-3 px-2 sm:px-3 font-semibold text-xs sm:text-sm text-white truncate">{sub.team.name}</td>
                 <td className="py-2 sm:py-3 px-2 sm:px-3 text-(--text-secondary) hidden sm:table-cell truncate text-xs sm:text-sm">{formatTrackLabel(sub.team.track)}</td>
                 <td className="py-2 sm:py-3 px-2 sm:px-3 font-mono text-(--text-muted) hidden md:table-cell text-[8px] sm:text-xs">{new Date(sub.submittedAt).toLocaleDateString()}</td>
+                <td className="py-2 sm:py-3 px-2 sm:px-3 text-center">
+                  <span className="text-[10px] font-mono text-(--accent-cyan) bg-[rgba(0,229,255,0.05)] border border-[rgba(0,229,255,0.2)] px-1.5 py-0.5 rounded">
+                    v{sub.version}
+                  </span>
+                </td>
                 <td className="py-2 sm:py-3 px-2 sm:px-3">
                   {sub.moderatorReview ? (
                     <span className={`inline-block text-[8px] sm:text-xs font-bold py-1 px-2 rounded border ${sub.moderatorReview.status === 'PASS' ? 'text-(--accent-green) border-[rgba(0,230,118,0.3)] bg-[rgba(0,230,118,0.1)]' : 'text-[#ff6275] border-[rgba(255,98,117,0.3)] bg-[rgba(255,98,117,0.1)]'}`}>
                       ■ {sub.moderatorReview.status}
                     </span>
-                  ) : sub.version > 1 ? (
+                  ) : (
                     <span className="inline-block text-[8px] sm:text-xs font-bold py-1 px-2 rounded border text-[rgba(255,167,38,1)] border-[rgba(255,167,38,0.3)] bg-[rgba(255,167,38,0.1)] text-center w-full max-w-[80px]">
                       PENDING
                     </span>
-                  ) : (
-                    <span className="text-(--text-muted) text-[8px] sm:text-xs font-semibold">PENDING</span>
                   )}
                 </td>
                 <td className="py-2 sm:py-3 px-2 sm:px-3">
