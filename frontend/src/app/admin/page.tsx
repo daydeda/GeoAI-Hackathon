@@ -140,6 +140,7 @@ function AdminContent() {
   const [sendingAnnouncement, setSendingAnnouncement] = useState(false)
   const [announcementStatus, setAnnouncementStatus] =
     useState<AnnouncementEmailStatus | null>(null)
+  const [totalSubmissions, setTotalSubmissions] = useState(0)
   const [confirmAction, setConfirmAction] = useState<{
     type: 'PROMOTE' | 'DISQUALIFY' | 'REVOKE' | 'RESTORE'
     teamId: string
@@ -204,11 +205,12 @@ function AdminContent() {
       const trimmedTeamSearch = teamSearch.trim()
       if (trimmedTeamSearch) teamParams.set('search', trimmedTeamSearch)
 
-      const [usersRes, teamsRes, logsRes, announcementRes] = await Promise.all([
+      const [usersRes, teamsRes, logsRes, announcementRes, statsRes] = await Promise.all([
         fetch(`${API}/api/v1/admin/users?${userParams.toString()}`, opts),
         fetch(`${API}/api/v1/admin/teams?${teamParams.toString()}`, opts),
         fetch(`${API}/api/v1/admin/audit-logs?limit=10`, opts),
         fetch(`${API}/api/v1/admin/announcement-email/status`, opts),
+        fetch(`${API}/api/v1/admin/stats/overview`, opts),
       ])
 
       clearTimeout(timeoutId)
@@ -237,6 +239,10 @@ function AdminContent() {
       if (announcementRes.ok) {
         const d = await announcementRes.json()
         setAnnouncementStatus(d)
+      }
+      if (statsRes.ok) {
+        const d = await statsRes.json()
+        setTotalSubmissions(d.totals?.submissions || 0)
       }
     } catch (err) {
       if ((err as Error).name === 'AbortError') {
@@ -649,9 +655,7 @@ function AdminContent() {
           },
           {
             label: 'TOTAL PROPOSALS',
-            value: teams
-              .reduce((acc, t) => acc + (t.submissions?.length || 0), 0)
-              .toLocaleString(),
+            value: totalSubmissions.toLocaleString(),
             change: 'Submitted PDFs',
             changeColor: 'var(--text-muted)',
             color: 'var(--accent-amber)',
