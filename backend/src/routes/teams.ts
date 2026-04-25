@@ -88,7 +88,7 @@ export async function teamRoutes(app: FastifyInstance) {
       include: {
         team: {
           include: {
-            members: { include: { user: { select: { id: true, email: true, fullName: true, avatarUrl: true } } } },
+            members: { include: { user: { select: { id: true, email: true, fullName: true, avatarUrl: true, competitorStatus: true, moderatorNote: true } } } },
             leader: { select: { id: true, email: true, fullName: true } },
             invites: { where: { revoked: false } },
             submissions: {
@@ -121,6 +121,8 @@ export async function teamRoutes(app: FastifyInstance) {
         email: m.user.email,
         fullName: m.user.fullName,
         avatarUrl: m.user.avatarUrl,
+        competitorStatus: m.user.competitorStatus,
+        moderatorNote: m.user.moderatorNote,
         isLeader: m.userId === team.leaderId,
         joinedAt: m.joinedAt,
       })),

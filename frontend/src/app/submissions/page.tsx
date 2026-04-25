@@ -1,11 +1,12 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
+import Link from 'next/link'
 import { AuthProvider, useAuth } from '@/contexts/AuthContext'
 import AppShell from '@/components/AppShell'
 import { useDropzone } from 'react-dropzone'
 import { useCompetitionPhases } from '@/hooks/useCompetitionPhases'
-import { AlertTriangle, CheckSquare, FileText, Square, UploadCloud } from 'lucide-react'
+import { AlertTriangle, CheckSquare, FileText, Square, UploadCloud, ShieldAlert } from 'lucide-react'
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
 const LIVE_REFRESH_MS = 8000
@@ -23,6 +24,15 @@ interface Submission {
   judgeEvaluations?: Array<{
     comment?: string
   }>
+}
+
+interface TeamMember {
+  userId: string
+  fullName: string
+  email: string
+  competitorStatus?: string
+  moderatorNote?: string
+  isLeader: boolean
 }
 
 interface UploadErrorPayload {
@@ -48,6 +58,8 @@ function SubmissionsContent() {
   const [history, setHistory] = useState<Submission[]>([])
   const [hasTeam, setHasTeam] = useState(true)
   const [loading, setLoading] = useState(true)
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([])
+  const [isAnyMemberRejected, setIsAnyMemberRejected] = useState(false)
 
   const [file, setFile] = useState<File | null>(null)
   const [gistda, setGistda] = useState(false)
@@ -63,8 +75,23 @@ function SubmissionsContent() {
         return
       }
       setHasTeam(true)
-      const res = await fetch(`${API}/api/v1/submissions`, { credentials: 'include' })
-      if (res.ok) { const d = await res.json(); setHistory(d.data ?? []) }
+
+      // Fetch both history and team details (for member status)
+      const [historyRes, teamRes] = await Promise.all([
+        fetch(`${API}/api/v1/submissions`, { credentials: 'include' }),
+        fetch(`${API}/api/v1/teams/my`, { credentials: 'include' })
+      ])
+
+      if (historyRes.ok) {
+        const d = await historyRes.json()
+        setHistory(d.data ?? [])
+      }
+
+      if (teamRes.ok) {
+        const teamData = await teamRes.json()
+        setTeamMembers(teamData.members || [])
+        setIsAnyMemberRejected(teamData.members?.some((m: TeamMember) => m.competitorStatus === 'INCORRECT_COMPETITOR'))
+      }
     } finally {
       setLoading(false)
     }
@@ -257,6 +284,30 @@ function SubmissionsContent() {
           <div className="mb-4 sm:mb-6 p-3 sm:p-4 rounded-md bg-[rgba(255,23,68,0.1)] border border-(--accent-red) text-(--accent-red) text-xs sm:text-sm flex items-start gap-2 sm:gap-3">
             <AlertTriangle size={16} className="mt-0.5 flex-shrink-0" />
             <span>{error}</span>
+          </div>
+        )}
+
+        {/* Global Warning for Rejected Members */}
+        {isAnyMemberRejected && (
+          <div className="mb-6 flex gap-3 rounded-lg border border-[rgba(255,98,117,0.4)] bg-[rgba(255,98,117,0.08)] p-4 shadow-[0_4px_20px_rgba(255,98,117,0.15)]">
+            <ShieldAlert size={18} className="mt-0.5 shrink-0 text-[#ff6275]" />
+            <div className="min-w-0">
+              <div className="mb-1 text-xs font-bold tracking-[0.06em] text-[#ff6275]">ต้องดำเนินการ — สมาชิกในทีมไม่ผ่านการตรวจสอบโปรไฟล์</div>
+              <p className="text-sm leading-relaxed text-(--text-secondary)">
+                สมาชิกในทีมมีอย่างน้อย 1 คนที่โปรไฟล์ไม่ผ่านการตรวจสอบ โปรดให้สมาชิกแก้ไขข้อมูลในหน้า{' '}
+                <Link href="/settings" className="font-semibold text-(--accent-cyan) underline decoration-(--accent-cyan)/30 underline-offset-4 transition hover:text-white hover:decoration-white">
+                  Settings
+                </Link>{' '}
+                ก่อนส่งให้ทีมงานตรวจสอบอีกครั้ง
+              </p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {teamMembers.filter(m => m.competitorStatus === 'INCORRECT_COMPETITOR').map(m => (
+                  <span key={m.userId} className="text-[10px] font-bold text-[#ff6275] bg-[rgba(255,98,117,0.1)] px-2 py-1 rounded border border-[#ff6275]/30">
+                    {m.fullName}
+                  </span>
+                ))}
+              </div>
+            </div>
           </div>
         )}
 

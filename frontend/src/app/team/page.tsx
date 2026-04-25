@@ -1,16 +1,17 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
+import Link from 'next/link'
 import { AuthProvider } from '@/contexts/AuthContext'
 import AppShell from '@/components/AppShell'
 import { useAuth, TeamInfo } from '@/contexts/AuthContext'
 import CustomDropdown from '@/components/CustomDropdown'
-import { AlertTriangle, Trash2, ChevronDown } from 'lucide-react'
+import { AlertTriangle, Trash2, ChevronDown, ShieldAlert } from 'lucide-react'
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
 const LIVE_REFRESH_MS = 8000
 
-interface Member { fullName: string; email: string; isLeader: boolean; userId: string }
+interface Member { fullName: string; email: string; isLeader: boolean; userId: string; competitorStatus?: string; moderatorNote?: string }
 interface TeamData extends TeamInfo { institution: string; memberCount: number; members: Member[]; inviteCode: string; activeSubmission?: { id: string } | null }
 
 function TeamContent() {
@@ -248,6 +249,30 @@ function TeamContent() {
           </div>
         )}
 
+        {/* Global Warning for Rejected Members */}
+        {team?.members.some(m => m.competitorStatus === 'INCORRECT_COMPETITOR') && (
+          <div className="mb-6 flex gap-3 rounded-lg border border-[rgba(255,98,117,0.4)] bg-[rgba(255,98,117,0.08)] p-4 shadow-[0_4px_20px_rgba(255,98,117,0.15)]">
+            <ShieldAlert size={18} className="mt-0.5 shrink-0 text-[#ff6275]" />
+            <div className="min-w-0">
+              <div className="mb-1 text-xs font-bold tracking-[0.06em] text-[#ff6275]">ต้องดำเนินการ — สมาชิกในทีมไม่ผ่านการตรวจสอบโปรไฟล์</div>
+              <p className="text-sm leading-relaxed text-(--text-secondary)">
+                สมาชิกในทีมมีอย่างน้อย 1 คนที่โปรไฟล์ไม่ผ่านการตรวจสอบ โปรดให้สมาชิกแก้ไขข้อมูลในหน้า{' '}
+                <Link href="/settings" className="font-semibold text-(--accent-cyan) underline decoration-(--accent-cyan)/30 underline-offset-4 transition hover:text-white hover:decoration-white">
+                  Settings
+                </Link>{' '}
+                ก่อนส่งให้ทีมงานตรวจสอบอีกครั้ง
+              </p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {team?.members.filter(m => m.competitorStatus === 'INCORRECT_COMPETITOR').map(m => (
+                  <span key={m.userId} className="text-[10px] font-bold text-[#ff6275] bg-[rgba(255,98,117,0.1)] px-2 py-1 rounded border border-[#ff6275]/30">
+                    {m.fullName}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
         {!team ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
             {/* Create Team */}
@@ -449,8 +474,21 @@ function TeamContent() {
                     {team.members.map(m => (
                       <tr key={m.userId} className="border-b border-(--border-subtle) hover:bg-[rgba(0,229,255,0.02)]">
                         <td className="py-3 px-2">
-                          <div className="font-semibold text-xs sm:text-sm">{m.fullName} {m.userId === user?.id && '(You)'}</div>
+                          <div className="flex items-center gap-2">
+                            <div className="font-semibold text-xs sm:text-sm">{m.fullName} {m.userId === user?.id && '(You)'}</div>
+                            {m.competitorStatus === 'INCORRECT_COMPETITOR' && (
+                              <span className="flex items-center gap-1 text-[10px] font-bold text-[#ff6275] bg-[rgba(255,98,117,0.1)] px-1.5 py-0.5 rounded border border-[#ff6275]/30">
+                                <ShieldAlert size={10} />
+                                REJECTED
+                              </span>
+                            )}
+                          </div>
                           <div className="text-[10px] text-(--text-muted) truncate">{m.email}</div>
+                          {m.competitorStatus === 'INCORRECT_COMPETITOR' && m.moderatorNote && (
+                            <div className="mt-1 text-[10px] italic text-[#ff6275]/80 line-clamp-1">
+                              &quot;{m.moderatorNote}&quot;
+                            </div>
+                          )}
                         </td>
                         <td className="py-3 px-2">
                           <span className={`badge text-[10px] px-2 py-1 rounded ${m.isLeader ? 'bg-(--accent-cyan) text-(--bg-base)' : 'bg-(--bg-base) text-(--accent-cyan)'}`}>

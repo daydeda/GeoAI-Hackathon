@@ -233,7 +233,7 @@ function SettingsContent() {
           <div>
             <div className="mb-1 text-xs font-bold tracking-[0.06em] text-[#ff6275]">MODERATOR REVIEW — ACTION REQUIRED</div>
             <p className="text-sm leading-relaxed text-(--text-secondary)">
-              Your submission was flagged. Please review the reason below and update your profile accordingly before resubmitting.
+              ข้อมูลที่คุณส่งมาไม่ผ่านการตรวจสอบ โปรดตรวจสอบสาเหตุผลด้านล่างและแก้ไขข้อมูลโปรไฟล์ให้ถูกต้อง
             </p>
             <div className="mt-2 rounded border border-[rgba(255,98,117,0.3)] bg-[rgba(5,13,26,0.5)] px-3 py-2 text-sm italic text-(--text-secondary)">
               &quot;{moderatorNote}&quot;

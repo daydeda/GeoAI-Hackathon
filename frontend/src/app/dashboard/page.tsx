@@ -13,6 +13,7 @@ import {
   FileText,
   Leaf,
   Play,
+  ShieldAlert,
   Upload,
   Waves,
 } from 'lucide-react'
@@ -147,6 +148,26 @@ function DashboardContent() {
           </div>
         </div>
       </div>
+
+      {/* Moderator note callout (INCORRECT_COMPETITOR) */}
+      {user?.competitorStatus === 'INCORRECT_COMPETITOR' && user?.moderatorNote && (
+        <div className="mb-6 flex gap-3 rounded-lg border border-[rgba(255,98,117,0.4)] bg-[rgba(255,98,117,0.08)] p-4 shadow-[0_4px_20px_rgba(255,98,117,0.15)]">
+          <ShieldAlert size={18} className="mt-0.5 shrink-0 text-[#ff6275]" />
+          <div className="min-w-0">
+            <div className="mb-1 text-xs font-bold tracking-[0.06em] text-[#ff6275]">MODERATOR REVIEW — ACTION REQUIRED</div>
+            <p className="text-sm leading-relaxed text-(--text-secondary)">
+              พบข้อมูลที่ไม่ถูกต้องในโปรไฟล์ของคุณ โปรดทำการแก้ไขข้อมูลในหน้า{' '}
+              <Link href="/settings" className="font-semibold text-(--accent-cyan) underline decoration-(--accent-cyan)/30 underline-offset-4 transition hover:text-white hover:decoration-white">
+                Settings
+              </Link>{' '}
+              ก่อนส่งให้ทีมงานตรวจสอบอีกครั้ง
+            </p>
+            <div className="mt-2 rounded border border-[rgba(255,98,117,0.3)] bg-[rgba(5,13,26,0.5)] px-3 py-2 text-sm italic text-(--text-secondary)">
+              &quot;{user.moderatorNote}&quot;
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-[300px_minmax(0,1fr)]">
         {/* Left Column */}
