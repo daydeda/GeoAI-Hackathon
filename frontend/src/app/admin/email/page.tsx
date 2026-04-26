@@ -200,16 +200,20 @@ function BulkEmailContent() {
         // Refresh recipients to reflect any changes
         fetchRecipients()
       } else {
-        const errorMsg = d.error || d.message || 'Failed to send bulk email'
+        const isTimeout = res.status === 504 || res.status === 408
+        const errorMsg = isTimeout 
+          ? 'Dispatch is taking longer than expected. It is likely still running in the background. Please check the logs or your inbox in a few minutes.'
+          : d.error || d.message || 'Failed to send bulk email'
+        
         setSendResult({ 
           sent: d.sent ?? 0, 
-          failed: d.failed ?? (selectedIds.size || 1), 
+          failed: isTimeout ? 0 : (d.failed ?? selectedIds.size), 
           message: errorMsg, 
           failures: d.failures ?? [] 
         })
       }
     } catch {
-      setSendResult({ sent: 0, failed: 1, message: 'Network error. Please try again.', failures: [] })
+      setSendResult({ sent: 0, failed: 0, message: 'Network error or timeout. The task might still be running on the server. Please refresh in a few minutes.', failures: [] })
     } finally {
       setSending(false)
     }

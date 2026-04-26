@@ -35,7 +35,7 @@ function createTransporter() {
   if (refreshToken && oauthClientId && oauthClientSecret) {
     return nodemailer.createTransport({
       pool: true,
-      maxConnections: 3,
+      maxConnections: 10,
       maxMessages: 100,
       host, port, secure,
       auth: { type: 'OAuth2', user, clientId: oauthClientId, clientSecret: oauthClientSecret, refreshToken },
@@ -46,7 +46,7 @@ function createTransporter() {
 
   return nodemailer.createTransport({ 
     pool: true,
-    maxConnections: 3,
+    maxConnections: 10,
     maxMessages: 100,
     host, port, secure, 
     auth: { user, pass } 
@@ -76,7 +76,7 @@ export async function sendBulkEmail(input: BulkEmailInput): Promise<BulkEmailRes
     }
 
     // Process in limited concurrency batches
-    const BATCH_SIZE = 10
+    const BATCH_SIZE = 25
     
     // Pre-calculate plain text body once to save CPU
     const basePlainText = htmlToPlainText(input.htmlBody)
@@ -130,9 +130,9 @@ export async function sendBulkEmail(input: BulkEmailInput): Promise<BulkEmailRes
         }
       }
 
-      // Safety pause: Wait 1 second between batches
+      // Safety pause: Wait 500ms between batches
       if (i + BATCH_SIZE < input.recipients.length) {
-        await new Promise((r) => setTimeout(r, 1000))
+        await new Promise((r) => setTimeout(r, 500))
       }
     }
   } finally {
