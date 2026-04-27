@@ -91,7 +91,7 @@ function ModeratorContent() {
   const [teamOverviewTotal, setTeamOverviewTotal] = useState(0)
   const [teamOverviewPage, setTeamOverviewPage] = useState(1)
   const [total, setTotal] = useState(0)
-  const [stats, setStats] = useState({ PENDING: 0, APPROVED: 0, DISQUALIFIED: 0, TOTAL: 0 })
+  const [stats, setStats] = useState({ PENDING: 0, APPROVED: 0, DISQUALIFIED: 0, DRAFT: 0, TOTAL: 0 })
   const [loading, setLoading] = useState(true)
   const [trackFilter, setTrackFilter] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
@@ -180,12 +180,13 @@ function ModeratorContent() {
 
       {/* Stats Grid */}
       <div className="border-b border-(--border-subtle) bg-[rgba(255,255,255,0.01)] px-4 sm:px-6 lg:px-8 py-3 sm:py-4">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-3">
             {[
+            { label: 'NOT SUBMITTED', value: stats.DRAFT, color: 'text-(--text-muted)' },
             { label: 'PENDING', value: stats.PENDING, color: 'text-(--accent-amber)' },
             { label: 'APPROVED', value: stats.APPROVED, color: 'text-(--accent-green)' },
             { label: 'DISQUALIFIED', value: stats.DISQUALIFIED, color: 'text-[#ff6275]' },
-            { label: 'TOTAL', value: stats.TOTAL, color: 'text-white' },
+            { label: 'TOTAL TEAMS', value: stats.TOTAL, color: 'text-white' },
           ].map((stat, i) => (
             <div key={i} className="bg-(--bg-base) p-2 sm:p-3 lg:p-4 rounded border border-(--border-subtle)">
               <div className="text-[7px] sm:text-[8px] lg:text-xs text-(--text-muted) tracking-widest uppercase mb-1">{stat.label}</div>

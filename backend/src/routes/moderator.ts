@@ -28,7 +28,12 @@ export async function moderatorRoutes(app: FastifyInstance) {
     const { status, track, page = '1', limit = '20' } = request.query as Record<string, string>
 
     const where: any = { isActive: true }
-    if (track) where.team = { track }
+    const teamWhere: any = {}
+    
+    if (track) {
+      where.team = { track }
+      teamWhere.track = track
+    }
 
     const normalizedFilterStatus = status === 'DISQUALIFIED' ? 'FAIL' : status
     const listWhere = { ...where }
@@ -38,12 +43,13 @@ export async function moderatorRoutes(app: FastifyInstance) {
       listWhere.moderatorReview = { status: normalizedFilterStatus }
     }
 
-    const [totalMatching, pendingCount, approvedCount, disqualifiedCount, totalInTrack] = await Promise.all([
+    const [totalMatching, pendingCount, approvedCount, disqualifiedCount, draftCount, totalTeams] = await Promise.all([
       prisma.submission.count({ where: listWhere }),
-      prisma.submission.count({ where: { ...where, moderatorReview: null } }),
-      prisma.submission.count({ where: { ...where, moderatorReview: { status: 'PASS' } } }),
-      prisma.submission.count({ where: { ...where, moderatorReview: { status: 'FAIL' } } }),
-      prisma.submission.count({ where })
+      prisma.team.count({ where: { ...teamWhere, currentStatus: 'SUBMITTED' } }),
+      prisma.team.count({ where: { ...teamWhere, currentStatus: { in: ['PRE_SCREEN_PASSED', 'JUDGED', 'FINALIST'] } } }),
+      prisma.team.count({ where: { ...teamWhere, currentStatus: 'REJECTED' } }),
+      prisma.team.count({ where: { ...teamWhere, currentStatus: 'DRAFT' } }),
+      prisma.team.count({ where: teamWhere })
     ])
 
     const submissions = await prisma.submission.findMany({
@@ -73,7 +79,8 @@ export async function moderatorRoutes(app: FastifyInstance) {
         PENDING: pendingCount,
         APPROVED: approvedCount,
         DISQUALIFIED: disqualifiedCount,
-        TOTAL: totalInTrack,
+        DRAFT: draftCount,
+        TOTAL: totalTeams,
       },
       page: Number(page),
       limit: Number(limit),
