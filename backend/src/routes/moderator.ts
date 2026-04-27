@@ -27,10 +27,27 @@ export async function moderatorRoutes(app: FastifyInstance) {
   app.get('/submissions', { preHandler: [requireRole('MODERATOR', 'ADMIN')] }, async (request, reply) => {
     const { status, track, page = '1', limit = '20' } = request.query as Record<string, string>
 
-    const where: Record<string, unknown> = { isActive: true }
+    const where: any = { isActive: true }
+    if (track) where.team = { track }
+
+    const normalizedFilterStatus = status === 'DISQUALIFIED' ? 'FAIL' : status
+    const listWhere = { ...where }
+    if (normalizedFilterStatus === 'PENDING') {
+      listWhere.moderatorReview = null
+    } else if (normalizedFilterStatus) {
+      listWhere.moderatorReview = { status: normalizedFilterStatus }
+    }
+
+    const [totalMatching, pendingCount, approvedCount, disqualifiedCount, totalInTrack] = await Promise.all([
+      prisma.submission.count({ where: listWhere }),
+      prisma.submission.count({ where: { ...where, moderatorReview: null } }),
+      prisma.submission.count({ where: { ...where, moderatorReview: { status: 'PASS' } } }),
+      prisma.submission.count({ where: { ...where, moderatorReview: { status: 'FAIL' } } }),
+      prisma.submission.count({ where })
+    ])
 
     const submissions = await prisma.submission.findMany({
-      where,
+      where: listWhere,
       include: {
         team: true,
         files: true,
@@ -41,20 +58,8 @@ export async function moderatorRoutes(app: FastifyInstance) {
       take: Number(limit),
     })
 
-    // Apply filters
-    let filtered = submissions
-    const normalizedFilterStatus = status === 'DISQUALIFIED' ? 'FAIL' : status
-    if (normalizedFilterStatus) {
-      filtered = filtered.filter(
-        s => s.moderatorReview?.status === normalizedFilterStatus || (normalizedFilterStatus === 'PENDING' && !s.moderatorReview),
-      )
-    }
-    if (track) filtered = filtered.filter(s => s.team.track === track)
-
-    const total = await prisma.submission.count({ where })
-
     return {
-      data: filtered.map((submission) => ({
+      data: submissions.map((submission) => ({
         ...submission,
         moderatorReview: submission.moderatorReview
           ? {
@@ -63,7 +68,13 @@ export async function moderatorRoutes(app: FastifyInstance) {
             }
           : null,
       })),
-      total,
+      total: totalMatching,
+      counts: {
+        PENDING: pendingCount,
+        APPROVED: approvedCount,
+        DISQUALIFIED: disqualifiedCount,
+        TOTAL: totalInTrack,
+      },
       page: Number(page),
       limit: Number(limit),
       announcementDate: ANNOUNCEMENT_DATE,
