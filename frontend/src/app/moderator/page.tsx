@@ -98,13 +98,16 @@ function ModeratorContent() {
   const [search, setSearch] = useState('')
   const [previewSubmissionId, setPreviewSubmissionId] = useState<string | null>(null)
   const [rejectionTarget, setRejectionTarget] = useState<Submission | null>(null)
+  const [submissionsPage, setSubmissionsPage] = useState(1)
+  const SUBMISSIONS_LIMIT = 50
+  const totalSubmissionsPages = Math.max(1, Math.ceil(total / SUBMISSIONS_LIMIT))
   const TEAM_OVERVIEW_LIMIT = 10
   const totalTeamOverviewPages = Math.max(1, Math.ceil(teamOverviewTotal / TEAM_OVERVIEW_LIMIT))
 
   const fetchSubmissions = useCallback(async () => {
     setLoading(true)
     try {
-      const qs = new URLSearchParams({ limit: '50' })
+      const qs = new URLSearchParams({ page: String(submissionsPage), limit: String(SUBMISSIONS_LIMIT) })
       if (trackFilter) qs.set('track', trackFilter)
       if (statusFilter) qs.set('status', statusFilter)
 
@@ -130,7 +133,7 @@ function ModeratorContent() {
     } finally {
       setLoading(false)
     }
-  }, [trackFilter, statusFilter, teamOverviewPage])
+  }, [trackFilter, statusFilter, teamOverviewPage, submissionsPage])
 
   useEffect(() => { fetchSubmissions() }, [fetchSubmissions])
 
@@ -386,6 +389,29 @@ function ModeratorContent() {
             ))}
           </tbody>
         </table>
+        <div className="mt-4 flex flex-col gap-2 border-t border-(--border-subtle) pt-3 text-[11px] text-(--text-muted) sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            Page {submissionsPage} of {totalSubmissionsPages} · Showing {submissions.length} / {total} matching submissions
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setSubmissionsPage((p) => Math.max(1, p - 1))}
+              disabled={submissionsPage <= 1 || loading}
+              className="rounded border border-(--border-subtle) px-2 py-1 text-[11px] text-(--text-secondary) disabled:opacity-50"
+            >
+              Prev
+            </button>
+            <button
+              type="button"
+              onClick={() => setSubmissionsPage((p) => Math.min(totalSubmissionsPages, p + 1))}
+              disabled={submissionsPage >= totalSubmissionsPages || loading}
+              className="rounded border border-(--border-subtle) px-2 py-1 text-[11px] text-(--text-secondary) disabled:opacity-50"
+            >
+              Next
+            </button>
+          </div>
+        </div>
       </div>
 
       {rejectionTarget && (
