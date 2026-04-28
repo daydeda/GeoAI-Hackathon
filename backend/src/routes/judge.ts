@@ -351,6 +351,10 @@ export async function judgeRoutes(app: FastifyInstance) {
       const file = sub.files[0]
       if (!file) continue
 
+      const displayId = displayIdMap.get(sub.id) || '?'
+      const safeTeamName = sub.team.name.replace(/[/\\?%*:|"<>]/g, '-')
+      const zipFileName = `ID_${displayId}_${safeTeamName}_${file.originalName}`
+
       try {
         // Download from MinIO
         const dataStream = await minioClient.getObject(BUCKET, file.fileKey)
@@ -371,7 +375,6 @@ export async function judgeRoutes(app: FastifyInstance) {
           : await pdfDoc.embedFont(StandardFonts.Helvetica)
 
         const pages = pdfDoc.getPages()
-        const displayId = displayIdMap.get(sub.id) || '?'
 
         for (const page of pages) {
           const { width } = page.getSize()
@@ -396,11 +399,6 @@ export async function judgeRoutes(app: FastifyInstance) {
         }
 
         const modifiedPdf = await pdfDoc.save()
-        
-        // Add to ZIP with team name prefix and ID to ensure uniqueness
-        const displayId = displayIdMap.get(sub.id) || '?'
-        const safeTeamName = sub.team.name.replace(/[/\\?%*:|"<>]/g, '-')
-        const zipFileName = `ID_${displayId}_${safeTeamName}_${file.originalName}`
         zip.file(zipFileName, modifiedPdf)
 
       } catch (err) {
@@ -408,10 +406,6 @@ export async function judgeRoutes(app: FastifyInstance) {
         
         // If watermarking/PDF processing fails, still try to include the raw file in the ZIP
         try {
-          const displayId = displayIdMap.get(sub.id) || '?'
-          const safeTeamName = sub.team.name.replace(/[/\\?%*:|"<>]/g, '-')
-          const zipFileName = `ID_${displayId}_${safeTeamName}_${file.originalName}`
-          
           const dataStream = await minioClient.getObject(BUCKET, file.fileKey)
           const chunks: Buffer[] = []
           for await (const chunk of dataStream) {
