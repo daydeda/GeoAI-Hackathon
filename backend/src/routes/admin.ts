@@ -506,18 +506,20 @@ export async function adminRoutes(app: FastifyInstance) {
     const allowedTracks = new Set(['SMART_AGRICULTURE', 'DISASTER_FLOOD_RESPONSE'])
     const trackFilter = normalizedTrack && allowedTracks.has(normalizedTrack) ? normalizedTrack : null
     const normalizedSearch = search?.trim()
+    const looksLikeUuid = Boolean(normalizedSearch && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(normalizedSearch))
+    
     const where: Prisma.TeamWhereInput = {
-      ...(trackFilter
-        ? {
-            track: trackFilter as never,
-          }
-        : {}),
+      ...(trackFilter ? { track: trackFilter as never } : {}),
       ...(normalizedSearch
         ? {
-            name: {
-              contains: normalizedSearch,
-              mode: 'insensitive' as const,
-            },
+            OR: [
+              { name: { contains: normalizedSearch, mode: 'insensitive' as const } },
+              { leader: { fullName: { contains: normalizedSearch, mode: 'insensitive' as const } } },
+              { leader: { email: { contains: normalizedSearch, mode: 'insensitive' as const } } },
+              { members: { some: { user: { fullName: { contains: normalizedSearch, mode: 'insensitive' as const } } } } },
+              { members: { some: { user: { email: { contains: normalizedSearch, mode: 'insensitive' as const } } } } },
+              ...(looksLikeUuid ? [{ id: normalizedSearch }] : []),
+            ],
           }
         : {}),
     }

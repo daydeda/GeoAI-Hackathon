@@ -10,12 +10,14 @@ const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
 
 interface Team { name: string; track: string }
 interface File { fileKey: string; originalName: string }
-interface Review { status: 'PASS' | 'DISQUALIFIED'; note?: string | null }
+interface Review { status: 'PASS' | 'DISQUALIFIED'; note?: string | null; tags?: string[] }
 interface Submission { id: string; submittedAt: string; team: Team; files: File[]; moderatorReview: Review | null; version: number }
 interface TeamOverviewRow {
   id: string
   name: string
   institution: string
+  track: string
+  currentStatus: string
   leader?: { fullName?: string; email?: string }
   members: Array<{ user: { id: string; fullName?: string; email?: string; idCardUploaded?: boolean } }>
 }
@@ -40,8 +42,8 @@ function ReviewModal({
   onConfirm: (note: string, tags: string[]) => void
   onCancel: () => void
 }) {
-  const [note, setNote] = useState('')
-  const [tagsInput, setTagsInput] = useState('')
+  const [note, setNote] = useState(submission.moderatorReview?.note || '')
+  const [tagsInput, setTagsInput] = useState(submission.moderatorReview?.tags?.join(', ') || '')
   const [touched, setTouched] = useState(false)
   const isReject = status === 'DISQUALIFIED'
   const invalid = isReject && touched && note.trim().length === 0
@@ -139,9 +141,11 @@ function ModeratorContent() {
       const qs = new URLSearchParams({ page: String(submissionsPage), limit: String(SUBMISSIONS_LIMIT) })
       if (trackFilter) qs.set('track', trackFilter)
       if (statusFilter) qs.set('status', statusFilter)
+      if (search.trim()) qs.set('search', search.trim())
 
       const teamsQs = new URLSearchParams({ page: String(teamOverviewPage), limit: String(TEAM_OVERVIEW_LIMIT) })
       if (trackFilter) teamsQs.set('track', trackFilter)
+      if (search.trim()) teamsQs.set('search', search.trim())
 
       const [res, teamsRes] = await Promise.all([
         fetch(`${API}/api/v1/mod/submissions?${qs.toString()}`, { credentials: 'include' }),
@@ -185,11 +189,7 @@ function ModeratorContent() {
     }
   }
 
-  const visibleSubmissions = submissions.filter((sub) => {
-    if (!search.trim()) return true
-    const q = search.trim().toLowerCase()
-    return sub.team.name.toLowerCase().includes(q)
-  })
+  const visibleSubmissions = submissions
 
   const previewSubmission = visibleSubmissions.find((sub) => sub.id === previewSubmissionId) || null
   const previewUrl = previewSubmission ? `${API}/api/v1/submissions/${previewSubmission.id}/view` : ''
@@ -257,7 +257,13 @@ function ModeratorContent() {
             />
           </div>
           <div className="flex items-center gap-2">
-            <input placeholder="Search..." value={search} onChange={e => setSearch(e.target.value)} className="bg-(--bg-base) border border-(--border-subtle) rounded px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm text-white placeholder-(--text-muted) outline-none flex-1 sm:flex-initial sm:w-40" />
+            <input 
+              placeholder="Search Team, Member, Email, UID..." 
+              value={search} 
+              onChange={e => setSearch(e.target.value)} 
+              onKeyDown={e => e.key === 'Enter' && fetchSubmissions()}
+              className="bg-(--bg-base) border border-(--border-subtle) rounded px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm text-white placeholder-(--text-muted) outline-none flex-1 sm:flex-initial sm:w-64" 
+            />
             <button onClick={() => fetchSubmissions()} className="p-1.5 sm:p-2 bg-(--bg-base) border border-(--border-subtle) rounded text-white hover:bg-(--bg-elevated) transition">
               <RefreshCw size={16} />
             </button>
@@ -279,8 +285,21 @@ function ModeratorContent() {
               const missingMembers = team.members.filter((member) => !member.user.idCardUploaded).length
               return (
                 <div key={team.id} className="rounded-lg border border-(--border-subtle) bg-(--bg-base) p-4 sm:p-5 flex flex-col">
-                  <div className="text-sm font-bold text-white break-words">{team.name}</div>
-                  <div className="text-xs text-(--text-secondary) mt-1 break-words">{team.institution || 'Institution not set'}</div>
+                  <div className="flex items-start justify-between gap-2 mb-2">
+                    <div className="text-sm font-bold text-white break-words leading-tight">{team.name}</div>
+                    <div className="shrink-0 text-[9px] font-mono text-(--text-muted) bg-(--bg-elevated) px-1.5 py-0.5 rounded border border-(--border-subtle)">
+                      UID: {team.id.slice(0, 8)}
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5 mb-3">
+                    <span className="text-[8px] font-bold px-1.5 py-0.5 rounded bg-[rgba(0,229,255,0.05)] border border-[rgba(0,229,255,0.2)] text-(--accent-cyan) uppercase tracking-wider">
+                      {formatTrackLabel(team.track)}
+                    </span>
+                    <span className="text-[8px] font-bold px-1.5 py-0.5 rounded bg-[rgba(255,255,255,0.05)] border border-[rgba(255,255,255,0.1)] text-(--text-secondary) uppercase tracking-wider">
+                      {team.currentStatus.replace(/_/g, ' ')}
+                    </span>
+                  </div>
+                  <div className="text-xs text-(--text-secondary) break-words">{team.institution || 'Institution not set'}</div>
                   <div className="mt-3 text-xs text-(--text-secondary) break-words">
                     <span className="font-semibold text-white">Leader:</span> {team.leader?.fullName || team.leader?.email || '-'}
                   </div>
@@ -349,6 +368,7 @@ function ModeratorContent() {
               <th className="py-2 sm:py-3 px-2 sm:px-3 text-[9px] sm:text-xs text-(--text-muted) font-semibold tracking-widest hidden md:table-cell min-w-[100px]">SUBMITTED</th>
               <th className="py-2 sm:py-3 px-2 sm:px-3 text-[9px] sm:text-xs text-(--text-muted) font-semibold tracking-widest text-center w-16">VERSION</th>
               <th className="py-2 sm:py-3 px-2 sm:px-3 text-[9px] sm:text-xs text-(--text-muted) font-semibold tracking-widest min-w-[110px]">STATUS</th>
+              <th className="py-2 sm:py-3 px-2 sm:px-3 text-[9px] sm:text-xs text-(--text-muted) font-semibold tracking-widest min-w-[120px]">TAGS</th>
               <th className="py-2 sm:py-3 px-2 sm:px-3 text-[9px] sm:text-xs text-(--text-muted) font-semibold tracking-widest min-w-[200px] lg:min-w-[300px]">NOTE</th>
               <th className="py-2 sm:py-3 px-2 sm:px-3 text-[9px] sm:text-xs text-(--text-muted) font-semibold tracking-widest text-right min-w-[130px]">ACTION</th>
             </tr>
@@ -377,6 +397,18 @@ function ModeratorContent() {
                     </span>
                   )}
                 </td>
+                <td className="py-2 sm:py-3 px-2 sm:px-3">
+                  <div className="flex flex-wrap gap-1">
+                    {sub.moderatorReview?.tags?.map((tag, idx) => (
+                      <span key={idx} className="inline-block text-[9px] font-bold py-0.5 px-1.5 rounded bg-(--bg-base) border border-(--border-subtle) text-(--text-secondary)">
+                        {tag}
+                      </span>
+                    ))}
+                    {(!sub.moderatorReview?.tags || sub.moderatorReview.tags.length === 0) && (
+                      <span className="text-(--text-muted) opacity-20">—</span>
+                    )}
+                  </div>
+                </td>
                 <td className="py-3 sm:py-4 px-2 sm:px-3">
                   {sub.moderatorReview?.note ? (
                     <div className="text-[10px] sm:text-xs text-(--text-secondary) italic whitespace-pre-wrap leading-relaxed">
@@ -396,18 +428,16 @@ function ModeratorContent() {
                       <FileText size={14} />
                     </button>
                     <button 
-                      disabled={sub.moderatorReview?.status === 'PASS'}
                       onClick={() => setReviewTarget({ submission: sub, status: 'PASS' })} 
-                      className={`p-1 sm:p-1.5 border rounded transition ${sub.moderatorReview?.status === 'PASS' ? 'opacity-30 cursor-not-allowed bg-transparent border-(--border-subtle) text-(--text-muted)' : 'bg-[rgba(0,230,118,0.1)] border-(--accent-green) text-(--accent-green) hover:bg-(--accent-green) hover:text-black'}`} 
-                      title="Approve Submission"
+                      className={`p-1 sm:p-1.5 border rounded transition ${sub.moderatorReview?.status === 'PASS' ? 'bg-(--accent-green) border-(--accent-green) text-black' : 'bg-[rgba(0,230,118,0.1)] border-(--accent-green) text-(--accent-green) hover:bg-(--accent-green) hover:text-black'}`} 
+                      title={sub.moderatorReview?.status === 'PASS' ? 'Update Tags/Note' : 'Approve Submission'}
                     >
                       <Check size={14} />
                     </button>
                     <button 
-                      disabled={sub.moderatorReview?.status === 'DISQUALIFIED'}
                       onClick={() => setReviewTarget({ submission: sub, status: 'DISQUALIFIED' })} 
-                      className={`p-1 sm:p-1.5 border rounded transition ${sub.moderatorReview?.status === 'DISQUALIFIED' ? 'opacity-30 cursor-not-allowed bg-transparent border-(--border-subtle) text-(--text-muted)' : 'bg-[rgba(255,98,117,0.1)] border-[#ff6275] text-[#ff6275] hover:bg-[#ff6275] hover:text-white'}`} 
-                      title="Disqualify Submission"
+                      className={`p-1 sm:p-1.5 border rounded transition ${sub.moderatorReview?.status === 'DISQUALIFIED' ? 'bg-[#ff6275] border-[#ff6275] text-white' : 'bg-[rgba(255,98,117,0.1)] border-[#ff6275] text-[#ff6275] hover:bg-[#ff6275] hover:text-white'}`} 
+                      title={sub.moderatorReview?.status === 'DISQUALIFIED' ? 'Update Tags/Note' : 'Disqualify Submission'}
                     >
                       <X size={14} />
                     </button>

@@ -26,7 +26,9 @@ function canSendAnnouncement() {
 export async function moderatorRoutes(app: FastifyInstance) {
   // GET /api/v1/mod/submissions
   app.get('/submissions', { preHandler: [requireRole('MODERATOR', 'ADMIN')] }, async (request, reply) => {
-    const { status, track, page = '1', limit = '20' } = request.query as Record<string, string>
+    const { status, track, search, page = '1', limit = '20' } = request.query as Record<string, string>
+    const normalizedSearch = search?.trim()
+    const looksLikeUuid = Boolean(normalizedSearch && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(normalizedSearch))
 
     const where: any = { isActive: true }
     const teamWhere: any = {}
@@ -34,6 +36,25 @@ export async function moderatorRoutes(app: FastifyInstance) {
     if (track) {
       where.team = { track }
       teamWhere.track = track
+    }
+
+    if (normalizedSearch) {
+      where.OR = [
+        { team: { name: { contains: normalizedSearch, mode: 'insensitive' } } },
+        { team: { leader: { fullName: { contains: normalizedSearch, mode: 'insensitive' } } } },
+        { team: { leader: { email: { contains: normalizedSearch, mode: 'insensitive' } } } },
+        { team: { members: { some: { user: { fullName: { contains: normalizedSearch, mode: 'insensitive' } } } } } },
+        { team: { members: { some: { user: { email: { contains: normalizedSearch, mode: 'insensitive' } } } } } },
+        ...(looksLikeUuid ? [{ id: normalizedSearch }, { team: { id: normalizedSearch } }] : []),
+      ]
+      teamWhere.OR = [
+        { name: { contains: normalizedSearch, mode: 'insensitive' } },
+        { leader: { fullName: { contains: normalizedSearch, mode: 'insensitive' } } },
+        { leader: { email: { contains: normalizedSearch, mode: 'insensitive' } } },
+        { members: { some: { user: { fullName: { contains: normalizedSearch, mode: 'insensitive' } } } } },
+        { members: { some: { user: { email: { contains: normalizedSearch, mode: 'insensitive' } } } } },
+        ...(looksLikeUuid ? [{ id: normalizedSearch }] : []),
+      ]
     }
 
     const normalizedFilterStatus = status === 'DISQUALIFIED' ? 'FAIL' : status
