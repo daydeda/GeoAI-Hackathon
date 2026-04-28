@@ -386,12 +386,12 @@ export async function judgeRoutes(app: FastifyInstance) {
           
           // Use a safe team name if using Helvetica (which doesn't support Thai)
           const isThaiFont = font.name !== 'Helvetica'
-          const watermarkTeamName = (isThaiFont || /^[\x00-\x7F]*$/.test(sub.team.name))
+          const safeName = (isThaiFont || /^[\x00-\x7F]*$/.test(sub.team.name))
             ? sub.team.name
-            : `Team (ID: ${displayId})`
+            : 'Team'
 
-          // Left: Team Name
-          page.drawText(`Team: ${watermarkTeamName}`, {
+          // Left: Team Name (ID: X)
+          page.drawText(`Team: ${safeName} (ID: ${displayId})`, {
             x: 40,
             y: 20,
             size: 10,
@@ -400,8 +400,8 @@ export async function judgeRoutes(app: FastifyInstance) {
           })
 
           // Right: Exported Date & Time
-          page.drawText(`Exported: ${timestampStr} (ID: ${displayId})`, {
-            x: width - 240,
+          page.drawText(`Exported: ${timestampStr}`, {
+            x: width - 200,
             y: 20,
             size: 10,
             font,
