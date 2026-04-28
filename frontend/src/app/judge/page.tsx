@@ -538,15 +538,35 @@ function JudgeContent() {
                 </p>
 
                 {activeSubmission.moderatorReview?.tags && activeSubmission.moderatorReview.tags.length > 0 && (
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    {activeSubmission.moderatorReview.tags.map((tag, idx) => (
-                      <span 
-                        key={idx}
-                        className="inline-flex items-center rounded-full bg-[rgba(0,229,255,0.1)] border border-[rgba(0,229,255,0.3)] px-2.5 py-0.5 text-[10px] font-bold text-(--accent-cyan) uppercase tracking-wider"
-                      >
-                        {tag}
-                      </span>
-                    ))}
+                  <div className="mt-4 flex flex-wrap gap-2.5">
+                    {activeSubmission.moderatorReview.tags.map((tag, idx) => {
+                      // Generate a stable color based on tag text
+                      const colors = [
+                        { bg: 'rgba(0, 229, 255, 0.15)', border: 'rgba(0, 229, 255, 0.4)', text: 'var(--accent-cyan)' },   // Cyan
+                        { bg: 'rgba(0, 230, 118, 0.15)', border: 'rgba(0, 230, 118, 0.4)', text: 'var(--accent-green)' },  // Green
+                        { bg: 'rgba(255, 167, 38, 0.15)', border: 'rgba(255, 167, 38, 0.4)', text: 'var(--accent-amber)' }, // Amber
+                        { bg: 'rgba(255, 64, 129, 0.15)', border: 'rgba(255, 64, 129, 0.4)', text: '#ff4081' },            // Pink
+                        { bg: 'rgba(124, 77, 255, 0.15)', border: 'rgba(124, 77, 255, 0.4)', text: '#7c4dff' },            // Purple
+                        { bg: 'rgba(64, 196, 255, 0.15)', border: 'rgba(64, 196, 255, 0.4)', text: '#40c4ff' },            // Light Blue
+                      ]
+                      const hash = tag.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)
+                      const color = colors[hash % colors.length]
+
+                      return (
+                        <span 
+                          key={idx}
+                          className="inline-flex items-center rounded-md border px-3 py-1.5 text-[12px] font-bold uppercase tracking-widest shadow-sm"
+                          style={{
+                            backgroundColor: color.bg,
+                            borderColor: color.border,
+                            color: color.text,
+                            textShadow: `0 0 8px ${color.bg}`
+                          }}
+                        >
+                          {tag}
+                        </span>
+                      )
+                    })}
                   </div>
                 )}
 

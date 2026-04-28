@@ -398,12 +398,32 @@ function ModeratorContent() {
                   )}
                 </td>
                 <td className="py-2 sm:py-3 px-2 sm:px-3">
-                  <div className="flex flex-wrap gap-1">
-                    {sub.moderatorReview?.tags?.map((tag, idx) => (
-                      <span key={idx} className="inline-block text-[9px] font-bold py-0.5 px-1.5 rounded bg-(--bg-base) border border-(--border-subtle) text-(--text-secondary)">
-                        {tag}
-                      </span>
-                    ))}
+                  <div className="flex flex-wrap gap-1.5">
+                    {sub.moderatorReview?.tags?.map((tag, idx) => {
+                      const colors = [
+                        { bg: 'rgba(0, 229, 255, 0.15)', border: 'rgba(0, 229, 255, 0.4)', text: 'var(--accent-cyan)' },
+                        { bg: 'rgba(0, 230, 118, 0.15)', border: 'rgba(0, 230, 118, 0.4)', text: 'var(--accent-green)' },
+                        { bg: 'rgba(255, 167, 38, 0.15)', border: 'rgba(255, 167, 38, 0.4)', text: 'var(--accent-amber)' },
+                        { bg: 'rgba(255, 64, 129, 0.15)', border: 'rgba(255, 64, 129, 0.4)', text: '#ff4081' },
+                        { bg: 'rgba(124, 77, 255, 0.15)', border: 'rgba(124, 77, 255, 0.4)', text: '#7c4dff' },
+                        { bg: 'rgba(64, 196, 255, 0.15)', border: 'rgba(64, 196, 255, 0.4)', text: '#40c4ff' },
+                      ]
+                      const hash = tag.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)
+                      const color = colors[hash % colors.length]
+                      return (
+                        <span 
+                          key={idx} 
+                          className="inline-block text-[10px] font-bold py-1 px-2 rounded border uppercase tracking-wider whitespace-nowrap"
+                          style={{
+                            backgroundColor: color.bg,
+                            borderColor: color.border,
+                            color: color.text,
+                          }}
+                        >
+                          {tag}
+                        </span>
+                      )
+                    })}
                     {(!sub.moderatorReview?.tags || sub.moderatorReview.tags.length === 0) && (
                       <span className="text-(--text-muted) opacity-20">—</span>
                     )}
