@@ -65,6 +65,7 @@ function SubmissionsContent() {
   const [gistda, setGistda] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState('')
+  const [showSuccessModal, setShowSuccessModal] = useState(false)
 
   const fetchHistory = useCallback(async () => {
     if (authLoading) return
@@ -156,7 +157,12 @@ function SubmissionsContent() {
       const res = await fetch(`${API}/api/v1/submissions/upload`, {
         method: 'POST', credentials: 'include', body: formData
       })
-      if (res.ok) { setFile(null); setGistda(false); fetchHistory() }
+      if (res.ok) { 
+        setFile(null); 
+        setGistda(false); 
+        setShowSuccessModal(true);
+        fetchHistory() 
+      }
       else {
         if (res.status === 413) {
           setError('File too large. Maximum allowed size is 20MB.')
@@ -305,8 +311,30 @@ function SubmissionsContent() {
         )}
 
         {isSubmissionClosed && (
-          <div className="mb-4 sm:mb-6 rounded-md border border-(--accent-amber) bg-[rgba(255,167,38,0.12)] p-3 sm:p-4 text-xs sm:text-sm text-(--accent-amber)">
-            Submission Locked: This proposal is now under review and can no longer be edited.
+          <div className="mb-4 sm:mb-6 rounded-md border border-(--accent-amber) bg-[rgba(255,167,38,0.12)] p-3 sm:p-4 text-xs sm:text-sm text-(--accent-amber) flex items-center gap-3">
+            <ShieldAlert size={18} className="shrink-0" />
+            <span>Submission Locked: This proposal is now under review and can no longer be edited.</span>
+          </div>
+        )}
+
+        {/* Success Modal */}
+        {showSuccessModal && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-300">
+            <div className="max-w-md w-full bg-(--bg-surface) border border-(--accent-green) rounded-xl p-8 text-center shadow-[0_0_50px_rgba(0,230,118,0.2)] animate-in zoom-in-95 duration-300">
+              <div className="mx-auto w-16 h-16 bg-[rgba(0,230,118,0.1)] rounded-full flex items-center justify-center mb-6 border border-(--accent-green)/30">
+                <CheckSquare size={32} className="text-(--accent-green)" />
+              </div>
+              <h2 className="font-display text-2xl text-white mb-2">TRANSMISSION COMPLETE</h2>
+              <p className="text-(--text-secondary) text-sm mb-8 leading-relaxed">
+                Your proposal has been successfully uploaded to the GeoAI Hackathon platform. Our moderators will review it shortly.
+              </p>
+              <button
+                onClick={() => setShowSuccessModal(false)}
+                className="w-full py-3 bg-(--accent-green) text-black rounded font-bold text-sm tracking-widest hover:opacity-90 transition-opacity"
+              >
+                DISMISS
+              </button>
+            </div>
           </div>
         )}
 
@@ -375,34 +403,57 @@ function SubmissionsContent() {
             </div>
 
             {activeSubmission && (
-              <div className="p-3 sm:p-4 bg-(--bg-elevated) rounded-lg border border-(--accent-cyan) mb-4 sm:mb-6">
-                <div className="text-[10px] sm:text-xs text-(--accent-cyan) font-bold mb-2 uppercase tracking-widest">
-                  ACTIVE PROPOSAL (v{activeSubmission.version})
-                </div>
-                <div className="text-xs sm:text-sm text-(--text-primary) mb-3 sm:mb-4">
-                  Status:{' '}
+              <div className="p-3 sm:p-5 bg-(--bg-elevated) rounded-lg border border-(--accent-cyan) mb-4 sm:mb-6 shadow-[0_4px_20px_rgba(0,229,255,0.1)]">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="text-[10px] sm:text-xs text-(--accent-cyan) font-bold uppercase tracking-widest">
+                    ACTIVE PROPOSAL (v{activeSubmission.version})
+                  </div>
                   <span
-                    className="font-semibold"
+                    className="inline-flex items-center rounded px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider"
                     style={{
+                      backgroundColor:
+                        reviewStatus === 'PASS' || reviewStatus === 'QUALIFIED'
+                          ? 'rgba(0, 230, 118, 0.15)'
+                          : reviewStatus === 'DISQUALIFIED'
+                            ? 'rgba(255, 23, 68, 0.15)'
+                            : 'rgba(0, 229, 255, 0.15)',
                       color:
                         reviewStatus === 'PASS' || reviewStatus === 'QUALIFIED'
                           ? 'var(--accent-green)'
                           : reviewStatus === 'DISQUALIFIED'
                             ? 'var(--accent-red)'
-                            : 'var(--text-secondary)',
+                            : 'var(--accent-cyan)',
+                      border: `1px solid ${
+                        reviewStatus === 'PASS' || reviewStatus === 'QUALIFIED'
+                          ? 'rgba(0, 230, 118, 0.4)'
+                          : reviewStatus === 'DISQUALIFIED'
+                            ? 'rgba(255, 23, 68, 0.4)'
+                            : 'rgba(0, 229, 255, 0.4)'
+                      }`,
                     }}
                   >
                     {reviewStatus}
                   </span>
                 </div>
+                
+                <div className="grid grid-cols-2 gap-4 mb-4 text-[10px] sm:text-xs">
+                  <div>
+                    <div className="text-(--text-muted) uppercase mb-1">Status</div>
+                    <div className="text-white font-mono">{reviewStatus}</div>
+                  </div>
+                  <div>
+                    <div className="text-(--text-muted) uppercase mb-1">Timestamp</div>
+                    <div className="text-white font-mono">{new Date(activeSubmission.submittedAt).toLocaleTimeString()}</div>
+                  </div>
+                </div>
+
                 <button
-                  className="w-full px-3 py-2 text-xs sm:text-sm border border-(--border-active) rounded hover:bg-(--bg-base) transition-colors"
+                  className="w-full py-2.5 text-xs sm:text-sm bg-(--bg-base) border border-(--border-subtle) rounded-md hover:border-(--accent-cyan) hover:text-(--accent-cyan) transition-all flex items-center justify-center gap-2"
                   onClick={e => download(activeSubmission.id, e)}
                 >
+                  <FileText size={16} />
                   VIEW DOCUMENT
                 </button>
-
-
               </div>
             )}
 
