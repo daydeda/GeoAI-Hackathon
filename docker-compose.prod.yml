@@ -54,7 +54,7 @@ services:
       MINIO_ENDPOINT: storage
       MINIO_PORT: "9000"
       MAX_SUBMISSION_UPLOAD_BYTES: "20971520"
-    command: ["sh", "-lc", "npm run db:migrate:prod && node dist/server.js"]
+    command: ["sh", "-lc", "npx prisma db push --skip-generate && node dist/server.js"]
     ports:
       - "4000:4000"
     depends_on:
