@@ -197,6 +197,7 @@ model ModeratorReview {
   reviewerId   String
   status       ReviewStatus
   note         String?
+  tags         String[]     @default([])
   reviewedAt   DateTime     @default(now())
 
   submission Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)

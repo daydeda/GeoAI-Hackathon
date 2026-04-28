@@ -29,55 +29,84 @@ function formatTrackLabel(track: string) {
   return TRACK_LABELS[track] || track.replace(/_/g, ' ')
 }
 
-function RejectionModal({
-  teamName,
+function ReviewModal({
+  submission,
+  status,
   onConfirm,
   onCancel,
 }: {
-  teamName: string
-  onConfirm: (note: string) => void
+  submission: Submission
+  status: 'PASS' | 'DISQUALIFIED'
+  onConfirm: (note: string, tags: string[]) => void
   onCancel: () => void
 }) {
   const [note, setNote] = useState('')
+  const [tagsInput, setTagsInput] = useState('')
   const [touched, setTouched] = useState(false)
-  const invalid = touched && note.trim().length === 0
+  const isReject = status === 'DISQUALIFIED'
+  const invalid = isReject && touched && note.trim().length === 0
 
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm">
-      <div className="w-full max-w-md rounded-lg border border-[rgba(255,98,117,0.4)] bg-(--bg-surface) p-6 shadow-[0_24px_64px_rgba(0,0,0,0.5)]">
+      <div className={`w-full max-w-md rounded-lg border bg-(--bg-surface) p-6 shadow-[0_24px_64px_rgba(0,0,0,0.5)] ${isReject ? 'border-[rgba(255,98,117,0.4)]' : 'border-[rgba(0,230,118,0.4)]'}`}>
         <div className="mb-1 flex items-center gap-2">
-          <Check size={16} className="text-[#ff6275]" />
-          <h2 className="text-base font-bold tracking-[0.05em] text-white">REJECTION REASON REQUIRED</h2>
+          {isReject ? <X size={16} className="text-[#ff6275]" /> : <Check size={16} className="text-(--accent-green)" />}
+          <h2 className="text-base font-bold tracking-[0.05em] text-white uppercase">
+            {isReject ? 'Disqualify Submission' : 'Approve Submission'}
+          </h2>
         </div>
         <p className="mb-4 text-sm text-(--text-secondary)">
-          You are disqualifying <strong className="text-white">{teamName}</strong>. 
-          Please provide a reason — this is required and will be shown to the competitors.
+          Team: <strong className="text-white">{submission.team.name}</strong>
         </p>
-        <textarea
-          autoFocus
-          value={note}
-          onChange={(e) => setNote(e.target.value)}
-          onBlur={() => setTouched(true)}
-          placeholder="Describe why this submission is being disqualified (e.g., missing requirements, incorrect track)…"
-          className={`min-h-[100px] w-full rounded border bg-(--bg-base) px-3 py-2 text-sm text-white outline-none transition ${
-            invalid ? 'border-[#ff6275]' : 'border-(--border-subtle)'
-          }`}
-        />
-        {invalid && (
-          <p className="mt-1 text-xs text-[#ff6275]">A reason is required to proceed.</p>
-        )}
-        <div className="mt-4 flex justify-end gap-2">
+
+        {/* Tags Input */}
+        <div className="mb-4">
+          <label className="mb-1.5 block text-[10px] font-bold tracking-widest text-(--text-muted) uppercase">Classification Tags</label>
+          <input
+            autoFocus={!isReject}
+            value={tagsInput}
+            onChange={(e) => setTagsInput(e.target.value)}
+            placeholder="e.g. AI, Satellite, Agriculture (comma separated)"
+            className="w-full rounded border border-(--border-subtle) bg-(--bg-base) px-3 py-2 text-sm text-white outline-none focus:border-(--accent-cyan) transition placeholder:opacity-30"
+          />
+          <p className="mt-1 text-[10px] text-(--text-muted)">Separate tags with commas.</p>
+        </div>
+
+        {/* Note / Rejection Reason */}
+        <div className="mb-4">
+          <label className="mb-1.5 block text-[10px] font-bold tracking-widest text-(--text-muted) uppercase">
+            {isReject ? 'Rejection Reason (Required)' : 'Internal Note (Optional)'}
+          </label>
+          <textarea
+            autoFocus={isReject}
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            onBlur={() => setTouched(true)}
+            placeholder={isReject ? "Describe why this submission is being disqualified..." : "Add any internal notes for judges..."}
+            className={`min-h-[80px] w-full rounded border bg-(--bg-base) px-3 py-2 text-sm text-white outline-none transition ${
+              invalid ? 'border-[#ff6275]' : 'border-(--border-subtle) focus:border-(--accent-cyan)'
+            }`}
+          />
+          {invalid && (
+            <p className="mt-1 text-xs text-[#ff6275]">A reason is required to proceed.</p>
+          )}
+        </div>
+
+        <div className="mt-6 flex justify-end gap-2">
           <button onClick={onCancel} className="rounded border border-(--border-subtle) bg-transparent px-5 py-2 text-xs font-semibold text-(--text-muted)">
             CANCEL
           </button>
           <button
             onClick={() => {
               setTouched(true)
-              if (note.trim().length > 0) onConfirm(note.trim())
+              if (!isReject || note.trim().length > 0) {
+                const tags = tagsInput.split(',').map(t => t.trim()).filter(Boolean)
+                onConfirm(note.trim(), tags)
+              }
             }}
-            className="rounded border-none bg-[#ff6275] px-5 py-2 text-xs font-bold text-white shadow-[0_4px_12px_rgba(255,98,117,0.3)] hover:scale-105 transition-transform"
+            className={`rounded border-none px-5 py-2 text-xs font-bold text-white shadow-lg hover:scale-105 transition-transform ${isReject ? 'bg-[#ff6275] shadow-[0_4px_12px_rgba(255,98,117,0.3)]' : 'bg-(--accent-green) shadow-[0_4px_12px_rgba(0,230,118,0.3)]'}`}
           >
-            CONFIRM DISQUALIFY
+            CONFIRM {status === 'PASS' ? 'APPROVE' : 'DISQUALIFY'}
           </button>
         </div>
       </div>
@@ -97,7 +126,7 @@ function ModeratorContent() {
   const [statusFilter, setStatusFilter] = useState('')
   const [search, setSearch] = useState('')
   const [previewSubmissionId, setPreviewSubmissionId] = useState<string | null>(null)
-  const [rejectionTarget, setRejectionTarget] = useState<Submission | null>(null)
+  const [reviewTarget, setReviewTarget] = useState<{ submission: Submission, status: 'PASS' | 'DISQUALIFIED' } | null>(null)
   const [submissionsPage, setSubmissionsPage] = useState(1)
   const SUBMISSIONS_LIMIT = 50
   const totalSubmissionsPages = Math.max(1, Math.ceil(total / SUBMISSIONS_LIMIT))
@@ -137,15 +166,15 @@ function ModeratorContent() {
 
   useEffect(() => { fetchSubmissions() }, [fetchSubmissions])
 
-  const submitReview = async (submissionId: string, status: 'PASS' | 'DISQUALIFIED', note = '') => {
+  const submitReview = async (submissionId: string, status: 'PASS' | 'DISQUALIFIED', note = '', tags: string[] = []) => {
     try {
       const res = await fetch(`${API}/api/v1/mod/submissions/${submissionId}/review`, {
         method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status, note })
+        body: JSON.stringify({ status, note, tags })
       })
       if (res.ok) {
         fetchSubmissions()
-        setRejectionTarget(null)
+        setReviewTarget(null)
       } else {
         const d = await res.json().catch(() => ({}))
         alert(d.error || 'Failed to submit review')
@@ -368,7 +397,7 @@ function ModeratorContent() {
                     </button>
                     <button 
                       disabled={sub.moderatorReview?.status === 'PASS'}
-                      onClick={() => submitReview(sub.id, 'PASS')} 
+                      onClick={() => setReviewTarget({ submission: sub, status: 'PASS' })} 
                       className={`p-1 sm:p-1.5 border rounded transition ${sub.moderatorReview?.status === 'PASS' ? 'opacity-30 cursor-not-allowed bg-transparent border-(--border-subtle) text-(--text-muted)' : 'bg-[rgba(0,230,118,0.1)] border-(--accent-green) text-(--accent-green) hover:bg-(--accent-green) hover:text-black'}`} 
                       title="Approve Submission"
                     >
@@ -376,7 +405,7 @@ function ModeratorContent() {
                     </button>
                     <button 
                       disabled={sub.moderatorReview?.status === 'DISQUALIFIED'}
-                      onClick={() => setRejectionTarget(sub)} 
+                      onClick={() => setReviewTarget({ submission: sub, status: 'DISQUALIFIED' })} 
                       className={`p-1 sm:p-1.5 border rounded transition ${sub.moderatorReview?.status === 'DISQUALIFIED' ? 'opacity-30 cursor-not-allowed bg-transparent border-(--border-subtle) text-(--text-muted)' : 'bg-[rgba(255,98,117,0.1)] border-[#ff6275] text-[#ff6275] hover:bg-[#ff6275] hover:text-white'}`} 
                       title="Disqualify Submission"
                     >
@@ -416,11 +445,12 @@ function ModeratorContent() {
         </div>
       </div>
 
-      {rejectionTarget && (
-        <RejectionModal
-          teamName={rejectionTarget.team.name}
-          onConfirm={(note) => submitReview(rejectionTarget.id, 'DISQUALIFIED', note)}
-          onCancel={() => setRejectionTarget(null)}
+      {reviewTarget && (
+        <ReviewModal
+          submission={reviewTarget.submission}
+          status={reviewTarget.status}
+          onConfirm={(note, tags) => submitReview(reviewTarget.submission.id, reviewTarget.status, note, tags)}
+          onCancel={() => setReviewTarget(null)}
         />
       )}
 

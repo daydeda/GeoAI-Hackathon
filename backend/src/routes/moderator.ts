@@ -8,6 +8,7 @@ import { ReviewStatus } from '@prisma/client'
 const ReviewSchema = z.object({
   status: z.enum(['PASS', 'DISQUALIFIED', 'FAIL']),
   note: z.string().max(1000).optional(),
+  tags: z.array(z.string()).optional(),
 })
 
 const ANNOUNCEMENT_DATE = process.env.ANNOUNCEMENT_DATE_ISO || '2026-05-08T00:00:00+07:00'
@@ -127,8 +128,20 @@ export async function moderatorRoutes(app: FastifyInstance) {
 
     const review = await prisma.moderatorReview.upsert({
       where: { submissionId },
-      update: { status: statusForDb, note: noteToSave, reviewerId: actor.userId, reviewedAt: new Date() },
-      create: { submissionId, reviewerId: actor.userId, status: statusForDb, note: noteToSave },
+      update: { 
+        status: statusForDb, 
+        note: noteToSave, 
+        reviewerId: actor.userId, 
+        reviewedAt: new Date(),
+        tags: body.data.tags || [] 
+      },
+      create: { 
+        submissionId, 
+        reviewerId: actor.userId, 
+        status: statusForDb, 
+        note: noteToSave,
+        tags: body.data.tags || []
+      },
     })
 
     // Collect all user IDs in the team (leader + members)

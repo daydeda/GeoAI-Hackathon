@@ -64,6 +64,9 @@ interface Submission {
   judgeScores: JudgeScore[]
   scoreAggregate?: ScoreAggregate | null
   abstract?: string
+  moderatorReview?: {
+    tags?: string[]
+  } | null
 }
 
 const TRACK_LABELS: Record<string, string> = {
@@ -533,6 +536,19 @@ function JudgeContent() {
                 <p className="mt-2 text-sm text-(--text-secondary)">
                   Review proposal materials and apply the scoring rubric consistently.
                 </p>
+
+                {activeSubmission.moderatorReview?.tags && activeSubmission.moderatorReview.tags.length > 0 && (
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    {activeSubmission.moderatorReview.tags.map((tag, idx) => (
+                      <span 
+                        key={idx}
+                        className="inline-flex items-center rounded-full bg-[rgba(0,229,255,0.1)] border border-[rgba(0,229,255,0.3)] px-2.5 py-0.5 text-[10px] font-bold text-(--accent-cyan) uppercase tracking-wider"
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                )}
 
                 <div className="mt-5 rounded border border-(--border-subtle) bg-(--bg-base) p-4">
                   <div className="mb-2 flex items-center gap-2 text-sm text-white">
