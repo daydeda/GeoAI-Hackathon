@@ -45,18 +45,7 @@ async function isDeadlinePassed(): Promise<boolean> {
   return new Date() > new Date(deadline)
 }
 
-async function isSubmissionLockedByScoring(teamId: string): Promise<boolean> {
-  const activeSubmission = await prisma.submission.findFirst({
-    where: { teamId, isActive: true },
-    select: {
-      scoreAggregate: { select: { id: true } },
-      judgeScores: { select: { id: true }, take: 1 },
-    },
-  })
 
-  if (!activeSubmission) return false
-  return Boolean(activeSubmission.scoreAggregate || activeSubmission.judgeScores.length > 0)
-}
 
 async function ensureCompetitorProfileCompleted(userId: string) {
   const user = await prisma.user.findUnique({
@@ -221,9 +210,7 @@ export async function submissionRoutes(app: FastifyInstance) {
       })
     }
 
-    if (await isSubmissionLockedByScoring(membership.teamId)) {
-      return reply.status(423).send({ error: 'Editing Disabled: Judges have already begun the scoring process for this submission.' })
-    }
+
 
     // Reuse logic below or implement
     const data = await request.file()
@@ -277,9 +264,7 @@ export async function submissionRoutes(app: FastifyInstance) {
       return reply.status(423).send({ error: 'Submission deadline has passed' })
     }
 
-    if (await isSubmissionLockedByScoring(teamId)) {
-      return reply.status(423).send({ error: 'Editing Disabled: Judges have already begun the scoring process for this submission.' })
-    }
+
 
     // Verify leader
     const team = await prisma.team.findUnique({ where: { id: teamId } })

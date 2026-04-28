@@ -217,6 +217,24 @@ export async function authRoutes(app: FastifyInstance) {
       const subject = `google:${profile.id}`
       const fullName = profile.name ?? profile.email
 
+      // Check if user already exists (either by subject or email)
+      const existingUser = await prisma.user.findFirst({
+        where: {
+          OR: [
+            { oauthSubject: subject },
+            { email: profile.email },
+          ],
+        },
+      })
+
+      // If user doesn't exist, check if registration is still open
+      if (!existingUser) {
+        const regPhase = await getPhaseByKey('registration')
+        if (regPhase && new Date() > new Date(regPhase.date)) {
+          return reply.redirect(`${process.env.FRONTEND_URL}/login?error=registration_closed`)
+        }
+      }
+
       let user
       try {
         // Resolve user by subject first, then by email, to avoid unique conflicts.

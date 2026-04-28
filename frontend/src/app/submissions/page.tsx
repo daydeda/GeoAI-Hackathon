@@ -132,8 +132,7 @@ function SubmissionsContent() {
   const activeSubmission = history[0]
   const proposalDeadline = phases.find((phase) => phase.key === 'proposal-submission')?.date || '2026-04-29T23:59:59+07:00'
   const isProposalPhaseEnded = Date.now() > new Date(proposalDeadline).getTime()
-  const isJudged = Boolean(activeSubmission?.scoreAggregate)
-  const isSubmissionClosed = isProposalPhaseEnded || isJudged
+  const isSubmissionClosed = isProposalPhaseEnded
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
@@ -144,9 +143,7 @@ function SubmissionsContent() {
 
   const upload = async () => {
     if (isSubmissionClosed) {
-      setError(isJudged
-        ? 'Editing Disabled: Judges have already begun the scoring process for this submission.'
-        : 'Submission Locked: This proposal is now under review and can no longer be edited.')
+      setError('Submission Locked: This proposal is now under review and can no longer be edited.')
       return
     }
     if (!file || !gistda || uploading) return
@@ -309,9 +306,7 @@ function SubmissionsContent() {
 
         {isSubmissionClosed && (
           <div className="mb-4 sm:mb-6 rounded-md border border-(--accent-amber) bg-[rgba(255,167,38,0.12)] p-3 sm:p-4 text-xs sm:text-sm text-(--accent-amber)">
-            {isJudged
-              ? 'Editing Disabled: Judges have already begun the scoring process for this submission.'
-              : 'Submission Locked: This proposal is now under review and can no longer be edited.'}
+            Submission Locked: This proposal is now under review and can no longer be edited.
           </div>
         )}
 

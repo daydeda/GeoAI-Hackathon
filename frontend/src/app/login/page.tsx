@@ -31,6 +31,8 @@ function getLoginErrorMessage(code: string | null) {
       return 'Google profile data is incomplete. Please use a different Google account.'
     case 'auth_failed':
       return 'Sign-in could not be completed on the server. Please try again in a few seconds.'
+    case 'registration_closed':
+      return 'Account creation is now closed. New registrations are no longer accepted for this competition.'
     default:
       return 'Sign-in failed. Please try again.'
   }
