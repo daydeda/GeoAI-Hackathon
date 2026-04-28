@@ -37,7 +37,7 @@ ssh -tt -J "$JUMP_HOST" "$REMOTE_USER@$REMOTE_HOST" "if [ -f /home/geoai/geoai/d
     tar -xzf deploy.tar.gz && \
     rm deploy.tar.gz && \
   sudo docker compose --env-file \"\$PROJECT_DIR/.env.production\" -f \"\$PROJECT_DIR/docker-compose.prod.yml\" up -d --build --remove-orphans && \
-  sudo docker compose --env-file \"\$PROJECT_DIR/.env.production\" -f \"\$PROJECT_DIR/docker-compose.prod.yml\" run --rm backend npm run db:push && \
+  sudo docker compose --env-file \"\$PROJECT_DIR/.env.production\" -f \"\$PROJECT_DIR/docker-compose.prod.yml\" run --rm backend npm run db:migrate:prod && \
   sudo docker compose --env-file \"\$PROJECT_DIR/.env.production\" -f \"\$PROJECT_DIR/docker-compose.prod.yml\" run --rm backend npm run db:seed && \
   sudo docker compose --env-file \"\$PROJECT_DIR/.env.production\" -f \"\$PROJECT_DIR/docker-compose.prod.yml\" run --rm backend npm run db:grant-admins"
 
