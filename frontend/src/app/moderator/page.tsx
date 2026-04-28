@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useMemo } from 'react'
 import { AuthProvider } from '@/contexts/AuthContext'
 import AppShell from '@/components/AppShell'
 import { Check, X, RefreshCw, FileText, ExternalLink } from 'lucide-react'
@@ -170,13 +170,19 @@ function ModeratorContent() {
     }
   }, [trackFilter, statusFilter, tagFilter, teamOverviewPage, submissionsPage, search])
 
-  const uniqueTags = (() => {
-    const tags = new Set<string>()
+  const tagCounts = useMemo(() => {
+    const counts: Record<string, number> = {}
     submissions.forEach(sub => {
-      sub.moderatorReview?.tags?.forEach(t => tags.add(t))
+      sub.moderatorReview?.tags?.forEach(tag => {
+        counts[tag] = (counts[tag] || 0) + 1
+      })
     })
-    return Array.from(tags).sort()
-  })()
+    return counts
+  }, [submissions])
+
+  const uniqueTags = useMemo(() => {
+    return Object.keys(tagCounts).sort()
+  }, [tagCounts])
 
   useEffect(() => { fetchSubmissions() }, [fetchSubmissions])
 
@@ -238,6 +244,38 @@ function ModeratorContent() {
         </div>
       </div>
 
+      {/* Tag Filter Bar */}
+      {uniqueTags.length > 0 && (
+        <div className="border-b border-(--border-subtle) bg-[rgba(0,229,255,0.02)] px-4 sm:px-6 lg:px-8 py-3">
+          <div className="flex flex-wrap gap-2 items-center">
+            <span className="text-[10px] font-bold tracking-widest text-(--text-muted) mr-2 uppercase">Filter by Tag:</span>
+            <button
+              onClick={() => setTagFilter('')}
+              className={`px-3 py-1 rounded-full text-[10px] font-bold tracking-wider transition border ${
+                tagFilter === ''
+                  ? 'bg-(--accent-cyan) border-(--accent-cyan) text-black shadow-[0_0_15px_rgba(0,229,255,0.3)]'
+                  : 'bg-transparent border-(--border-subtle) text-(--text-muted) hover:border-(--accent-cyan) hover:text-(--accent-cyan)'
+              }`}
+            >
+              ALL ({total})
+            </button>
+            {uniqueTags.map((tag: string) => (
+              <button
+                key={tag}
+                onClick={() => setTagFilter(tagFilter === tag ? '' : tag)}
+                className={`px-3 py-1 rounded-full text-[10px] font-bold tracking-wider transition border ${
+                  tagFilter === tag
+                    ? 'bg-(--accent-cyan) border-(--accent-cyan) text-black shadow-[0_0_15px_rgba(0,229,255,0.3)]'
+                    : 'bg-transparent border-(--border-subtle) text-(--text-muted) hover:border-(--accent-cyan) hover:text-(--accent-cyan)'
+                }`}
+              >
+                {tag.toUpperCase()} ({tagCounts[tag]})
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Filters */}
       <div className="border-b border-(--border-subtle) bg-(--bg-surface) px-4 sm:px-6 lg:px-8 py-3 sm:py-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -263,15 +301,6 @@ function ModeratorContent() {
                 { value: '', label: 'ALL STATUS' },
                 { value: 'PASS', label: 'Approved' },
                 { value: 'DISQUALIFIED', label: 'Disqualified' },
-              ]}
-            />
-            <CustomDropdown
-              className="min-w-[160px]"
-              value={tagFilter}
-              onChange={setTagFilter}
-              options={[
-                { value: '', label: 'ALL TAGS' },
-                ...uniqueTags.map(t => ({ value: t, label: t.toUpperCase() }))
               ]}
             />
           </div>

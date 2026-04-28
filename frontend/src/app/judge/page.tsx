@@ -175,13 +175,19 @@ function JudgeContent() {
     return result
   }, [baseTabQueue, statusFilter, tagFilter])
 
-  const uniqueTags = useMemo(() => {
-    const tags = new Set<string>()
+  const tagCounts = useMemo(() => {
+    const counts: Record<string, number> = {}
     queue.forEach(sub => {
-      sub.moderatorReview?.tags?.forEach(t => tags.add(t))
+      sub.moderatorReview?.tags?.forEach(tag => {
+        counts[tag] = (counts[tag] || 0) + 1
+      })
     })
-    return Array.from(tags).sort()
+    return counts
   }, [queue])
+
+  const uniqueTags = useMemo(() => {
+    return Object.keys(tagCounts).sort()
+  }, [tagCounts])
 
   const currentTabQueue = useMemo(() => {
     const cloned = [...filteredTabQueue]
@@ -380,6 +386,38 @@ function JudgeContent() {
           </div>
         </header>
 
+        {/* Tag Filter Bar */}
+        {uniqueTags.length > 0 && (
+          <div className="rounded-lg border border-(--border-subtle) bg-[rgba(0,229,255,0.03)] p-4 shadow-[0_0_20px_rgba(0,229,255,0.05)]">
+            <div className="flex flex-wrap gap-2 items-center">
+              <span className="text-[10px] font-bold tracking-widest text-(--text-muted) mr-2 uppercase">Classification Filters:</span>
+              <button
+                onClick={() => setTagFilter('')}
+                className={`px-3 py-1.5 rounded-md text-[10px] font-bold tracking-wider transition border ${
+                  tagFilter === ''
+                    ? 'bg-(--accent-cyan) border-(--accent-cyan) text-black shadow-[0_0_15px_rgba(0,229,255,0.4)]'
+                    : 'bg-transparent border-(--border-subtle) text-(--text-muted) hover:border-(--accent-cyan) hover:text-(--accent-cyan)'
+                }`}
+              >
+                ALL PROPOSALS ({queue.length})
+              </button>
+              {uniqueTags.map(tag => (
+                <button
+                  key={tag}
+                  onClick={() => setTagFilter(tagFilter === tag ? '' : tag)}
+                  className={`px-3 py-1.5 rounded-md text-[10px] font-bold tracking-wider transition border ${
+                    tagFilter === tag
+                      ? 'bg-(--accent-cyan) border-(--accent-cyan) text-black shadow-[0_0_15px_rgba(0,229,255,0.4)]'
+                      : 'bg-transparent border-(--border-subtle) text-(--text-muted) hover:border-(--accent-cyan) hover:text-(--accent-cyan)'
+                  }`}
+                >
+                  {tag.toUpperCase()} ({tagCounts[tag]})
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         <section className="grid grid-cols-1 gap-4 md:grid-cols-3">
           {statusCard.map((card) => (
             <div key={card.label} className="rounded-lg border border-(--border-subtle) bg-(--bg-surface) p-4">
@@ -468,21 +506,6 @@ function JudgeContent() {
                       { value: 'QUALIFIED', label: 'Qualified' },
                       { value: 'DISQUALIFIED', label: 'Disqualified' },
                       { value: 'PENDING', label: 'Pending' },
-                    ]}
-                  />
-                </div>
-                <div className="mb-1 rounded border border-(--border-subtle) bg-(--bg-base) px-3 py-2">
-                  <div className="mb-2 inline-flex items-center gap-1 text-[10px] uppercase tracking-[0.08em] text-(--text-muted)">
-                    <ClipboardList size={12} />
-                    Tag Filter
-                  </div>
-                  <CustomDropdown
-                    className="w-full"
-                    value={tagFilter}
-                    onChange={setTagFilter}
-                    options={[
-                      { value: '', label: 'All Tags' },
-                      ...uniqueTags.map(t => ({ value: t, label: t.toUpperCase() }))
                     ]}
                   />
                 </div>
