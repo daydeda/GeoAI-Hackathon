@@ -166,7 +166,7 @@ function ModeratorContent() {
     } finally {
       setLoading(false)
     }
-  }, [trackFilter, statusFilter, teamOverviewPage, submissionsPage])
+  }, [trackFilter, statusFilter, teamOverviewPage, submissionsPage, search])
 
   useEffect(() => { fetchSubmissions() }, [fetchSubmissions])
 
