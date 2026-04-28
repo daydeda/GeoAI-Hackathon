@@ -121,7 +121,7 @@ function JudgeContent() {
   const [downloadingZip, setDownloadingZip] = useState(false)
   const [sortMode, setSortMode] = useState<'mean_desc' | 'mean_asc' | 'submitted_desc' | 'submitted_asc'>('mean_desc')
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('ALL')
-  const [tagFilter, setTagFilter] = useState<string>('')
+  const [tagFilter, setTagFilter] = useState<string[]>([])
   const { currentPhase } = useCompetitionPhases()
   const phaseDeadline = formatPhaseDeadline(currentPhase.date)
 
@@ -169,8 +169,10 @@ function JudgeContent() {
     if (statusFilter !== 'ALL') {
       result = result.filter((item) => getTeamOutcomeLabel(item.team.currentStatus) === statusFilter)
     }
-    if (tagFilter) {
-      result = result.filter((item) => item.moderatorReview?.tags?.includes(tagFilter))
+    if (tagFilter.length > 0) {
+      result = result.filter((item) => 
+        item.moderatorReview?.tags?.some(tag => tagFilter.includes(tag))
+      )
     }
     return result
   }, [baseTabQueue, statusFilter, tagFilter])
@@ -188,6 +190,14 @@ function JudgeContent() {
   const uniqueTags = useMemo(() => {
     return Object.keys(tagCounts).sort()
   }, [tagCounts])
+
+  const toggleTag = (tag: string) => {
+    setTagFilter(prev => 
+      prev.includes(tag) 
+        ? prev.filter(t => t !== tag) 
+        : [...prev, tag]
+    )
+  }
 
   const currentTabQueue = useMemo(() => {
     const cloned = [...filteredTabQueue]
@@ -388,30 +398,38 @@ function JudgeContent() {
 
         {/* Tag Filter Bar */}
         {uniqueTags.length > 0 && (
-          <div className="rounded-lg border border-(--border-subtle) bg-[rgba(0,229,255,0.03)] p-4 shadow-[0_0_20px_rgba(0,229,255,0.05)]">
-            <div className="flex flex-wrap gap-2 items-center">
-              <span className="text-[10px] font-bold tracking-widest text-(--text-muted) mr-2 uppercase">Classification Filters:</span>
+          <div className="rounded-lg border border-(--border-subtle) bg-[rgba(255,255,255,0.03)] p-5 shadow-[0_0_25px_rgba(255,255,255,0.02)]">
+            <div className="flex flex-wrap gap-3 items-center">
+              <div className="flex items-center gap-2 mr-3 border-r border-(--border-subtle) pr-4">
+                <ShieldCheck size={16} className="text-[#FFB800]" />
+                <span className="text-[11px] font-bold tracking-[0.15em] text-(--text-muted) uppercase">Classification Filters</span>
+              </div>
+              
               <button
-                onClick={() => setTagFilter('')}
-                className={`px-3 py-1.5 rounded-md text-[10px] font-bold tracking-wider transition border ${
-                  tagFilter === ''
-                    ? 'bg-(--accent-cyan) border-(--accent-cyan) text-black shadow-[0_0_15px_rgba(0,229,255,0.4)]'
-                    : 'bg-transparent border-(--border-subtle) text-(--text-muted) hover:border-(--accent-cyan) hover:text-(--accent-cyan)'
+                onClick={() => setTagFilter([])}
+                className={`px-4 py-1.5 rounded text-xs font-bold tracking-wider transition-all border ${
+                  tagFilter.length === 0
+                    ? 'bg-white border-white text-black shadow-[0_0_20px_rgba(255,255,255,0.15)]'
+                    : 'bg-transparent border-(--border-subtle) text-(--text-muted) hover:border-white hover:text-white'
                 }`}
               >
                 ALL PROPOSALS ({queue.length})
               </button>
+              
               {uniqueTags.map(tag => (
                 <button
                   key={tag}
-                  onClick={() => setTagFilter(tagFilter === tag ? '' : tag)}
-                  className={`px-3 py-1.5 rounded-md text-[10px] font-bold tracking-wider transition border ${
-                    tagFilter === tag
-                      ? 'bg-(--accent-cyan) border-(--accent-cyan) text-black shadow-[0_0_15px_rgba(0,229,255,0.4)]'
-                      : 'bg-transparent border-(--border-subtle) text-(--text-muted) hover:border-(--accent-cyan) hover:text-(--accent-cyan)'
+                  onClick={() => toggleTag(tag)}
+                  className={`px-4 py-1.5 rounded text-xs font-bold tracking-wider transition-all border flex items-center gap-2 ${
+                    tagFilter.includes(tag)
+                      ? 'bg-[#FFB800] border-[#FFB800] text-black shadow-[0_0_25px_rgba(255,184,0,0.25)]'
+                      : 'bg-transparent border-(--border-subtle) text-(--text-muted) hover:border-[#FFB800] hover:text-[#FFB800]'
                   }`}
                 >
-                  {tag.toUpperCase()} ({tagCounts[tag]})
+                  {tag.toUpperCase()}
+                  <span className={`text-[10px] opacity-70 ${tagFilter.includes(tag) ? 'text-black' : 'text-(--text-muted)'}`}>
+                    {tagCounts[tag]}
+                  </span>
                 </button>
               ))}
             </div>

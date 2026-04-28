@@ -498,7 +498,8 @@ export async function adminRoutes(app: FastifyInstance) {
 
   // GET /api/v1/admin/teams — list all teams with scores
   app.get('/teams', { preHandler: [requireRole('ADMIN', 'MODERATOR')] }, async (request, reply) => {
-    const { page = '1', limit = '20', track, search } = request.query as Record<string, string>
+    const { page = '1', limit = '20', track, search, tags, status } = request.query as Record<string, string>
+    const selectedTags = tags ? tags.split(',') : []
     const take = Math.min(100, Math.max(1, Number(limit) || 20))
     const currentPage = Math.max(1, Number(page) || 1)
 
@@ -522,6 +523,16 @@ export async function adminRoutes(app: FastifyInstance) {
             ],
           }
         : {}),
+      ...(status ? { currentStatus: status as any } : {}),
+      ...(selectedTags.length > 0 ? {
+        submissions: {
+          some: {
+            moderatorReview: {
+              tags: { hasSome: selectedTags }
+            }
+          }
+        }
+      } : {}),
     }
 
     const teams = await prisma.team.findMany({

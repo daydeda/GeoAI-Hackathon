@@ -26,7 +26,8 @@ function canSendAnnouncement() {
 export async function moderatorRoutes(app: FastifyInstance) {
   // GET /api/v1/mod/submissions
   app.get('/submissions', { preHandler: [requireRole('MODERATOR', 'ADMIN')] }, async (request, reply) => {
-    const { status, track, search, tag, page = '1', limit = '20' } = request.query as Record<string, string>
+    const { status, track, search, tag, tags, page = '1', limit = '20' } = request.query as Record<string, string>
+    const selectedTags = tags ? tags.split(',') : (tag ? [tag] : [])
     const normalizedSearch = search?.trim()
     const looksLikeUuid = Boolean(normalizedSearch && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(normalizedSearch))
 
@@ -57,6 +58,16 @@ export async function moderatorRoutes(app: FastifyInstance) {
       ]
     }
 
+    if (selectedTags.length > 0) {
+      teamWhere.submissions = {
+        some: {
+          moderatorReview: {
+            tags: { hasSome: selectedTags }
+          }
+        }
+      }
+    }
+
     const normalizedFilterStatus = status === 'DISQUALIFIED' ? 'FAIL' : status
     const listWhere = { ...where }
     if (normalizedFilterStatus === 'PENDING') {
@@ -65,11 +76,11 @@ export async function moderatorRoutes(app: FastifyInstance) {
       listWhere.moderatorReview = { status: normalizedFilterStatus }
     }
 
-    if (tag) {
+    if (selectedTags.length > 0) {
       if (listWhere.moderatorReview) {
-        listWhere.moderatorReview.tags = { has: tag }
+        listWhere.moderatorReview.tags = { hasSome: selectedTags }
       } else {
-        listWhere.moderatorReview = { tags: { has: tag } }
+        listWhere.moderatorReview = { tags: { hasSome: selectedTags } }
       }
     }
 

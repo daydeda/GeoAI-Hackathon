@@ -127,7 +127,7 @@ function ModeratorContent() {
   const [trackFilter, setTrackFilter] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
   const [search, setSearch] = useState('')
-  const [tagFilter, setTagFilter] = useState('')
+  const [tagFilter, setTagFilter] = useState<string[]>([])
   const [previewSubmissionId, setPreviewSubmissionId] = useState<string | null>(null)
   const [reviewTarget, setReviewTarget] = useState<{ submission: Submission, status: 'PASS' | 'DISQUALIFIED' } | null>(null)
   const [submissionsPage, setSubmissionsPage] = useState(1)
@@ -139,18 +139,22 @@ function ModeratorContent() {
   const fetchSubmissions = useCallback(async () => {
     setLoading(true)
     try {
-      const qs = new URLSearchParams({ page: String(submissionsPage), limit: String(SUBMISSIONS_LIMIT) })
-      if (trackFilter) qs.set('track', trackFilter)
-      if (statusFilter) qs.set('status', statusFilter)
-      if (tagFilter) qs.set('tag', tagFilter)
-      if (search.trim()) qs.set('search', search.trim())
+      const params = new URLSearchParams()
+      if (trackFilter) params.append('track', trackFilter)
+      if (statusFilter) params.append('status', statusFilter)
+      if (tagFilter.length > 0) params.append('tags', tagFilter.join(','))
+      params.append('search', search)
+      params.append('page', String(submissionsPage))
+      params.append('limit', '20')
 
       const teamsQs = new URLSearchParams({ page: String(teamOverviewPage), limit: String(TEAM_OVERVIEW_LIMIT) })
       if (trackFilter) teamsQs.set('track', trackFilter)
+      if (statusFilter) teamsQs.set('status', statusFilter)
+      if (tagFilter.length > 0) teamsQs.set('tags', tagFilter.join(','))
       if (search.trim()) teamsQs.set('search', search.trim())
 
       const [res, teamsRes] = await Promise.all([
-        fetch(`${API}/api/v1/mod/submissions?${qs.toString()}`, { credentials: 'include' }),
+        fetch(`${API}/api/v1/mod/submissions?${params.toString()}`, { credentials: 'include' }),
         fetch(`${API}/api/v1/admin/teams?${teamsQs.toString()}`, { credentials: 'include' }),
       ])
 
@@ -183,6 +187,15 @@ function ModeratorContent() {
   const uniqueTags = useMemo(() => {
     return Object.keys(tagCounts).sort()
   }, [tagCounts])
+
+  const toggleTag = (tag: string) => {
+    setTagFilter(prev => 
+      prev.includes(tag) 
+        ? prev.filter(t => t !== tag) 
+        : [...prev, tag]
+    )
+    setTeamOverviewPage(1)
+  }
 
   useEffect(() => { fetchSubmissions() }, [fetchSubmissions])
 
@@ -246,30 +259,38 @@ function ModeratorContent() {
 
       {/* Tag Filter Bar */}
       {uniqueTags.length > 0 && (
-        <div className="border-b border-(--border-subtle) bg-[rgba(0,229,255,0.02)] px-4 sm:px-6 lg:px-8 py-3">
-          <div className="flex flex-wrap gap-2 items-center">
-            <span className="text-[10px] font-bold tracking-widest text-(--text-muted) mr-2 uppercase">Filter by Tag:</span>
+        <div className="border-b border-(--border-subtle) bg-[rgba(255,255,255,0.02)] px-4 sm:px-6 lg:px-8 py-4">
+          <div className="flex flex-wrap gap-3 items-center">
+            <div className="flex items-center gap-2 mr-3">
+              <span className="text-[11px] font-bold tracking-[0.15em] text-(--text-muted) uppercase">Classification Filters</span>
+              <div className="h-4 w-[1px] bg-(--border-subtle)" />
+            </div>
+            
             <button
-              onClick={() => setTagFilter('')}
-              className={`px-3 py-1 rounded-full text-[10px] font-bold tracking-wider transition border ${
-                tagFilter === ''
-                  ? 'bg-(--accent-cyan) border-(--accent-cyan) text-black shadow-[0_0_15px_rgba(0,229,255,0.3)]'
-                  : 'bg-transparent border-(--border-subtle) text-(--text-muted) hover:border-(--accent-cyan) hover:text-(--accent-cyan)'
+              onClick={() => setTagFilter([])}
+              className={`px-4 py-1.5 rounded-full text-xs font-bold tracking-wider transition-all border ${
+                tagFilter.length === 0
+                  ? 'bg-white border-white text-black shadow-[0_0_20px_rgba(255,255,255,0.2)]'
+                  : 'bg-transparent border-(--border-subtle) text-(--text-muted) hover:border-white hover:text-white'
               }`}
             >
               ALL ({total})
             </button>
+            
             {uniqueTags.map((tag: string) => (
               <button
                 key={tag}
-                onClick={() => setTagFilter(tagFilter === tag ? '' : tag)}
-                className={`px-3 py-1 rounded-full text-[10px] font-bold tracking-wider transition border ${
-                  tagFilter === tag
-                    ? 'bg-(--accent-cyan) border-(--accent-cyan) text-black shadow-[0_0_15px_rgba(0,229,255,0.3)]'
-                    : 'bg-transparent border-(--border-subtle) text-(--text-muted) hover:border-(--accent-cyan) hover:text-(--accent-cyan)'
+                onClick={() => toggleTag(tag)}
+                className={`px-4 py-1.5 rounded-full text-xs font-bold tracking-wider transition-all border flex items-center gap-2 ${
+                  tagFilter.includes(tag)
+                    ? 'bg-[#FFB800] border-[#FFB800] text-black shadow-[0_0_25px_rgba(255,184,0,0.3)]'
+                    : 'bg-transparent border-(--border-subtle) text-(--text-muted) hover:border-[#FFB800] hover:text-[#FFB800]'
                 }`}
               >
-                {tag.toUpperCase()} ({tagCounts[tag]})
+                {tag.toUpperCase()}
+                <span className={`text-[10px] opacity-70 ${tagFilter.includes(tag) ? 'text-black' : 'text-(--text-muted)'}`}>
+                  {tagCounts[tag]}
+                </span>
               </button>
             ))}
           </div>
