@@ -15,6 +15,7 @@ import {
   Save,
   Settings,
   ShieldCheck,
+  Download,
 } from 'lucide-react'
 import { AuthProvider, useAuth } from '@/contexts/AuthContext'
 import { useAlert } from '@/contexts/AlertContext'
@@ -114,6 +115,7 @@ function JudgeContent() {
   const [comments, setComments] = useState('')
   const [saving, setSaving] = useState(false)
   const [updatingFinalStatus, setUpdatingFinalStatus] = useState(false)
+  const [downloadingZip, setDownloadingZip] = useState(false)
   const [sortMode, setSortMode] = useState<'mean_desc' | 'mean_asc' | 'submitted_desc' | 'submitted_asc'>('mean_desc')
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('ALL')
   const { currentPhase } = useCompetitionPhases()
@@ -215,7 +217,7 @@ function JudgeContent() {
       feasibilityScore: 0,
     })
     setComments('')
-  }, [activeSubmission])
+  }, [activeSubmission, user?.id])
 
   const weightedScore =
     scores.nationalImpactScore * 0.4 +
@@ -290,6 +292,33 @@ function JudgeContent() {
     }
   }
 
+  const downloadAllPdfs = async () => {
+    setDownloadingZip(true)
+    try {
+      const res = await fetch(`${API}/api/v1/judge/export/proposals`, {
+        credentials: 'include',
+      })
+      if (!res.ok) {
+        showAlert('Failed to generate ZIP export.', 'warning')
+        return
+      }
+      const blob = await res.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `GeoAI_Proposals_${new Date().getTime()}.zip`
+      document.body.appendChild(a)
+      a.click()
+      window.URL.revokeObjectURL(url)
+      document.body.removeChild(a)
+      showAlert('ZIP export downloaded successfully.', 'info')
+    } catch {
+      showAlert('Unexpected error during ZIP export.', 'error')
+    } finally {
+      setDownloadingZip(false)
+    }
+  }
+
   const statusCard = [
     { label: 'Pending Reviews', value: unscoredQueue.length, icon: ClipboardList },
     { label: 'Completed Reviews', value: scoredQueue.length, icon: CheckCircle2 },
@@ -307,17 +336,28 @@ function JudgeContent() {
                 Standardized rubric scoring with independent judge submissions and automatic averaging.
               </p>
             </div>
-            <div className="flex items-center gap-3 text-xs text-(--text-muted)">
-              <ShieldCheck size={16} className="text-(--accent-cyan)" />
-              <span>{user?.roles?.[0] || 'JUDGE'}</span>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
               <button
                 type="button"
-                onClick={logout}
-                className="ml-2 inline-flex items-center gap-2 rounded border border-(--border-subtle) px-3 py-1.5 text-(--text-secondary) hover:text-white"
+                onClick={downloadAllPdfs}
+                disabled={downloadingZip || queue.length === 0}
+                className="inline-flex items-center gap-2 rounded bg-(--bg-base) border border-(--accent-cyan) px-4 py-2.5 text-xs font-semibold text-(--accent-cyan) hover:bg-[rgba(0,229,255,0.1)] transition disabled:opacity-50"
               >
-                <LogOut size={14} />
-                Logout
+                <Download size={14} />
+                {downloadingZip ? 'Generating ZIP...' : 'Download All PDFs (ZIP)'}
               </button>
+              <div className="flex items-center gap-3 text-xs text-(--text-muted)">
+                <ShieldCheck size={16} className="text-(--accent-cyan)" />
+                <span>{user?.roles?.[0] || 'JUDGE'}</span>
+                <button
+                  type="button"
+                  onClick={logout}
+                  className="ml-2 inline-flex items-center gap-2 rounded border border-(--border-subtle) px-3 py-1.5 text-(--text-secondary) hover:text-white"
+                >
+                  <LogOut size={14} />
+                  Logout
+                </button>
+              </div>
             </div>
           </div>
         </header>

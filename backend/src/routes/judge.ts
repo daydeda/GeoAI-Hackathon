@@ -3,6 +3,10 @@ import { z } from 'zod'
 import { prisma } from '../plugins/prisma.js'
 import { requireRole, JwtPayload } from '../middleware/auth.js'
 import { writeAuditLog } from '../services/auditLog.js'
+import { minioClient, BUCKET } from '../services/storage.js'
+import { PDFDocument, rgb, StandardFonts } from 'pdf-lib'
+import JSZip from 'jszip'
+import { Readable } from 'stream'
 
 // Score weights per SRS §4.5
 const WEIGHTS = {
@@ -287,5 +291,101 @@ export async function judgeRoutes(app: FastifyInstance) {
         disqualified: disqualifiedVotes,
       },
     }
+  })
+
+  // GET /api/v1/judge/export/proposals
+  app.get('/export/proposals', { preHandler: [requireRole('JUDGE', 'ADMIN', 'MODERATOR')] }, async (request, reply) => {
+    const actor = request.user as JwtPayload
+    
+    // 1. Fetch all submissions that have passed moderation
+    const submissions = await prisma.submission.findMany({
+      where: {
+        isActive: true,
+        moderatorReview: { is: { status: 'PASS' } },
+      },
+      include: {
+        team: true,
+        files: { orderBy: { uploadedAt: 'desc' }, take: 1 },
+      },
+    })
+
+    if (submissions.length === 0) {
+      return reply.status(404).send({ error: 'No proposals found to export' })
+    }
+
+    const zip = new JSZip()
+    const now = new Date()
+    const timestampStr = now.toLocaleString('en-GB', { 
+      day: '2-digit', 
+      month: '2-digit', 
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false 
+    }).replace(',', '') // DD/MM/YYYY HH:mm
+
+    // 2. Process each submission
+    for (const sub of submissions) {
+      const file = sub.files[0]
+      if (!file) continue
+
+      try {
+        // Download from MinIO
+        const dataStream = await minioClient.getObject(BUCKET, file.fileKey)
+        const chunks: Buffer[] = []
+        for await (const chunk of dataStream) {
+          chunks.push(chunk as Buffer)
+        }
+        const pdfBuffer = Buffer.concat(chunks)
+
+        // Modify PDF with watermark/text
+        const pdfDoc = await PDFDocument.load(pdfBuffer)
+        const font = await pdfDoc.embedFont(StandardFonts.Helvetica)
+        const pages = pdfDoc.getPages()
+
+        for (const page of pages) {
+          const { width } = page.getSize()
+          page.drawText(`Exported: ${timestampStr}`, {
+            x: 40,
+            y: 20,
+            size: 9,
+            font,
+            color: rgb(0.5, 0.5, 0.5),
+          })
+          page.drawText(`Team: ${sub.team.name}`, {
+            x: width - 200,
+            y: 20,
+            size: 9,
+            font,
+            color: rgb(0.5, 0.5, 0.5),
+          })
+        }
+
+        const modifiedPdf = await pdfDoc.save()
+        
+        // Add to ZIP with team name prefix
+        const safeTeamName = sub.team.name.replace(/[/\\?%*:|"<>]/g, '-')
+        const zipFileName = `${safeTeamName}_v${sub.version}_${file.originalName}`
+        zip.file(zipFileName, modifiedPdf)
+
+      } catch (err) {
+        request.log.error(err, `Failed to process submission ${sub.id} for export`)
+      }
+    }
+
+    const zipBuffer = await zip.generateAsync({ type: 'nodebuffer' })
+
+    await writeAuditLog({
+      actorId: actor.userId,
+      action: 'BULK_PROPOSAL_EXPORT',
+      entityType: 'submission',
+      entityId: 'multiple',
+      metadata: { count: submissions.length },
+    })
+
+    reply
+      .header('Content-Type', 'application/zip')
+      .header('Content-Disposition', `attachment; filename="GeoAI_Proposals_Export_${now.getTime()}.zip"`)
+      .send(zipBuffer)
   })
 }

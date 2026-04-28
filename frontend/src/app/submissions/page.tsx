@@ -131,7 +131,6 @@ function SubmissionsContent() {
 
   const activeSubmission = history[0]
   const proposalDeadline = phases.find((phase) => phase.key === 'proposal-submission')?.date || '2026-04-29T23:59:59+07:00'
-  const announcementDate = phases.find((phase) => phase.key === 'announcement')?.date || '2026-05-08T00:00:00+07:00'
   const isProposalPhaseEnded = Date.now() > new Date(proposalDeadline).getTime()
   const isJudged = Boolean(activeSubmission?.scoreAggregate)
   const isSubmissionClosed = isProposalPhaseEnded || isJudged

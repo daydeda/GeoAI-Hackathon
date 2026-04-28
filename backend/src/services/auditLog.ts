@@ -25,6 +25,7 @@ type AuditAction =
   | 'PHASE_DEADLINES_UPDATED'
   | 'JUDGE_FINAL_STATUS_UPDATED'
   | 'TEAM_TRACK_CHANGED'
+  | 'BULK_PROPOSAL_EXPORT'
 
 interface AuditParams {
   actorId?: string
