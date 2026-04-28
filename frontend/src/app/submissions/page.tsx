@@ -407,12 +407,7 @@ function SubmissionsContent() {
                   VIEW DOCUMENT
                 </button>
 
-                {activeSubmission.moderatorReview?.note && (
-                  <div className="mt-4 p-3 bg-(--bg-base) border border-(--accent-amber)/30 rounded text-xs text-(--text-secondary)">
-                    <div className="font-bold text-(--accent-amber) mb-1 uppercase tracking-widest text-[10px]">Reviewer Feedback</div>
-                    <div className="whitespace-pre-wrap">{activeSubmission.moderatorReview.note}</div>
-                  </div>
-                )}
+
               </div>
             )}
 
