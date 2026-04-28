@@ -216,6 +216,7 @@ function JudgeContent() {
   }, [currentTabQueue, activeSubId])
 
   useEffect(() => {
+    const existing = activeSubmission?.judgeScores?.find((s) => s.judgeUserId === user?.id)
     if (existing) {
       setScores({
         problemDefinitionScore: existing.problemDefinitionScore,

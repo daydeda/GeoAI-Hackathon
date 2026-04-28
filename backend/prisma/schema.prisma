@@ -158,10 +158,10 @@ model JudgeScore {
   id                           String   @id @default(uuid())
   submissionId                 String
   judgeUserId                  String
-  problemDefinitionScore       Float // Max 5
-  dataSpatialArchitectureScore Float // Max 5
-  methodologicalFrameworkScore Float // Max 30
-  outputDecisionUseScore       Float // Max 10
+  problemDefinitionScore       Float @default(0) // Max 5
+  dataSpatialArchitectureScore Float @default(0) // Max 5
+  methodologicalFrameworkScore Float @default(0) // Max 30
+  outputDecisionUseScore       Float @default(0) // Max 10
   comments                     String?
   scoredAt                     DateTime @default(now())
   updatedAt                    DateTime @updatedAt
