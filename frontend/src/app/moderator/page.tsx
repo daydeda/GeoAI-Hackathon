@@ -420,23 +420,24 @@ function ModeratorContent() {
                   <div className="flex flex-wrap gap-1.5">
                     {sub.moderatorReview?.tags?.map((tag, idx) => {
                       const colors = [
-                        { bg: 'rgba(0, 229, 255, 0.15)', border: 'rgba(0, 229, 255, 0.4)', text: 'var(--accent-cyan)' },
-                        { bg: 'rgba(0, 230, 118, 0.15)', border: 'rgba(0, 230, 118, 0.4)', text: 'var(--accent-green)' },
-                        { bg: 'rgba(255, 167, 38, 0.15)', border: 'rgba(255, 167, 38, 0.4)', text: 'var(--accent-amber)' },
-                        { bg: 'rgba(255, 64, 129, 0.15)', border: 'rgba(255, 64, 129, 0.4)', text: '#ff4081' },
-                        { bg: 'rgba(124, 77, 255, 0.15)', border: 'rgba(124, 77, 255, 0.4)', text: '#7c4dff' },
-                        { bg: 'rgba(64, 196, 255, 0.15)', border: 'rgba(64, 196, 255, 0.4)', text: '#40c4ff' },
+                        { bg: 'rgba(0, 229, 255, 0.2)', border: 'rgba(0, 229, 255, 0.6)', glow: 'rgba(0, 229, 255, 0.4)' },
+                        { bg: 'rgba(0, 230, 118, 0.2)', border: 'rgba(0, 230, 118, 0.6)', glow: 'rgba(0, 230, 118, 0.4)' },
+                        { bg: 'rgba(255, 167, 38, 0.2)', border: 'rgba(255, 167, 38, 0.6)', glow: 'rgba(255, 167, 38, 0.4)' },
+                        { bg: 'rgba(255, 64, 129, 0.2)', border: 'rgba(255, 64, 129, 0.6)', glow: 'rgba(255, 64, 129, 0.4)' },
+                        { bg: 'rgba(124, 77, 255, 0.2)', border: 'rgba(124, 77, 255, 0.6)', glow: 'rgba(124, 77, 255, 0.4)' },
+                        { bg: 'rgba(64, 196, 255, 0.2)', border: 'rgba(64, 196, 255, 0.6)', glow: 'rgba(64, 196, 255, 0.4)' },
                       ]
                       const hash = tag.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)
                       const color = colors[hash % colors.length]
                       return (
                         <span 
                           key={idx} 
-                          className="inline-block text-[10px] font-bold py-1 px-2 rounded border uppercase tracking-wider whitespace-nowrap"
+                          className="inline-block text-[10px] font-extrabold py-1 px-2 rounded border uppercase tracking-wider whitespace-nowrap text-white"
                           style={{
                             backgroundColor: color.bg,
                             borderColor: color.border,
-                            color: color.text,
+                            boxShadow: `0 0 8px ${color.glow}`,
+                            textShadow: '0 1px 2px rgba(0,0,0,0.5)'
                           }}
                         >
                           {tag}

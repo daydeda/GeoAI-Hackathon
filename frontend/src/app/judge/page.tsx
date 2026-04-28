@@ -572,12 +572,12 @@ function JudgeContent() {
                     {activeSubmission.moderatorReview.tags.map((tag, idx) => {
                       // Generate a stable color based on tag text
                       const colors = [
-                        { bg: 'rgba(0, 229, 255, 0.15)', border: 'rgba(0, 229, 255, 0.4)', text: 'var(--accent-cyan)' },   // Cyan
-                        { bg: 'rgba(0, 230, 118, 0.15)', border: 'rgba(0, 230, 118, 0.4)', text: 'var(--accent-green)' },  // Green
-                        { bg: 'rgba(255, 167, 38, 0.15)', border: 'rgba(255, 167, 38, 0.4)', text: 'var(--accent-amber)' }, // Amber
-                        { bg: 'rgba(255, 64, 129, 0.15)', border: 'rgba(255, 64, 129, 0.4)', text: '#ff4081' },            // Pink
-                        { bg: 'rgba(124, 77, 255, 0.15)', border: 'rgba(124, 77, 255, 0.4)', text: '#7c4dff' },            // Purple
-                        { bg: 'rgba(64, 196, 255, 0.15)', border: 'rgba(64, 196, 255, 0.4)', text: '#40c4ff' },            // Light Blue
+                        { bg: 'rgba(0, 229, 255, 0.2)', border: 'rgba(0, 229, 255, 0.6)', glow: 'rgba(0, 229, 255, 0.4)' }, // Cyan
+                        { bg: 'rgba(0, 230, 118, 0.2)', border: 'rgba(0, 230, 118, 0.6)', glow: 'rgba(0, 230, 118, 0.4)' }, // Green
+                        { bg: 'rgba(255, 167, 38, 0.2)', border: 'rgba(255, 167, 38, 0.6)', glow: 'rgba(255, 167, 38, 0.4)' }, // Amber
+                        { bg: 'rgba(255, 64, 129, 0.2)', border: 'rgba(255, 64, 129, 0.6)', glow: 'rgba(255, 64, 129, 0.4)' }, // Pink
+                        { bg: 'rgba(124, 77, 255, 0.2)', border: 'rgba(124, 77, 255, 0.6)', glow: 'rgba(124, 77, 255, 0.4)' }, // Purple
+                        { bg: 'rgba(64, 196, 255, 0.2)', border: 'rgba(64, 196, 255, 0.6)', glow: 'rgba(64, 196, 255, 0.4)' }, // Light Blue
                       ]
                       const hash = tag.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)
                       const color = colors[hash % colors.length]
@@ -585,12 +585,12 @@ function JudgeContent() {
                       return (
                         <span 
                           key={idx}
-                          className="inline-flex items-center rounded-md border px-3 py-1.5 text-[12px] font-bold uppercase tracking-widest shadow-sm"
+                          className="inline-flex items-center rounded-md border px-3 py-1.5 text-[12px] font-extrabold uppercase tracking-widest text-white shadow-lg"
                           style={{
                             backgroundColor: color.bg,
                             borderColor: color.border,
-                            color: color.text,
-                            textShadow: `0 0 8px ${color.bg}`
+                            boxShadow: `0 0 12px ${color.glow}`,
+                            textShadow: '0 1px 2px rgba(0,0,0,0.5)'
                           }}
                         >
                           {tag}
