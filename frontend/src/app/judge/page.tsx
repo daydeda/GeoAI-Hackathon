@@ -130,7 +130,7 @@ function JudgeContent() {
     fetchInFlightRef.current = true
     setLoading(true)
     try {
-      const res = await fetch(`${API}/api/v1/judge/submissions?limit=50`, { credentials: 'include' })
+      const res = await fetch(`${API}/api/v1/judge/submissions?limit=200`, { credentials: 'include' })
       if (!res.ok) {
         showAlertRef.current('Failed to load evaluation queue', 'warning')
         return
@@ -420,14 +420,15 @@ function JudgeContent() {
                 <button
                   key={tag}
                   onClick={() => toggleTag(tag)}
-                  className={`px-4 py-1.5 rounded text-xs font-bold tracking-wider transition-all border flex items-center gap-2 ${
+                  className={`px-4 py-1.5 rounded text-xs font-bold transition-all border flex items-center gap-2 font-sans ${
                     tagFilter.includes(tag)
-                      ? 'bg-[#FFB800] border-[#FFB800] text-black shadow-[0_0_25px_rgba(255,184,0,0.25)]'
+                      ? 'bg-[#FFB800] border-[#FFB800] text-[#1A1A1A] shadow-[0_0_25px_rgba(255,184,0,0.25)]'
                       : 'bg-transparent border-(--border-subtle) text-(--text-muted) hover:border-[#FFB800] hover:text-[#FFB800]'
                   }`}
+                  style={{ fontFamily: "'Inter', 'Sarabun', sans-serif" }}
                 >
                   {tag.toUpperCase()}
-                  <span className={`text-[10px] opacity-70 ${tagFilter.includes(tag) ? 'text-black' : 'text-(--text-muted)'}`}>
+                  <span className={`text-[10px] font-bold ${tagFilter.includes(tag) ? 'text-[#1A1A1A] opacity-70' : 'text-(--text-muted) opacity-50'}`}>
                     {tagCounts[tag]}
                   </span>
                 </button>

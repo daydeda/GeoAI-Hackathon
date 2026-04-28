@@ -123,6 +123,7 @@ function ModeratorContent() {
   const [teamOverviewPage, setTeamOverviewPage] = useState(1)
   const [total, setTotal] = useState(0)
   const [stats, setStats] = useState({ PENDING: 0, APPROVED: 0, DISQUALIFIED: 0, DRAFT: 0, TOTAL: 0 })
+  const [tagCounts, setTagCounts] = useState<Record<string, number>>({})
   const [loading, setLoading] = useState(true)
   const [trackFilter, setTrackFilter] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
@@ -145,7 +146,7 @@ function ModeratorContent() {
       if (tagFilter.length > 0) params.append('tags', tagFilter.join(','))
       params.append('search', search)
       params.append('page', String(submissionsPage))
-      params.append('limit', '20')
+      params.append('limit', String(SUBMISSIONS_LIMIT))
 
       const teamsQs = new URLSearchParams({ page: String(teamOverviewPage), limit: String(TEAM_OVERVIEW_LIMIT) })
       if (trackFilter) teamsQs.set('track', trackFilter)
@@ -163,6 +164,7 @@ function ModeratorContent() {
         setSubmissions(d.data || [])
         setTotal(d.total || 0)
         if (d.counts) setStats(d.counts)
+        if (d.tagCounts) setTagCounts(d.tagCounts)
       }
       if (teamsRes.ok) {
         const d = await teamsRes.json()
@@ -173,16 +175,6 @@ function ModeratorContent() {
       setLoading(false)
     }
   }, [trackFilter, statusFilter, tagFilter, teamOverviewPage, submissionsPage, search])
-
-  const tagCounts = useMemo(() => {
-    const counts: Record<string, number> = {}
-    submissions.forEach(sub => {
-      sub.moderatorReview?.tags?.forEach(tag => {
-        counts[tag] = (counts[tag] || 0) + 1
-      })
-    })
-    return counts
-  }, [submissions])
 
   const uniqueTags = useMemo(() => {
     return Object.keys(tagCounts).sort()
@@ -281,14 +273,15 @@ function ModeratorContent() {
               <button
                 key={tag}
                 onClick={() => toggleTag(tag)}
-                className={`px-4 py-1.5 rounded-full text-xs font-bold tracking-wider transition-all border flex items-center gap-2 ${
+                className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all border flex items-center gap-2 font-sans ${
                   tagFilter.includes(tag)
-                    ? 'bg-[#FFB800] border-[#FFB800] text-black shadow-[0_0_25px_rgba(255,184,0,0.3)]'
+                    ? 'bg-[#FFB800] border-[#FFB800] text-[#1A1A1A] shadow-[0_0_25px_rgba(255,184,0,0.3)]'
                     : 'bg-transparent border-(--border-subtle) text-(--text-muted) hover:border-[#FFB800] hover:text-[#FFB800]'
                 }`}
+                style={{ fontFamily: "'Inter', 'Sarabun', sans-serif" }}
               >
                 {tag.toUpperCase()}
-                <span className={`text-[10px] opacity-70 ${tagFilter.includes(tag) ? 'text-black' : 'text-(--text-muted)'}`}>
+                <span className={`text-[10px] font-bold ${tagFilter.includes(tag) ? 'text-[#1A1A1A] opacity-70' : 'text-(--text-muted) opacity-50'}`}>
                   {tagCounts[tag]}
                 </span>
               </button>

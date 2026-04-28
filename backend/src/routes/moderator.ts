@@ -84,14 +84,25 @@ export async function moderatorRoutes(app: FastifyInstance) {
       }
     }
 
-    const [totalMatching, pendingCount, approvedCount, disqualifiedCount, draftCount, totalTeams] = await Promise.all([
+    const [totalMatching, pendingCount, approvedCount, disqualifiedCount, draftCount, totalTeams, allMatchingSubmissions] = await Promise.all([
       prisma.submission.count({ where: listWhere }),
       prisma.team.count({ where: { ...teamWhere, currentStatus: 'SUBMITTED' } }),
       prisma.team.count({ where: { ...teamWhere, currentStatus: { in: ['PRE_SCREEN_PASSED', 'JUDGED', 'FINALIST'] } } }),
       prisma.team.count({ where: { ...teamWhere, currentStatus: 'REJECTED' } }),
       prisma.team.count({ where: { ...teamWhere, currentStatus: 'DRAFT' } }),
-      prisma.team.count({ where: teamWhere })
+      prisma.team.count({ where: teamWhere }),
+      prisma.submission.findMany({
+        where: listWhere,
+        select: { moderatorReview: { select: { tags: true } } }
+      })
     ])
+
+    const tagCounts: Record<string, number> = {}
+    allMatchingSubmissions.forEach(s => {
+      s.moderatorReview?.tags?.forEach(t => {
+        tagCounts[t] = (tagCounts[t] || 0) + 1
+      })
+    })
 
     const submissions = await prisma.submission.findMany({
       where: listWhere,
@@ -116,6 +127,7 @@ export async function moderatorRoutes(app: FastifyInstance) {
           : null,
       })),
       total: totalMatching,
+      tagCounts,
       counts: {
         PENDING: pendingCount,
         APPROVED: approvedCount,
