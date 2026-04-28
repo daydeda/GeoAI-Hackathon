@@ -298,7 +298,7 @@ export async function judgeRoutes(app: FastifyInstance) {
     const actor = request.user as JwtPayload
     
     // 1. Fetch all submissions that have passed moderation
-    const submissions = await prisma.submission.findMany({
+    const allPassSubmissions = await prisma.submission.findMany({
       where: {
         isActive: true,
         moderatorReview: { is: { status: 'PASS' } },
@@ -307,7 +307,26 @@ export async function judgeRoutes(app: FastifyInstance) {
         team: true,
         files: { orderBy: { uploadedAt: 'desc' }, take: 1 },
       },
+      orderBy: [
+        { submittedAt: 'asc' },
+        { id: 'asc' },
+      ],
     })
+
+    // Calculate display IDs (1, 2, 3...) matching the dashboard's chronological order
+    const displayIdMap = new Map<string, number>(
+      allPassSubmissions.map((row, index) => [row.id, index + 1])
+    )
+
+    // Group by teamId but keep only the LATEST one (the one with the highest version/latest date)
+    // We sort by submittedAt DESC to ensure the first one we pick per team is the latest.
+    const sortedForGrouping = [...allPassSubmissions].sort((a, b) => 
+      new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime()
+    )
+    
+    const submissions = Array.from(
+      new Map(sortedForGrouping.map((s) => [s.teamId, s])).values()
+    )
 
     if (submissions.length === 0) {
       return reply.status(404).send({ error: 'No proposals found to export' })
@@ -321,7 +340,8 @@ export async function judgeRoutes(app: FastifyInstance) {
       year: 'numeric',
       hour: '2-digit',
       minute: '2-digit',
-      hour12: false 
+      hour12: false,
+      timeZone: 'Asia/Bangkok'
     }).replace(',', '') // DD/MM/YYYY HH:mm
 
     // 2. Process each submission
@@ -363,13 +383,30 @@ export async function judgeRoutes(app: FastifyInstance) {
 
         const modifiedPdf = await pdfDoc.save()
         
-        // Add to ZIP with team name prefix
+        // Add to ZIP with team name prefix and ID to ensure uniqueness
+        const displayId = displayIdMap.get(sub.id) || '?'
         const safeTeamName = sub.team.name.replace(/[/\\?%*:|"<>]/g, '-')
-        const zipFileName = `${safeTeamName}_v${sub.version}_${file.originalName}`
+        const zipFileName = `ID_${displayId}_${safeTeamName}_${file.originalName}`
         zip.file(zipFileName, modifiedPdf)
 
       } catch (err) {
-        request.log.error(err, `Failed to process submission ${sub.id} for export`)
+        request.log.error(err, `Watermarking failed for submission ${sub.id}, including original file instead`)
+        
+        // If watermarking/PDF processing fails, still try to include the raw file in the ZIP
+        try {
+          const displayId = displayIdMap.get(sub.id) || '?'
+          const safeTeamName = sub.team.name.replace(/[/\\?%*:|"<>]/g, '-')
+          const zipFileName = `ID_${displayId}_${safeTeamName}_${file.originalName}`
+          
+          const dataStream = await minioClient.getObject(BUCKET, file.fileKey)
+          const chunks: Buffer[] = []
+          for await (const chunk of dataStream) {
+            chunks.push(chunk as Buffer)
+          }
+          zip.file(zipFileName, Buffer.concat(chunks))
+        } catch (innerErr) {
+          request.log.error(innerErr, `Total failure to include file for submission ${sub.id}`)
+        }
       }
     }
 
