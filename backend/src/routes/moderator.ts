@@ -26,7 +26,7 @@ function canSendAnnouncement() {
 export async function moderatorRoutes(app: FastifyInstance) {
   // GET /api/v1/mod/submissions
   app.get('/submissions', { preHandler: [requireRole('MODERATOR', 'ADMIN')] }, async (request, reply) => {
-    const { status, track, search, page = '1', limit = '20' } = request.query as Record<string, string>
+    const { status, track, search, tag, page = '1', limit = '20' } = request.query as Record<string, string>
     const normalizedSearch = search?.trim()
     const looksLikeUuid = Boolean(normalizedSearch && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(normalizedSearch))
 
@@ -63,6 +63,14 @@ export async function moderatorRoutes(app: FastifyInstance) {
       listWhere.moderatorReview = null
     } else if (normalizedFilterStatus) {
       listWhere.moderatorReview = { status: normalizedFilterStatus }
+    }
+
+    if (tag) {
+      if (listWhere.moderatorReview) {
+        listWhere.moderatorReview.tags = { has: tag }
+      } else {
+        listWhere.moderatorReview = { tags: { has: tag } }
+      }
     }
 
     const [totalMatching, pendingCount, approvedCount, disqualifiedCount, draftCount, totalTeams] = await Promise.all([

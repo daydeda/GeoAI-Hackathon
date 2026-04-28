@@ -121,6 +121,7 @@ function JudgeContent() {
   const [downloadingZip, setDownloadingZip] = useState(false)
   const [sortMode, setSortMode] = useState<'mean_desc' | 'mean_asc' | 'submitted_desc' | 'submitted_asc'>('mean_desc')
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('ALL')
+  const [tagFilter, setTagFilter] = useState<string>('')
   const { currentPhase } = useCompetitionPhases()
   const phaseDeadline = formatPhaseDeadline(currentPhase.date)
 
@@ -164,9 +165,23 @@ function JudgeContent() {
 
   const baseTabQueue = activeTab === 'QUEUE' ? unscoredQueue : scoredQueue
   const filteredTabQueue = useMemo(() => {
-    if (statusFilter === 'ALL') return baseTabQueue
-    return baseTabQueue.filter((item) => getTeamOutcomeLabel(item.team.currentStatus) === statusFilter)
-  }, [baseTabQueue, statusFilter])
+    let result = baseTabQueue
+    if (statusFilter !== 'ALL') {
+      result = result.filter((item) => getTeamOutcomeLabel(item.team.currentStatus) === statusFilter)
+    }
+    if (tagFilter) {
+      result = result.filter((item) => item.moderatorReview?.tags?.includes(tagFilter))
+    }
+    return result
+  }, [baseTabQueue, statusFilter, tagFilter])
+
+  const uniqueTags = useMemo(() => {
+    const tags = new Set<string>()
+    queue.forEach(sub => {
+      sub.moderatorReview?.tags?.forEach(t => tags.add(t))
+    })
+    return Array.from(tags).sort()
+  }, [queue])
 
   const currentTabQueue = useMemo(() => {
     const cloned = [...filteredTabQueue]
@@ -453,6 +468,21 @@ function JudgeContent() {
                       { value: 'QUALIFIED', label: 'Qualified' },
                       { value: 'DISQUALIFIED', label: 'Disqualified' },
                       { value: 'PENDING', label: 'Pending' },
+                    ]}
+                  />
+                </div>
+                <div className="mb-1 rounded border border-(--border-subtle) bg-(--bg-base) px-3 py-2">
+                  <div className="mb-2 inline-flex items-center gap-1 text-[10px] uppercase tracking-[0.08em] text-(--text-muted)">
+                    <ClipboardList size={12} />
+                    Tag Filter
+                  </div>
+                  <CustomDropdown
+                    className="w-full"
+                    value={tagFilter}
+                    onChange={setTagFilter}
+                    options={[
+                      { value: '', label: 'All Tags' },
+                      ...uniqueTags.map(t => ({ value: t, label: t.toUpperCase() }))
                     ]}
                   />
                 </div>

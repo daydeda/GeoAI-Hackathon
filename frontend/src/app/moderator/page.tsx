@@ -127,6 +127,7 @@ function ModeratorContent() {
   const [trackFilter, setTrackFilter] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
   const [search, setSearch] = useState('')
+  const [tagFilter, setTagFilter] = useState('')
   const [previewSubmissionId, setPreviewSubmissionId] = useState<string | null>(null)
   const [reviewTarget, setReviewTarget] = useState<{ submission: Submission, status: 'PASS' | 'DISQUALIFIED' } | null>(null)
   const [submissionsPage, setSubmissionsPage] = useState(1)
@@ -141,6 +142,7 @@ function ModeratorContent() {
       const qs = new URLSearchParams({ page: String(submissionsPage), limit: String(SUBMISSIONS_LIMIT) })
       if (trackFilter) qs.set('track', trackFilter)
       if (statusFilter) qs.set('status', statusFilter)
+      if (tagFilter) qs.set('tag', tagFilter)
       if (search.trim()) qs.set('search', search.trim())
 
       const teamsQs = new URLSearchParams({ page: String(teamOverviewPage), limit: String(TEAM_OVERVIEW_LIMIT) })
@@ -166,7 +168,15 @@ function ModeratorContent() {
     } finally {
       setLoading(false)
     }
-  }, [trackFilter, statusFilter, teamOverviewPage, submissionsPage, search])
+  }, [trackFilter, statusFilter, tagFilter, teamOverviewPage, submissionsPage, search])
+
+  const uniqueTags = (() => {
+    const tags = new Set<string>()
+    submissions.forEach(sub => {
+      sub.moderatorReview?.tags?.forEach(t => tags.add(t))
+    })
+    return Array.from(tags).sort()
+  })()
 
   useEffect(() => { fetchSubmissions() }, [fetchSubmissions])
 
@@ -253,6 +263,15 @@ function ModeratorContent() {
                 { value: '', label: 'ALL STATUS' },
                 { value: 'PASS', label: 'Approved' },
                 { value: 'DISQUALIFIED', label: 'Disqualified' },
+              ]}
+            />
+            <CustomDropdown
+              className="min-w-[160px]"
+              value={tagFilter}
+              onChange={setTagFilter}
+              options={[
+                { value: '', label: 'ALL TAGS' },
+                ...uniqueTags.map(t => ({ value: t, label: t.toUpperCase() }))
               ]}
             />
           </div>
