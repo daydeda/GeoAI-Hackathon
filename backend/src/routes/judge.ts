@@ -7,6 +7,8 @@ import { minioClient, BUCKET } from '../services/storage.js'
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib'
 import JSZip from 'jszip'
 import { Readable } from 'stream'
+import fs from 'fs/promises'
+import path from 'path'
 
 // Score weights per SRS §4.5
 const WEIGHTS = {
@@ -360,24 +362,36 @@ export async function judgeRoutes(app: FastifyInstance) {
 
         // Modify PDF with watermark/text
         const pdfDoc = await PDFDocument.load(pdfBuffer)
-        const font = await pdfDoc.embedFont(StandardFonts.Helvetica)
+        
+        // Load Thai-compatible font
+        const fontPath = path.join(process.cwd(), 'fonts/Sarabun-Regular.ttf')
+        const fontBuffer = await fs.readFile(fontPath).catch(() => null)
+        const font = fontBuffer 
+          ? await pdfDoc.embedFont(fontBuffer)
+          : await pdfDoc.embedFont(StandardFonts.Helvetica)
+
         const pages = pdfDoc.getPages()
+        const displayId = displayIdMap.get(sub.id) || '?'
 
         for (const page of pages) {
           const { width } = page.getSize()
-          page.drawText(`Exported: ${timestampStr}`, {
+          
+          // Left: Team Name (supports Thai now)
+          page.drawText(`Team: ${sub.team.name}`, {
             x: 40,
             y: 20,
-            size: 9,
+            size: 10,
             font,
-            color: rgb(0.5, 0.5, 0.5),
+            color: rgb(0.4, 0.4, 0.4),
           })
-          page.drawText(`Team: ${sub.team.name}`, {
-            x: width - 200,
+
+          // Right: Exported Date & Time
+          page.drawText(`Exported: ${timestampStr} (ID: ${displayId})`, {
+            x: width - 220,
             y: 20,
-            size: 9,
+            size: 10,
             font,
-            color: rgb(0.5, 0.5, 0.5),
+            color: rgb(0.4, 0.4, 0.4),
           })
         }
 
