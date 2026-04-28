@@ -24,6 +24,14 @@ function buildAdminEmailAllowlist(): Set<string> {
   ])
 }
 
+function buildJudgeEmailAllowlist(): Set<string> {
+  return new Set(parseCsvEmails(process.env.JUDGE_EMAIL_ALLOWLIST))
+}
+
+function buildModeratorEmailAllowlist(): Set<string> {
+  return new Set(parseCsvEmails(process.env.MODERATOR_EMAIL_ALLOWLIST))
+}
+
 export function getAllowlistedAdminEmails(): string[] {
   return Array.from(buildAdminEmailAllowlist())
 }
@@ -34,9 +42,16 @@ export function isAllowlistedAdminEmail(email: string): boolean {
 
 export function getAutoGrantedRolesForEmail(email: string): RoleType[] {
   const roles: RoleType[] = ['COMPETITOR']
+  const normalized = normalizeEmail(email)
 
-  if (isAllowlistedAdminEmail(email)) {
+  if (buildAdminEmailAllowlist().has(normalized)) {
     roles.push('ADMIN')
+  }
+  if (buildJudgeEmailAllowlist().has(normalized)) {
+    roles.push('JUDGE')
+  }
+  if (buildModeratorEmailAllowlist().has(normalized)) {
+    roles.push('MODERATOR')
   }
 
   return roles

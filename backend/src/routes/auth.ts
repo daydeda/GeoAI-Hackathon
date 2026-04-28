@@ -229,9 +229,14 @@ export async function authRoutes(app: FastifyInstance) {
 
       // If user doesn't exist, check if registration is still open
       if (!existingUser) {
-        const regPhase = await getPhaseByKey('registration')
-        if (regPhase && new Date() > new Date(regPhase.date)) {
-          return reply.redirect(`${process.env.FRONTEND_URL}/login?error=registration_closed`)
+        const autoGrantedRoles = getAutoGrantedRolesForEmail(profile.email)
+        const isStaff = autoGrantedRoles.some(r => r === 'ADMIN' || r === 'JUDGE' || r === 'MODERATOR')
+
+        if (!isStaff) {
+          const regPhase = await getPhaseByKey('registration')
+          if (regPhase && new Date() > new Date(regPhase.date)) {
+            return reply.redirect(`${process.env.FRONTEND_URL}/login?error=registration_closed`)
+          }
         }
       }
 
