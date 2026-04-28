@@ -283,8 +283,12 @@ export default function LandingPage() {
       <section className="border-t border-b border-(--border-subtle) bg-(--bg-surface) px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-20">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-8 sm:mb-12">
-            <div className="font-mono text-[10px] sm:text-xs text-(--text-muted) tracking-widest mb-2">
-              SUBMISSION DEADLINE · PROTOCOL LOCK IN
+            <div className="font-mono text-[10px] sm:text-xs text-(--text-muted) tracking-widest mb-2 uppercase">
+              {currentPhase.key === 'proposal-submission' 
+                ? 'SUBMISSION DEADLINE · PROTOCOL LOCK IN' 
+                : currentPhase.key === 'announcement'
+                ? 'ANNOUNCEMENT PHASE · PREPARING FINALISTS'
+                : `${currentPhase.title} · PROTOCOL PHASE`}
             </div>
           </div>
           <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 md:gap-4">
@@ -434,9 +438,9 @@ export default function LandingPage() {
                   {item.status === 'done' ? '✓' : null}
                 </div>
 
-                <div>
+                <div className={item.status === 'done' ? 'opacity-40' : ''}>
                   <div
-                    className="font-mono text-xs sm:text-sm mb-1 tracking-widest"
+                    className={`font-mono text-xs sm:text-sm mb-1 tracking-widest ${item.status === 'done' ? 'line-through' : ''}`}
                     style={{
                       color:
                         item.status === 'active'
@@ -446,12 +450,12 @@ export default function LandingPage() {
                   >
                     {item.phase} · {item.dateLabel}
                   </div>
-                  <h3 className="font-display text-lg sm:text-xl mb-2" style={{
+                  <h3 className={`font-display text-lg sm:text-xl mb-2 ${item.status === 'done' ? 'line-through' : ''}`} style={{
                     color: item.status === 'upcoming' ? 'var(--text-secondary)' : 'var(--text-primary)',
                   }}>
                     {item.title}
                   </h3>
-                  <p className="text-sm sm:text-base text-(--text-muted) leading-relaxed">
+                  <p className={`text-sm sm:text-base text-(--text-muted) leading-relaxed ${item.status === 'done' ? 'line-through' : ''}`}>
                     {item.desc}
                   </p>
                 </div>

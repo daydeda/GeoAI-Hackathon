@@ -64,7 +64,7 @@ export async function judgeRoutes(app: FastifyInstance) {
         team: true,
         files: { orderBy: { uploadedAt: 'desc' }, take: 1 },
         moderatorReview: true,
-        judgeScores: { where: { judgeUserId: actor.userId } },
+        judgeScores: { include: { judge: { select: { id: true, fullName: true } } } },
         scoreAggregate: true,
       },
       orderBy: { submittedAt: 'desc' },

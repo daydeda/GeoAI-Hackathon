@@ -40,6 +40,8 @@ interface FileItem {
 }
 
 interface JudgeScore {
+  judgeUserId: string
+  judge?: { id: string; fullName: string }
   nationalImpactScore: number
   technologyMethodologyScore: number
   requirementComplianceScore: number
@@ -194,7 +196,7 @@ function JudgeContent() {
   }, [currentTabQueue, activeSubId])
 
   useEffect(() => {
-    const existing = activeSubmission?.judgeScores?.[0]
+    const existing = activeSubmission?.judgeScores?.find((s) => s.judgeUserId === user?.id)
     if (existing) {
       setScores({
         nationalImpactScore: existing.nationalImpactScore,
@@ -619,6 +621,36 @@ function JudgeContent() {
                     placeholder="Write clear justification for your score."
                   />
                 </div>
+
+                {/* Peer Reviews section */}
+                {activeSubmission.judgeScores && activeSubmission.judgeScores.length > 0 && (
+                  <div className="mt-6 border-t border-(--border-subtle) pt-5">
+                    <label className="mb-3 block text-xs font-semibold uppercase tracking-[0.08em] text-(--text-secondary)">
+                      Peer Reviews ({activeSubmission.judgeScores.filter(s => s.judgeUserId !== user?.id).length})
+                    </label>
+                    <div className="space-y-3">
+                      {activeSubmission.judgeScores
+                        .filter((s) => s.judgeUserId !== user?.id)
+                        .map((s, idx) => (
+                          <div key={idx} className="rounded border border-(--border-subtle) bg-(--bg-elevated) p-3">
+                            <div className="mb-1 flex items-center justify-between">
+                              <span className="text-[11px] font-bold text-(--accent-cyan)">
+                                {s.judge?.fullName || 'Anonymous Judge'}
+                              </span>
+                            </div>
+                            <p className="text-xs text-white leading-relaxed whitespace-pre-wrap">
+                              {s.comments || <span className="text-(--text-muted) italic">No comments provided.</span>}
+                            </p>
+                          </div>
+                        ))}
+                      {activeSubmission.judgeScores.filter(s => s.judgeUserId !== user?.id).length === 0 && (
+                        <div className="text-xs text-(--text-muted) italic p-2">
+                          No peer reviews submitted yet for this proposal.
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
 
                 <button
                   type="button"

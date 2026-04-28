@@ -174,14 +174,27 @@ export async function submissionRoutes(app: FastifyInstance) {
       }
     })
 
-    const data = history.map((submission) => ({
-      ...submission,
-      judgeEvaluations: submission.judgeScores.map((score) => {
-        return {
+    const announcementPhase = await getPhaseByKey('announcement')
+    const announcementDate = announcementPhase ? new Date(announcementPhase.date) : null
+    const isAfterAnnouncement = announcementDate ? new Date() > announcementDate : false
+
+    const data = history.map((submission) => {
+      // Explicitly extract judgeScores to ensure it doesn't leak in the spread
+      const { judgeScores, ...rest } = submission as any
+      
+      return {
+        ...rest,
+        // Moderator notes hidden AFTER announcement for privacy
+        moderatorReview: submission.moderatorReview ? {
+          ...submission.moderatorReview,
+          note: isAfterAnnouncement ? null : submission.moderatorReview.note
+        } : null,
+        // Judge individual comments ONLY visible AFTER announcement
+        judgeEvaluations: isAfterAnnouncement ? judgeScores.map((score: any) => ({
           comment: score.comments,
-        }
-      }),
-    }))
+        })) : [],
+      }
+    })
 
     return { data }
   })

@@ -243,22 +243,19 @@ function SubmissionsContent() {
     </div>
   )
 
-  const canShowAnnouncement = Date.now() >= new Date(announcementDate).getTime()
+  const canShowAnnouncement = (() => {
+    const announcementDateStr = phases.find((phase) => phase.key === 'announcement')?.date || '2026-05-09T00:00:00+07:00'
+    const announcementTime = new Date(announcementDateStr).getTime()
+    return Date.now() >= announcementTime
+  })()
+
   const reviewStatus = (() => {
     if (!canShowAnnouncement) return 'UNDER REVIEW'
     if (activeSubmission?.team?.currentStatus === 'FINALIST') return 'QUALIFIED'
     if (activeSubmission?.team?.currentStatus === 'REJECTED') return 'DISQUALIFIED'
     return normalizeReviewStatus(activeSubmission?.moderatorReview?.status)
   })()
-  const feedbackMessage = canShowAnnouncement
-    ? 'No judge feedback has been published for this submission yet.'
-    : 'Judge feedback and detailed notes will be released during the Announcement Phase.'
 
-  const publishedJudgeCards = canShowAnnouncement
-    ? (activeSubmission?.judgeEvaluations || [])
-    : []
-
-  const fallbackJudgeCount = activeSubmission?.scoreAggregate?.judgeCount || 0
 
   return (
     <div className="min-h-screen px-4 py-6 sm:px-6 lg:px-8">
@@ -319,50 +316,6 @@ function SubmissionsContent() {
           </div>
         )}
 
-        {activeSubmission && (
-          <section className="mb-4 sm:mb-6 rounded-lg border border-(--border-subtle) bg-(--bg-surface) p-4 sm:p-6">
-            <h2 className="font-display text-lg tracking-[0.05em] text-(--accent-cyan) sm:text-xl">Judge Feedback &amp; Evaluations</h2>
-            <p className="mt-2 text-xs sm:text-sm text-(--text-secondary)">
-              Review the individual comments provided by our judging panel below.
-            </p>
-
-            {!canShowAnnouncement && (
-              <div className="mt-4 rounded border border-(--accent-amber) bg-[rgba(255,167,38,0.12)] px-3 py-2 text-xs text-(--accent-amber)">
-                Judge feedback and detailed notes will be released during the Announcement Phase.
-              </div>
-            )}
-
-            {canShowAnnouncement && (
-              <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
-                {publishedJudgeCards.length > 0 ? (
-                  publishedJudgeCards.map((evaluation, index) => (
-                    <article key={`judge-note-${index + 1}`} className="rounded border border-(--border-subtle) bg-(--bg-base) p-3">
-                      <div className="mb-1 text-xs font-semibold tracking-[0.08em] text-(--accent-cyan)">
-                        Judge Feedback {index + 1}
-                      </div>
-                      <div className="text-xs leading-relaxed text-(--text-secondary)">
-                        <span className="whitespace-pre-wrap">{evaluation.comment?.trim() || 'No written comment provided for this judge.'}</span>
-                      </div>
-                    </article>
-                  ))
-                ) : (
-                  Array.from({ length: Math.max(1, fallbackJudgeCount) }).map((_, index) => (
-                    <article key={`judge-placeholder-${index + 1}`} className="rounded border border-(--border-subtle) bg-(--bg-base) p-3">
-                      <div className="mb-1 text-xs font-semibold tracking-[0.08em] text-(--accent-cyan)">
-                        Judge {index + 1}
-                      </div>
-                      <div className="text-xs leading-relaxed text-(--text-secondary)">
-                        {index === 0 && feedbackMessage
-                          ? feedbackMessage
-                          : 'Detailed individual notes for this judge are not available yet.'}
-                      </div>
-                    </article>
-                  ))
-                )}
-              </div>
-            )}
-          </section>
-        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-[1.3fr_1fr] gap-4 sm:gap-6">
           {/* Upload Form */}
@@ -454,6 +407,13 @@ function SubmissionsContent() {
                 >
                   VIEW DOCUMENT
                 </button>
+
+                {activeSubmission.moderatorReview?.note && (
+                  <div className="mt-4 p-3 bg-(--bg-base) border border-(--accent-amber)/30 rounded text-xs text-(--text-secondary)">
+                    <div className="font-bold text-(--accent-amber) mb-1 uppercase tracking-widest text-[10px]">Reviewer Feedback</div>
+                    <div className="whitespace-pre-wrap">{activeSubmission.moderatorReview.note}</div>
+                  </div>
+                )}
               </div>
             )}
 

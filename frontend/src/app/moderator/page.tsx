@@ -315,19 +315,21 @@ function ModeratorContent() {
         <table className="w-full text-left text-xs sm:text-sm">
           <thead>
             <tr className="border-b border-[rgba(255,255,255,0.05)]">
-              <th className="py-2 sm:py-3 px-2 sm:px-3 text-[8px] sm:text-xs text-(--text-muted) font-semibold tracking-widest">TEAM</th>
-              <th className="py-2 sm:py-3 px-2 sm:px-3 text-[8px] sm:text-xs text-(--text-muted) font-semibold tracking-widest hidden sm:table-cell">TRACK</th>
-              <th className="py-2 sm:py-3 px-2 sm:px-3 text-[8px] sm:text-xs text-(--text-muted) font-semibold tracking-widest hidden md:table-cell">SUBMITTED</th>
-              <th className="py-2 sm:py-3 px-2 sm:px-3 text-[8px] sm:text-xs text-(--text-muted) font-semibold tracking-widest text-center">VERSION</th>
-              <th className="py-2 sm:py-3 px-2 sm:px-3 text-[8px] sm:text-xs text-(--text-muted) font-semibold tracking-widest">STATUS</th>
-              <th className="py-2 sm:py-3 px-2 sm:px-3 text-[8px] sm:text-xs text-(--text-muted) font-semibold tracking-widest">NOTE</th>
-              <th className="py-2 sm:py-3 px-2 sm:px-3 text-[8px] sm:text-xs text-(--text-muted) font-semibold tracking-widest text-right">ACTION</th>
+              <th className="py-2 sm:py-3 px-2 sm:px-3 text-[9px] sm:text-xs text-(--text-muted) font-semibold tracking-widest min-w-[120px]">TEAM</th>
+              <th className="py-2 sm:py-3 px-2 sm:px-3 text-[9px] sm:text-xs text-(--text-muted) font-semibold tracking-widest hidden sm:table-cell min-w-[140px]">TRACK</th>
+              <th className="py-2 sm:py-3 px-2 sm:px-3 text-[9px] sm:text-xs text-(--text-muted) font-semibold tracking-widest hidden md:table-cell min-w-[100px]">SUBMITTED</th>
+              <th className="py-2 sm:py-3 px-2 sm:px-3 text-[9px] sm:text-xs text-(--text-muted) font-semibold tracking-widest text-center w-16">VERSION</th>
+              <th className="py-2 sm:py-3 px-2 sm:px-3 text-[9px] sm:text-xs text-(--text-muted) font-semibold tracking-widest min-w-[110px]">STATUS</th>
+              <th className="py-2 sm:py-3 px-2 sm:px-3 text-[9px] sm:text-xs text-(--text-muted) font-semibold tracking-widest min-w-[200px] lg:min-w-[300px]">NOTE</th>
+              <th className="py-2 sm:py-3 px-2 sm:px-3 text-[9px] sm:text-xs text-(--text-muted) font-semibold tracking-widest text-right min-w-[130px]">ACTION</th>
             </tr>
           </thead>
           <tbody>
             {visibleSubmissions.map(sub => (
               <tr key={sub.id} className="border-b border-[rgba(255,255,255,0.02)] hover:bg-[rgba(255,255,255,0.01)] transition">
-                <td className="py-2 sm:py-3 px-2 sm:px-3 font-semibold text-xs sm:text-sm text-white truncate">{sub.team.name}</td>
+                <td className="py-3 sm:py-4 px-2 sm:px-3 font-semibold text-xs sm:text-sm text-white">
+                  <div className="truncate max-w-[150px] sm:max-w-none" title={sub.team.name}>{sub.team.name}</div>
+                </td>
                 <td className="py-2 sm:py-3 px-2 sm:px-3 text-(--text-secondary) hidden sm:table-cell truncate text-xs sm:text-sm">{formatTrackLabel(sub.team.track)}</td>
                 <td className="py-2 sm:py-3 px-2 sm:px-3 font-mono text-(--text-muted) hidden md:table-cell text-[8px] sm:text-xs">{new Date(sub.submittedAt).toLocaleDateString()}</td>
                 <td className="py-2 sm:py-3 px-2 sm:px-3 text-center">
@@ -346,9 +348,9 @@ function ModeratorContent() {
                     </span>
                   )}
                 </td>
-                <td className="py-2 sm:py-3 px-2 sm:px-3">
+                <td className="py-3 sm:py-4 px-2 sm:px-3">
                   {sub.moderatorReview?.note ? (
-                    <div className="text-[10px] sm:text-xs text-(--text-secondary) italic whitespace-pre-wrap max-w-[250px] leading-relaxed">
+                    <div className="text-[10px] sm:text-xs text-(--text-secondary) italic whitespace-pre-wrap leading-relaxed">
                       &quot;{sub.moderatorReview.note}&quot;
                     </div>
                   ) : (

@@ -1,0 +1,44 @@
+{
+  "phases": [
+    {
+      "key": "registration",
+      "phase": "PHASE 01",
+      "dateLabel": "31 MAR",
+      "title": "Registration",
+      "desc": "Team registration window closed on 27 April.",
+      "date": "2026-03-31T23:59:59+07:00"
+    },
+    {
+      "key": "proposal-submission",
+      "phase": "PHASE 02",
+      "dateLabel": "27 APR",
+      "title": "Proposal Submission",
+      "desc": "Proposal submission deadline is April 27 (PDF, max 20 MB), at 16:00.",
+      "date": "2026-04-27T16:00:00+07:00"
+    },
+    {
+      "key": "announcement",
+      "phase": "PHASE 03",
+      "dateLabel": "09 MAY",
+      "title": "Announcement",
+      "desc": "",
+      "date": "2026-05-09T00:00:00+07:00"
+    },
+    {
+      "key": "development",
+      "phase": "PHASE 04",
+      "dateLabel": "15 MAY",
+      "title": "Prototype Development",
+      "desc": "",
+      "date": "2026-05-15T09:00:00+07:00"
+    },
+    {
+      "key": "final-pitching",
+      "phase": "PHASE 05",
+      "dateLabel": "04 JUN",
+      "title": "Final Pitching",
+      "desc": "",
+      "date": "2026-06-04T09:00:00+07:00"
+    }
+  ]
+}
