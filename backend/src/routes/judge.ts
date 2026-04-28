@@ -9,6 +9,11 @@ import JSZip from 'jszip'
 import { Readable } from 'stream'
 import fs from 'fs/promises'
 import path from 'path'
+import { fileURLToPath } from 'url'
+import { dirname } from 'path'
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = dirname(__filename)
 
 // Score weights per SRS §4.5
 const WEIGHTS = {
@@ -367,11 +372,26 @@ export async function judgeRoutes(app: FastifyInstance) {
         // Modify PDF with watermark/text (ignore encryption to prevent loading failures)
         const pdfDoc = await PDFDocument.load(pdfBuffer, { ignoreEncryption: true })
         
-        // Load Thai-compatible font with robust pathing
+        // Load Thai-compatible font with multiple path fallbacks
         let font;
         try {
-          const fontPath = path.resolve(process.cwd(), 'fonts', 'Sarabun-Regular.ttf')
-          const fontBuffer = await fs.readFile(fontPath)
+          // Fallback 1: Root /app/fonts (Docker)
+          // Fallback 2: Local relative to this file
+          const fontPaths = [
+            path.resolve(process.cwd(), 'fonts', 'Sarabun-Regular.ttf'),
+            path.join(__dirname, '..', '..', 'fonts', 'Sarabun-Regular.ttf'),
+            path.join(__dirname, '..', 'fonts', 'Sarabun-Regular.ttf')
+          ]
+          
+          let fontBuffer = null
+          for (const p of fontPaths) {
+            try {
+              fontBuffer = await fs.readFile(p)
+              if (fontBuffer) break
+            } catch { continue }
+          }
+
+          if (!fontBuffer) throw new Error('Font file not found in any search path')
           font = await pdfDoc.embedFont(fontBuffer)
         } catch (fontErr) {
           const msg = fontErr instanceof Error ? fontErr.message : String(fontErr)
