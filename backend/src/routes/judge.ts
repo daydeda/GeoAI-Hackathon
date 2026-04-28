@@ -364,37 +364,48 @@ export async function judgeRoutes(app: FastifyInstance) {
         }
         const pdfBuffer = Buffer.concat(chunks)
 
-        // Modify PDF with watermark/text
-        const pdfDoc = await PDFDocument.load(pdfBuffer)
+        // Modify PDF with watermark/text (ignore encryption to prevent loading failures)
+        const pdfDoc = await PDFDocument.load(pdfBuffer, { ignoreEncryption: true })
         
-        // Load Thai-compatible font
-        const fontPath = path.join(process.cwd(), 'fonts/Sarabun-Regular.ttf')
-        const fontBuffer = await fs.readFile(fontPath).catch(() => null)
-        const font = fontBuffer 
-          ? await pdfDoc.embedFont(fontBuffer)
-          : await pdfDoc.embedFont(StandardFonts.Helvetica)
+        // Load Thai-compatible font with robust pathing
+        let font;
+        try {
+          const fontPath = path.resolve(process.cwd(), 'fonts', 'Sarabun-Regular.ttf')
+          const fontBuffer = await fs.readFile(fontPath)
+          font = await pdfDoc.embedFont(fontBuffer)
+        } catch (fontErr) {
+          const msg = fontErr instanceof Error ? fontErr.message : String(fontErr)
+          request.log.warn(`Font load failed: ${msg}. Falling back to Helvetica.`)
+          font = await pdfDoc.embedFont(StandardFonts.Helvetica)
+        }
 
         const pages = pdfDoc.getPages()
 
         for (const page of pages) {
           const { width } = page.getSize()
           
-          // Left: Team Name (supports Thai now)
-          page.drawText(`Team: ${sub.team.name}`, {
+          // Use a safe team name if using Helvetica (which doesn't support Thai)
+          const isThaiFont = font.name !== 'Helvetica'
+          const watermarkTeamName = (isThaiFont || /^[\x00-\x7F]*$/.test(sub.team.name))
+            ? sub.team.name
+            : `Team (ID: ${displayId})`
+
+          // Left: Team Name
+          page.drawText(`Team: ${watermarkTeamName}`, {
             x: 40,
             y: 20,
             size: 10,
             font,
-            color: rgb(0.4, 0.4, 0.4),
+            color: rgb(0.3, 0.3, 0.3),
           })
 
           // Right: Exported Date & Time
           page.drawText(`Exported: ${timestampStr} (ID: ${displayId})`, {
-            x: width - 220,
+            x: width - 240,
             y: 20,
             size: 10,
             font,
-            color: rgb(0.4, 0.4, 0.4),
+            color: rgb(0.3, 0.3, 0.3),
           })
         }
 
