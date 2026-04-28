@@ -148,10 +148,10 @@ export async function submissionRoutes(app: FastifyInstance) {
           select: {
             judgeUserId: true,
             comments: true,
-            nationalImpactScore: true,
-            technologyMethodologyScore: true,
-            requirementComplianceScore: true,
-            feasibilityScore: true,
+            problemDefinitionScore: true,
+            dataSpatialArchitectureScore: true,
+            methodologicalFrameworkScore: true,
+            outputDecisionUseScore: true,
             judge: {
               select: {
                 fullName: true,
@@ -168,18 +168,19 @@ export async function submissionRoutes(app: FastifyInstance) {
     const isAfterAnnouncement = announcementDate ? new Date() > announcementDate : false
 
     const data = history.map((submission) => {
-      // Explicitly extract judgeScores to ensure it doesn't leak in the spread
-      const { judgeScores, ...rest } = submission as any
+      // Use any cast to handle complex Prisma includes in the map
+      const s = submission as any
+      const { judgeScores, moderatorReview, ...rest } = s
       
       return {
         ...rest,
         // Moderator notes hidden AFTER announcement for privacy
-        moderatorReview: submission.moderatorReview ? {
-          ...submission.moderatorReview,
-          note: isAfterAnnouncement ? null : submission.moderatorReview.note
+        moderatorReview: moderatorReview ? {
+          ...moderatorReview,
+          note: isAfterAnnouncement ? null : moderatorReview.note
         } : null,
         // Judge individual comments ONLY visible AFTER announcement
-        judgeEvaluations: isAfterAnnouncement ? judgeScores.map((score: any) => ({
+        judgeEvaluations: isAfterAnnouncement && judgeScores ? judgeScores.map((score: any) => ({
           comment: score.comments,
         })) : [],
       }
