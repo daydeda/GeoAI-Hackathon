@@ -1,51 +1,42 @@
-// ============================================================
-// GEOAI Hackathon Platform — Prisma Schema
-// ============================================================
-
 generator client {
   provider = "prisma-client-js"
 }
 
-// Datasource: Postgres connection. Prisma reads `DATABASE_URL` from .env by default.
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
-// ─── Auth & Identity ─────────────────────────────────────────
-
 model User {
-  id               String           @id @default(uuid())
-  email            String           @unique
-  fullName         String
-  firstName        String?
-  lastName         String?
-  experience       String?
-  university       String?
-  yearOfStudy      Int?
-  phoneNumber      String?
-  address          String?
-  idCardFileKey    String?
-  idCardFileName   String?
-  profileCompleted Boolean          @default(false)
-  announcementSent Boolean          @default(false) @map("announcement_sent")
-  avatarUrl        String?
-  oauthProvider    String           @default("google")
-  oauthSubject     String           @unique
-  createdAt        DateTime         @default(now())
-  updatedAt        DateTime         @updatedAt
-  competitorStatus CompetitorStatus @default(PENDING)
-  lastLoginAt      DateTime?        @map("last_login_at")
-  moderatorNote    String?          // Rejection reason from moderator, shown to competitor
-
-  // Relations
-  userRoles          UserRole[]
-  ledTeams           Team[]                 @relation("TeamLeader")
-  teamMembers        TeamMember[]
+  id                 String                 @id @default(uuid())
+  email              String                 @unique
+  fullName           String
+  firstName          String?
+  lastName           String?
+  experience         String?
+  university         String?
+  yearOfStudy        Int?
+  phoneNumber        String?
+  address            String?
+  idCardFileKey      String?
+  idCardFileName     String?
+  profileCompleted   Boolean                @default(false)
+  announcementSent   Boolean                @default(false) @map("announcement_sent")
+  avatarUrl          String?
+  oauthProvider      String                 @default("google")
+  oauthSubject       String                 @unique
+  createdAt          DateTime               @default(now())
+  updatedAt          DateTime               @updatedAt
+  competitorStatus   CompetitorStatus       @default(PENDING)
+  moderatorNote      String?
+  lastLoginAt        DateTime?              @map("last_login_at")
+  announcementEmails AnnouncementEmailLog[]
+  auditLogs          AuditLog[]             @relation("AuditActor")
   judgeScores        JudgeScore[]
   moderatorReviews   ModeratorReview[]
-  auditLogs          AuditLog[]             @relation("AuditActor")
-  announcementEmails AnnouncementEmailLog[]
+  teamMembers        TeamMember[]
+  ledTeams           Team[]                 @relation("TeamLeader")
+  userRoles          UserRole[]
 
   @@map("users")
 }
@@ -59,6 +50,219 @@ model Role {
   @@map("roles")
 }
 
+model UserRole {
+  id         String   @id @default(uuid())
+  userId     String
+  roleId     String
+  assignedAt DateTime @default(now())
+  assignedBy String?
+  role       Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, roleId])
+  @@map("user_roles")
+}
+
+model Team {
+  id                 String                 @id @default(uuid())
+  name               String                 @unique
+  institution        String
+  track              Track
+  currentStatus      TeamStatus             @default(DRAFT)
+  leaderId           String
+  createdAt          DateTime               @default(now())
+  updatedAt          DateTime               @updatedAt
+  announcementEmails AnnouncementEmailLog[]
+  documents          Document[]
+  invites            Invite[]
+  scoreAggregates    ScoreAggregate[]
+  submissions        Submission[]
+  members            TeamMember[]
+  statusHistory      TeamStatusHistory[]
+  leader             User                   @relation("TeamLeader", fields: [leaderId], references: [id])
+
+  @@map("teams")
+}
+
+model TeamMember {
+  id       String   @id @default(uuid())
+  teamId   String
+  userId   String
+  joinedAt DateTime @default(now())
+  team     Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([teamId, userId])
+  @@map("team_members")
+}
+
+model Invite {
+  id        String    @id @default(uuid())
+  teamId    String
+  code      String    @unique
+  createdAt DateTime  @default(now())
+  expiresAt DateTime?
+  revoked   Boolean   @default(false)
+  team      Team      @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@map("invites")
+}
+
+model Submission {
+  id              String           @id @default(uuid())
+  teamId          String
+  version         Int              @default(1)
+  isActive        Boolean          @default(true)
+  gistdaDeclared  Boolean          @default(false)
+  abstract        String?
+  submittedAt     DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  judgeScores     JudgeScore[]
+  moderatorReview ModeratorReview?
+  scoreAggregate  ScoreAggregate?
+  files           SubmissionFile[]
+  team            Team             @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@map("submissions")
+}
+
+model SubmissionFile {
+  id            String     @id @default(uuid())
+  submissionId  String
+  fileKey       String
+  fileUrl       String?
+  fileSizeBytes Int
+  mimeType      String     @default("application/pdf")
+  originalName  String
+  uploadedAt    DateTime   @default(now())
+  submission    Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+
+  @@map("submission_files")
+}
+
+model ModeratorReview {
+  id           String       @id @default(uuid())
+  submissionId String       @unique
+  reviewerId   String
+  status       ReviewStatus
+  note         String?
+  reviewedAt   DateTime     @default(now())
+  tags         String[]     @default([])
+  reviewer     User         @relation(fields: [reviewerId], references: [id])
+  submission   Submission   @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+
+  @@map("moderator_reviews")
+}
+
+model JudgeScore {
+  id                           String   @id @default(uuid())
+  submissionId                 String
+  judgeUserId                  String
+  problemDefinitionScore       Float // Max 5
+  dataSpatialArchitectureScore Float // Max 5
+  methodologicalFrameworkScore Float // Max 30
+  outputDecisionUseScore       Float // Max 10
+  comments                     String?
+  scoredAt                     DateTime @default(now())
+  updatedAt                    DateTime @updatedAt
+
+  submission Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  judge      User       @relation(fields: [judgeUserId], references: [id])
+
+  @@unique([submissionId, judgeUserId])
+  @@map("judge_scores")
+}
+
+model ScoreAggregate {
+  id            String     @id @default(uuid())
+  submissionId  String     @unique
+  teamId        String
+  totalWeighted Float
+  judgeCount    Int
+  calculatedAt  DateTime   @default(now())
+  submission    Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  team          Team       @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@map("score_aggregates")
+}
+
+model TeamStatusHistory {
+  id         String      @id @default(uuid())
+  teamId     String
+  fromStatus TeamStatus?
+  toStatus   TeamStatus
+  actorId    String?
+  note       String?
+  changedAt  DateTime    @default(now())
+  team       Team        @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@map("team_status_history")
+}
+
+model Document {
+  id          String       @id @default(uuid())
+  teamId      String
+  type        DocumentType @default(PERMISSION_LETTER)
+  fileKey     String
+  generatedAt DateTime     @default(now())
+  version     Int          @default(1)
+  team        Team         @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@map("documents")
+}
+
+model Export {
+  id          String       @id @default(uuid())
+  requestedBy String
+  type        ExportType
+  fileKey     String?
+  status      ExportStatus @default(PENDING)
+  createdAt   DateTime     @default(now())
+  completedAt DateTime?
+
+  @@map("exports")
+}
+
+model AnnouncementEmailLog {
+  id               String                  @id @default(uuid())
+  announcementDate DateTime
+  recipientUserId  String?
+  recipientEmail   String
+  teamId           String?
+  teamName         String
+  result           TeamStatus
+  status           AnnouncementEmailStatus @default(SENT)
+  errorMessage     String?
+  sentAt           DateTime                @default(now())
+  createdAt        DateTime                @default(now())
+  updatedAt        DateTime                @updatedAt
+  recipientUser    User?                   @relation(fields: [recipientUserId], references: [id])
+  team             Team?                   @relation(fields: [teamId], references: [id])
+
+  @@unique([announcementDate, recipientEmail])
+  @@index([announcementDate])
+  @@index([status])
+  @@map("announcement_email_logs")
+}
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  actorId    String?
+  action     String
+  entityType String
+  entityId   String
+  oldValue   String?
+  newValue   String?
+  metadata   String?
+  createdAt  DateTime @default(now())
+  actor      User?    @relation("AuditActor", fields: [actorId], references: [id])
+
+  @@index([entityType, entityId])
+  @@index([actorId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
 enum RoleType {
   COMPETITOR
   MODERATOR
@@ -66,51 +270,12 @@ enum RoleType {
   ADMIN
 }
 
-// Individual competitor verification status (set by Moderator review & judge outcome)
 enum CompetitorStatus {
   PENDING
   VERIFIED_COMPETITOR
   INCORRECT_COMPETITOR
   DISQUALIFIED
   QUALIFIED
-}
-
-model UserRole {
-  id         String   @id @default(uuid())
-  userId     String
-  roleId     String
-  assignedAt DateTime @default(now())
-  assignedBy String?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, roleId])
-  @@map("user_roles")
-}
-
-// ─── Teams & Invites ─────────────────────────────────────────
-
-model Team {
-  id            String     @id @default(uuid())
-  name          String     @unique
-  institution   String
-  track         Track
-  currentStatus TeamStatus @default(DRAFT)
-  leaderId      String
-  createdAt     DateTime   @default(now())
-  updatedAt     DateTime   @updatedAt
-
-  leader             User                   @relation("TeamLeader", fields: [leaderId], references: [id])
-  members            TeamMember[]
-  invites            Invite[]
-  submissions        Submission[]
-  statusHistory      TeamStatusHistory[]
-  documents          Document[]
-  scoreAggregates    ScoreAggregate[]
-  announcementEmails AnnouncementEmailLog[]
-
-  @@map("teams")
 }
 
 enum Track {
@@ -127,172 +292,13 @@ enum TeamStatus {
   REJECTED
 }
 
-model TeamMember {
-  id       String   @id @default(uuid())
-  teamId   String
-  userId   String
-  joinedAt DateTime @default(now())
-
-  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([teamId, userId])
-  @@map("team_members")
-}
-
-model Invite {
-  id        String    @id @default(uuid())
-  teamId    String
-  code      String    @unique
-  createdAt DateTime  @default(now())
-  expiresAt DateTime?
-  revoked   Boolean   @default(false)
-
-  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
-
-  @@map("invites")
-}
-
-// ─── Submissions ─────────────────────────────────────────────
-
-model Submission {
-  id             String   @id @default(uuid())
-  teamId         String
-  version        Int      @default(1)
-  isActive       Boolean  @default(true)
-  gistdaDeclared Boolean  @default(false)
-  abstract       String? // Summarized content of the proposal PDF
-  submittedAt    DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-
-  team            Team             @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  files           SubmissionFile[]
-  moderatorReview ModeratorReview?
-  judgeScores     JudgeScore[]
-  scoreAggregate  ScoreAggregate?
-
-  @@map("submissions")
-}
-
-model SubmissionFile {
-  id            String   @id @default(uuid())
-  submissionId  String
-  fileKey       String // MinIO object key
-  fileUrl       String? // signed URL (transient)
-  fileSizeBytes Int
-  mimeType      String   @default("application/pdf")
-  originalName  String
-  uploadedAt    DateTime @default(now())
-
-  submission Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
-
-  @@map("submission_files")
-}
-
-// ─── Moderator Review ────────────────────────────────────────
-
-model ModeratorReview {
-  id           String       @id @default(uuid())
-  submissionId String       @unique
-  reviewerId   String
-  status       ReviewStatus
-  note         String?
-  tags         String[]     @default([])
-  reviewedAt   DateTime     @default(now())
-
-  submission Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
-  reviewer   User       @relation(fields: [reviewerId], references: [id])
-
-  @@map("moderator_reviews")
-}
-
 enum ReviewStatus {
   PASS
   FAIL
 }
 
-// ─── Judge Scoring ───────────────────────────────────────────
-
-model JudgeScore {
-  id                         String   @id @default(uuid())
-  submissionId               String
-  judgeUserId                String
-  nationalImpactScore        Float // 0-100, weight 0.40
-  technologyMethodologyScore Float // 0-100, weight 0.30
-  requirementComplianceScore Float // 0-100, weight 0.15
-  feasibilityScore           Float // 0-100, weight 0.15
-  comments                   String?
-  scoredAt                   DateTime @default(now())
-  updatedAt                  DateTime @updatedAt
-
-  submission Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
-  judge      User       @relation(fields: [judgeUserId], references: [id])
-
-  @@unique([submissionId, judgeUserId])
-  @@map("judge_scores")
-}
-
-model ScoreAggregate {
-  id            String   @id @default(uuid())
-  submissionId  String   @unique
-  teamId        String
-  totalWeighted Float
-  judgeCount    Int
-  calculatedAt  DateTime @default(now())
-
-  submission Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
-  team       Team       @relation(fields: [teamId], references: [id], onDelete: Cascade)
-
-  @@map("score_aggregates")
-}
-
-// ─── Team Status History ─────────────────────────────────────
-
-model TeamStatusHistory {
-  id         String      @id @default(uuid())
-  teamId     String
-  fromStatus TeamStatus?
-  toStatus   TeamStatus
-  actorId    String?
-  note       String?
-  changedAt  DateTime    @default(now())
-
-  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
-
-  @@map("team_status_history")
-}
-
-// ─── Finalist Documents ──────────────────────────────────────
-
-model Document {
-  id          String       @id @default(uuid())
-  teamId      String
-  type        DocumentType @default(PERMISSION_LETTER)
-  fileKey     String // MinIO object key
-  generatedAt DateTime     @default(now())
-  version     Int          @default(1)
-
-  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
-
-  @@map("documents")
-}
-
 enum DocumentType {
   PERMISSION_LETTER
-}
-
-// ─── Exports ─────────────────────────────────────────────────
-
-model Export {
-  id          String       @id @default(uuid())
-  requestedBy String
-  type        ExportType
-  fileKey     String?
-  status      ExportStatus @default(PENDING)
-  createdAt   DateTime     @default(now())
-  completedAt DateTime?
-
-  @@map("exports")
 }
 
 enum ExportType {
@@ -311,48 +317,4 @@ enum ExportStatus {
 enum AnnouncementEmailStatus {
   SENT
   FAILED
-}
-
-model AnnouncementEmailLog {
-  id               String                  @id @default(uuid())
-  announcementDate DateTime
-  recipientUserId  String?
-  recipientEmail   String
-  teamId           String?
-  teamName         String
-  result           TeamStatus
-  status           AnnouncementEmailStatus @default(SENT)
-  errorMessage     String?
-  sentAt           DateTime                @default(now())
-  createdAt        DateTime                @default(now())
-  updatedAt        DateTime                @updatedAt
-
-  recipientUser User? @relation(fields: [recipientUserId], references: [id], onDelete: SetNull)
-  team          Team? @relation(fields: [teamId], references: [id], onDelete: SetNull)
-
-  @@unique([announcementDate, recipientEmail])
-  @@index([announcementDate])
-  @@index([status])
-  @@map("announcement_email_logs")
-}
-
-// ─── Audit Logs ──────────────────────────────────────────────
-
-model AuditLog {
-  id         String   @id @default(uuid())
-  actorId    String?
-  action     String // e.g. "ROLE_ASSIGNED", "TEAM_STATUS_CHANGED"
-  entityType String // e.g. "user", "team", "submission"
-  entityId   String
-  oldValue   String? // JSON string
-  newValue   String? // JSON string
-  metadata   String? // JSON string
-  createdAt  DateTime @default(now())
-
-  actor User? @relation("AuditActor", fields: [actorId], references: [id])
-
-  @@index([entityType, entityId])
-  @@index([actorId])
-  @@index([createdAt])
-  @@map("audit_logs")
 }

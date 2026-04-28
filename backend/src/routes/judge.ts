@@ -15,19 +15,13 @@ import { dirname } from 'path'
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 
-// Score weights per SRS §4.5
-const WEIGHTS = {
-  nationalImpact: 0.40,
-  technologyMethodology: 0.30,
-  requirementCompliance: 0.15,
-  feasibility: 0.15,
-}
+// First Round Criteria Points: 5, 5, 30, 10. Total 50.
 
 const ScoreSchema = z.object({
-  nationalImpactScore: z.number().min(0).max(100),
-  technologyMethodologyScore: z.number().min(0).max(100),
-  requirementComplianceScore: z.number().min(0).max(100),
-  feasibilityScore: z.number().min(0).max(100),
+  problemDefinitionScore: z.number().min(0).max(5),
+  dataSpatialArchitectureScore: z.number().min(0).max(5),
+  methodologicalFrameworkScore: z.number().min(0).max(30),
+  outputDecisionUseScore: z.number().min(0).max(10),
   comments: z.string().max(2000).optional(),
 })
 
@@ -35,12 +29,12 @@ const FinalStatusSchema = z.object({
   status: z.enum(['FINALIST', 'REJECTED']),
 })
 
-function calcWeighted(s: z.infer<typeof ScoreSchema>): number {
+function calcTotal(s: any): number {
   return (
-    s.nationalImpactScore * WEIGHTS.nationalImpact +
-    s.technologyMethodologyScore * WEIGHTS.technologyMethodology +
-    s.requirementComplianceScore * WEIGHTS.requirementCompliance +
-    s.feasibilityScore * WEIGHTS.feasibility
+    (s.problemDefinitionScore || 0) +
+    (s.dataSpatialArchitectureScore || 0) +
+    (s.methodologicalFrameworkScore || 0) +
+    (s.outputDecisionUseScore || 0)
   )
 }
 
@@ -120,19 +114,19 @@ export async function judgeRoutes(app: FastifyInstance) {
     const score = await prisma.judgeScore.upsert({
       where: { submissionId_judgeUserId: { submissionId, judgeUserId: actor.userId } },
       update: {
-        nationalImpactScore: body.data.nationalImpactScore,
-        technologyMethodologyScore: body.data.technologyMethodologyScore,
-        requirementComplianceScore: body.data.requirementComplianceScore,
-        feasibilityScore: body.data.feasibilityScore,
+        problemDefinitionScore: body.data.problemDefinitionScore,
+        dataSpatialArchitectureScore: body.data.dataSpatialArchitectureScore,
+        methodologicalFrameworkScore: body.data.methodologicalFrameworkScore,
+        outputDecisionUseScore: body.data.outputDecisionUseScore,
         comments: body.data.comments,
       },
       create: {
         submissionId,
         judgeUserId: actor.userId,
-        nationalImpactScore: body.data.nationalImpactScore,
-        technologyMethodologyScore: body.data.technologyMethodologyScore,
-        requirementComplianceScore: body.data.requirementComplianceScore,
-        feasibilityScore: body.data.feasibilityScore,
+        problemDefinitionScore: body.data.problemDefinitionScore,
+        dataSpatialArchitectureScore: body.data.dataSpatialArchitectureScore,
+        methodologicalFrameworkScore: body.data.methodologicalFrameworkScore,
+        outputDecisionUseScore: body.data.outputDecisionUseScore,
         comments: body.data.comments,
       },
     })
@@ -140,16 +134,16 @@ export async function judgeRoutes(app: FastifyInstance) {
     // Recalculate aggregate
     const allScores = await prisma.judgeScore.findMany({ where: { submissionId } })
     const judgeCount = allScores.length
-    const avgNational = allScores.reduce((a, s) => a + s.nationalImpactScore, 0) / judgeCount
-    const avgTech = allScores.reduce((a, s) => a + s.technologyMethodologyScore, 0) / judgeCount
-    const avgCompliance = allScores.reduce((a, s) => a + s.requirementComplianceScore, 0) / judgeCount
-    const avgFeasibility = allScores.reduce((a, s) => a + s.feasibilityScore, 0) / judgeCount
+    const avgProb = allScores.reduce((a, s) => a + s.problemDefinitionScore, 0) / judgeCount
+    const avgData = allScores.reduce((a, s) => a + s.dataSpatialArchitectureScore, 0) / judgeCount
+    const avgFramework = allScores.reduce((a, s) => a + s.methodologicalFrameworkScore, 0) / judgeCount
+    const avgOutput = allScores.reduce((a, s) => a + s.outputDecisionUseScore, 0) / judgeCount
 
-    const totalWeighted = calcWeighted({
-      nationalImpactScore: avgNational,
-      technologyMethodologyScore: avgTech,
-      requirementComplianceScore: avgCompliance,
-      feasibilityScore: avgFeasibility,
+    const totalWeighted = calcTotal({
+      problemDefinitionScore: avgProb,
+      dataSpatialArchitectureScore: avgData,
+      methodologicalFrameworkScore: avgFramework,
+      outputDecisionUseScore: avgOutput,
     })
 
     await prisma.scoreAggregate.upsert({
@@ -186,10 +180,10 @@ export async function judgeRoutes(app: FastifyInstance) {
     if (!aggregate) return reply.status(404).send({ error: 'No scores yet' })
 
     const perCriterion = {
-      nationalImpact: { weight: WEIGHTS.nationalImpact, avgScore: scores.reduce((a, s) => a + s.nationalImpactScore, 0) / scores.length },
-      technologyMethodology: { weight: WEIGHTS.technologyMethodology, avgScore: scores.reduce((a, s) => a + s.technologyMethodologyScore, 0) / scores.length },
-      requirementCompliance: { weight: WEIGHTS.requirementCompliance, avgScore: scores.reduce((a, s) => a + s.requirementComplianceScore, 0) / scores.length },
-      feasibility: { weight: WEIGHTS.feasibility, avgScore: scores.reduce((a, s) => a + s.feasibilityScore, 0) / scores.length },
+      problemDefinition: { max: 5, avgScore: scores.reduce((a, s) => a + s.problemDefinitionScore, 0) / scores.length },
+      dataSpatialArchitecture: { max: 5, avgScore: scores.reduce((a, s) => a + s.dataSpatialArchitectureScore, 0) / scores.length },
+      methodologicalFramework: { max: 30, avgScore: scores.reduce((a, s) => a + s.methodologicalFrameworkScore, 0) / scores.length },
+      outputDecisionUse: { max: 10, avgScore: scores.reduce((a, s) => a + s.outputDecisionUseScore, 0) / scores.length },
     }
 
     return { aggregate, perCriterion, judgeCount: scores.length }

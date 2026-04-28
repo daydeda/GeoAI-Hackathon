@@ -43,10 +43,10 @@ interface FileItem {
 interface JudgeScore {
   judgeUserId: string
   judge?: { id: string; fullName: string }
-  nationalImpactScore: number
-  technologyMethodologyScore: number
-  requirementComplianceScore: number
-  feasibilityScore: number
+  problemDefinitionScore: number
+  dataSpatialArchitectureScore: number
+  methodologicalFrameworkScore: number
+  outputDecisionUseScore: number
   comments?: string
 }
 
@@ -78,9 +78,9 @@ function formatTrackLabel(track: string) {
   return TRACK_LABELS[track] || track.replace(/_/g, ' ')
 }
 
-function clampScore(value: number) {
+function clampScore(value: number, max = 100) {
   if (Number.isNaN(value)) return 0
-  return Math.max(0, Math.min(100, value))
+  return Math.max(0, Math.min(max, value))
 }
 
 function getTeamOutcomeLabel(status?: string) {
@@ -110,10 +110,10 @@ function JudgeContent() {
   const [pdfModalOpen, setPdfModalOpen] = useState(false)
 
   const [scores, setScores] = useState({
-    nationalImpactScore: 0,
-    technologyMethodologyScore: 0,
-    requirementComplianceScore: 0,
-    feasibilityScore: 0,
+    problemDefinitionScore: 0,
+    dataSpatialArchitectureScore: 0,
+    methodologicalFrameworkScore: 0,
+    outputDecisionUseScore: 0,
   })
   const [comments, setComments] = useState('')
   const [saving, setSaving] = useState(false)
@@ -216,32 +216,31 @@ function JudgeContent() {
   }, [currentTabQueue, activeSubId])
 
   useEffect(() => {
-    const existing = activeSubmission?.judgeScores?.find((s) => s.judgeUserId === user?.id)
     if (existing) {
       setScores({
-        nationalImpactScore: existing.nationalImpactScore,
-        technologyMethodologyScore: existing.technologyMethodologyScore,
-        requirementComplianceScore: existing.requirementComplianceScore,
-        feasibilityScore: existing.feasibilityScore,
+        problemDefinitionScore: existing.problemDefinitionScore,
+        dataSpatialArchitectureScore: existing.dataSpatialArchitectureScore,
+        methodologicalFrameworkScore: existing.methodologicalFrameworkScore,
+        outputDecisionUseScore: existing.outputDecisionUseScore,
       })
       setComments(existing.comments || '')
       return
     }
 
     setScores({
-      nationalImpactScore: 0,
-      technologyMethodologyScore: 0,
-      requirementComplianceScore: 0,
-      feasibilityScore: 0,
+      problemDefinitionScore: 0,
+      dataSpatialArchitectureScore: 0,
+      methodologicalFrameworkScore: 0,
+      outputDecisionUseScore: 0,
     })
     setComments('')
   }, [activeSubmission, user?.id])
 
-  const weightedScore =
-    scores.nationalImpactScore * 0.4 +
-    scores.technologyMethodologyScore * 0.3 +
-    scores.requirementComplianceScore * 0.15 +
-    scores.feasibilityScore * 0.15
+  const totalScore =
+    scores.problemDefinitionScore +
+    scores.dataSpatialArchitectureScore +
+    scores.methodologicalFrameworkScore +
+    scores.outputDecisionUseScore
 
   const activePdfUrl = activeSubmission ? `${API}/api/v1/submissions/${activeSubmission.id}/view` : ''
 
@@ -433,7 +432,7 @@ function JudgeContent() {
 
             {activeTab === 'SETTINGS' ? (
               <div className="text-sm text-(--text-secondary)">
-                This workspace uses a fixed scoring rubric with weights: 40% National Impact, 30% Technology & Methodology, 15% Requirement Compliance, and 15% Feasibility.
+                This workspace uses the First Round evaluation rubric with a total of 50 points: Problem Definition (5), Data & Architecture (5), Methodological Framework (30), and Output (10).
               </div>
             ) : (
               <div className="flex max-h-[60vh] flex-col gap-2 overflow-y-auto pr-1">
@@ -655,17 +654,17 @@ function JudgeContent() {
                 <div className="mb-4 flex items-center justify-between gap-3">
                   <div className="inline-flex items-center gap-2 text-sm font-semibold text-white">
                     <Gauge size={16} className="text-(--accent-cyan)" />
-                    Rubric Scoring
+                    เกณฑ์การตัดสิน (รอบแรก)
                   </div>
                   <div className="text-right">
-                    <div className="text-[10px] uppercase tracking-[0.08em] text-(--text-muted)">Your Weighted Score</div>
-                    <div className="font-display text-3xl text-(--accent-green)">{weightedScore.toFixed(1)}</div>
+                    <div className="text-[10px] uppercase tracking-[0.08em] text-(--text-muted)">Your Score / 50</div>
+                    <div className="font-display text-3xl text-(--accent-green)">{totalScore.toFixed(0)}</div>
                   </div>
                 </div>
 
                 {activeSubmission.scoreAggregate && (
                   <div className="mb-4 rounded border border-(--border-subtle) bg-(--bg-base) p-3 text-xs text-(--text-secondary)">
-                    Current final average: <span className="text-white">{activeSubmission.scoreAggregate.totalWeighted.toFixed(2)}</span>
+                    Current final average: <span className="text-white">{activeSubmission.scoreAggregate.totalWeighted.toFixed(2)} / 50</span>
                     {' · '}
                     Judges submitted: <span className="text-white">{activeSubmission.scoreAggregate.judgeCount}</span>
                   </div>
@@ -673,26 +672,27 @@ function JudgeContent() {
 
                 <div className="space-y-4">
                   {[
-                    { key: 'nationalImpactScore', label: 'National Impact', weight: 40 },
-                    { key: 'technologyMethodologyScore', label: 'Technology & Methodology', weight: 30 },
-                    { key: 'requirementComplianceScore', label: 'Requirement Compliance', weight: 15 },
-                    { key: 'feasibilityScore', label: 'Feasibility', weight: 15 },
+                    { key: 'problemDefinitionScore', label: '1) Problem Definition', max: 5 },
+                    { key: 'dataSpatialArchitectureScore', label: '2) Data & Spatial Architecture', max: 5 },
+                    { key: 'methodologicalFrameworkScore', label: '3) Methodological Framework', max: 30 },
+                    { key: 'outputDecisionUseScore', label: '4) Expected Output & Decision Use', max: 10 },
                   ].map((criterion) => (
                     <div key={criterion.key}>
                       <div className="mb-1 flex items-center justify-between text-xs">
                         <label className="font-semibold text-(--text-secondary)">{criterion.label}</label>
-                        <span className="text-(--text-muted)">{criterion.weight}%</span>
+                        <span className="text-(--text-muted)">Max {criterion.max}</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <input
                           type="range"
                           min={0}
-                          max={100}
+                          max={criterion.max}
+                          step={1}
                           value={scores[criterion.key as keyof typeof scores]}
                           onChange={(event) =>
                             setScores((prev) => ({
                               ...prev,
-                              [criterion.key]: clampScore(Number(event.target.value)),
+                              [criterion.key]: clampScore(Number(event.target.value), criterion.max),
                             }))
                           }
                           className="w-full accent-(--accent-cyan)"
@@ -700,12 +700,13 @@ function JudgeContent() {
                         <input
                           type="number"
                           min={0}
-                          max={100}
+                          max={criterion.max}
+                          step={1}
                           value={scores[criterion.key as keyof typeof scores]}
                           onChange={(event) =>
                             setScores((prev) => ({
                               ...prev,
-                              [criterion.key]: clampScore(Number(event.target.value)),
+                              [criterion.key]: clampScore(Number(event.target.value), criterion.max),
                             }))
                           }
                           className="w-16 rounded border border-(--border-subtle) bg-(--bg-base) px-2 py-1 text-right text-sm text-white"
