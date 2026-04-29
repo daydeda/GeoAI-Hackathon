@@ -392,7 +392,7 @@ function StatsContent() {
                         <Tooltip
                           cursor={{ fill: 'rgba(255,255,255,0.04)' }}
                           contentStyle={{ background: 'var(--bg-base)', border: '1px solid var(--border-subtle)', color: 'var(--text-primary)', fontSize: 12 }}
-                          formatter={(v: number) => [`${v} teams`, 'Count']}
+                          formatter={(v: string | number | readonly (string | number)[] | undefined) => [`${v ?? 0} teams`, 'Count']}
                         />
                         <Bar dataKey="count" fill="var(--accent-cyan)" radius={[0, 4, 4, 0]} maxBarSize={22} />
                       </BarChart>
@@ -428,7 +428,7 @@ function StatsContent() {
                         <Tooltip
                           cursor={{ fill: 'rgba(255,255,255,0.04)' }}
                           contentStyle={{ background: 'var(--bg-base)', border: '1px solid var(--border-subtle)', color: 'var(--text-primary)', fontSize: 12 }}
-                          formatter={(v: number) => [`${v} people`, 'Count']}
+                          formatter={(v: string | number | readonly (string | number)[] | undefined) => [`${v ?? 0} people`, 'Count']}
                         />
                         <Bar dataKey="count" fill="var(--accent-amber)" radius={[0, 4, 4, 0]} maxBarSize={22} />
                       </BarChart>
@@ -456,7 +456,7 @@ function StatsContent() {
                         <Tooltip
                           cursor={{ fill: 'rgba(255,255,255,0.04)' }}
                           contentStyle={{ background: 'var(--bg-base)', border: '1px solid var(--border-subtle)', color: 'var(--text-primary)', fontSize: 12 }}
-                          formatter={(v: number) => [`${v} people`, 'Competitors']}
+                          formatter={(v: string | number | readonly (string | number)[] | undefined) => [`${v ?? 0} people`, 'Competitors']}
                         />
                         <Bar dataKey="count" fill="var(--accent-green)" radius={[4, 4, 0, 0]} maxBarSize={48} />
                       </BarChart>
@@ -481,7 +481,7 @@ function StatsContent() {
                         <Tooltip
                           cursor={{ fill: 'rgba(255,255,255,0.04)' }}
                           contentStyle={{ background: 'var(--bg-base)', border: '1px solid var(--border-subtle)', color: 'var(--text-primary)', fontSize: 12 }}
-                          formatter={(v: number) => [`${v} teams`, 'Count']}
+                          formatter={(v: string | number | readonly (string | number)[] | undefined) => [`${v ?? 0} teams`, 'Count']}
                         />
                         <Bar dataKey="count" fill="rgba(139,92,246,0.8)" radius={[4, 4, 0, 0]} maxBarSize={64} />
                       </BarChart>
@@ -506,7 +506,7 @@ function StatsContent() {
                         <Tooltip
                           cursor={{ fill: 'rgba(255,255,255,0.04)' }}
                           contentStyle={{ background: 'var(--bg-base)', border: '1px solid var(--border-subtle)', color: 'var(--text-primary)', fontSize: 12 }}
-                          formatter={(v: number) => [`${v} teams`, 'Count']}
+                          formatter={(v: string | number | readonly (string | number)[] | undefined) => [`${v ?? 0} teams`, 'Count']}
                         />
                         <Bar dataKey="count" fill="rgba(255,255,255,0.25)" radius={[4, 4, 0, 0]} maxBarSize={64} />
                       </BarChart>
@@ -531,7 +531,7 @@ function StatsContent() {
                         <Tooltip
                           cursor={{ fill: 'rgba(255,255,255,0.04)' }}
                           contentStyle={{ background: 'var(--bg-base)', border: '1px solid var(--border-subtle)', color: 'var(--text-primary)', fontSize: 12 }}
-                          formatter={(v: number) => [`${v} people`, 'Count']}
+                          formatter={(v: string | number | readonly (string | number)[] | undefined) => [`${v ?? 0} people`, 'Count']}
                         />
                         <Bar dataKey="count" fill="rgba(0,230,118,0.7)" radius={[4, 4, 0, 0]} maxBarSize={64} />
                       </BarChart>
