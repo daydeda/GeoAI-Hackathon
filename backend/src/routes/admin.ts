@@ -173,18 +173,21 @@ export async function adminRoutes(app: FastifyInstance) {
       })
     ])
 
-    // Get top universities by user count as well
+    // Get top universities by user count, filtering out nulls/empty strings
     const universityUserStats = await prisma.user.groupBy({
       by: ['university'],
+      where: {
+        university: { not: null, notIn: ['', ' '] }
+      },
       _count: { id: true },
       orderBy: { _count: { id: 'desc' } },
-      take: 20
+      take: 50 // Increase take to ensure major unis aren't missed
     })
 
     return {
       universities: {
-        byTeams: universityStats.map(s => ({ name: s.institution, count: s._count.id })),
-        byUsers: universityUserStats.map(s => ({ name: s.university, count: s._count.id }))
+        byTeams: universityStats.filter(s => s.institution).map(s => ({ name: s.institution, count: s._count.id })),
+        byUsers: universityUserStats.map(s => ({ name: s.university as string, count: s._count.id }))
       },
       yearOfStudy: yearOfStudyStats.map(s => ({ year: s.yearOfStudy, count: s._count.id })),
       tracks: trackStats.map(s => ({ name: s.track, count: s._count.id })),
