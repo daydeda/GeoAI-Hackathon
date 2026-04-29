@@ -351,123 +351,193 @@ function StatsContent() {
 
         {/* Competitor Distribution Section */}
         {compStats && (
-          <div className="mt-12 space-y-8">
-            <div className="flex flex-col gap-2">
-              <h2 className="font-display text-2xl text-white">Competitor Distribution</h2>
+          <div className="mt-12">
+            <div className="mb-8 flex flex-col gap-1">
+              <div className="font-mono flex items-center gap-2 text-[11px] tracking-[0.1em] text-(--accent-amber)">
+                <Users size={12} />
+                <span>COMPETITOR ANALYTICS</span>
+              </div>
+              <h2 className="font-display text-2xl text-white sm:text-3xl">Competitor Distribution</h2>
               <p className="text-xs text-(--text-muted) sm:text-sm">
-                Detailed breakdown of participants by university, academic year, and track.
+                Breakdown of participants by institution, academic year, track, and status.
               </p>
             </div>
 
-            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+            {/* University Charts — full width, stacked */}
+            <div className="mb-6 flex flex-col gap-6">
               {/* University by Teams */}
-              <section className="rounded border border-(--border-subtle) bg-(--bg-surface) p-4 sm:p-6">
-                <div className="mb-4 text-sm font-semibold text-white">Top Universities (by Team Count)</div>
-                <div className="h-[350px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={compStats.universities.byTeams.slice(0, 10)} layout="vertical" margin={{ left: 40, right: 20 }}>
-                      <CartesianGrid stroke="rgba(255,255,255,0.06)" strokeDasharray="3 3" horizontal={true} vertical={false} />
-                      <XAxis type="number" tick={{ fill: 'var(--text-muted)', fontSize: 11 }} />
-                      <YAxis dataKey="name" type="category" tick={{ fill: 'var(--text-muted)', fontSize: 10 }} width={120} />
-                      <Tooltip
-                        contentStyle={{
-                          background: 'var(--bg-base)',
-                          border: '1px solid var(--border-subtle)',
-                          color: 'var(--text-primary)',
-                        }}
-                      />
-                      <Bar dataKey="count" fill="var(--accent-cyan)" radius={[0, 4, 4, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
+              <section className="rounded border border-(--border-subtle) bg-(--bg-surface) p-5 sm:p-6">
+                <div className="mb-1 text-sm font-semibold text-white">Top Institutions — by Team Count</div>
+                <div className="mb-4 text-[11px] text-(--text-muted)">Number of registered teams per institution</div>
+                {compStats.universities.byTeams.length === 0 ? (
+                  <div className="flex h-[280px] items-center justify-center text-sm text-(--text-muted)">No data available</div>
+                ) : (
+                  <div style={{ height: Math.max(220, compStats.universities.byTeams.slice(0, 15).length * 36) }}>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart
+                        data={compStats.universities.byTeams.slice(0, 15)}
+                        layout="vertical"
+                        margin={{ top: 4, right: 32, left: 8, bottom: 4 }}
+                      >
+                        <CartesianGrid stroke="rgba(255,255,255,0.05)" strokeDasharray="3 3" horizontal={false} vertical={true} />
+                        <XAxis type="number" tick={{ fill: 'var(--text-muted)', fontSize: 11 }} axisLine={false} tickLine={false} allowDecimals={false} />
+                        <YAxis
+                          dataKey="name"
+                          type="category"
+                          tick={{ fill: 'var(--text-secondary)', fontSize: 11 }}
+                          width={200}
+                          axisLine={false}
+                          tickLine={false}
+                        />
+                        <Tooltip
+                          cursor={{ fill: 'rgba(255,255,255,0.04)' }}
+                          contentStyle={{ background: 'var(--bg-base)', border: '1px solid var(--border-subtle)', color: 'var(--text-primary)', fontSize: 12 }}
+                          formatter={(v: number) => [`${v} teams`, 'Count']}
+                        />
+                        <Bar dataKey="count" fill="var(--accent-cyan)" radius={[0, 4, 4, 0]} maxBarSize={22} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
               </section>
 
               {/* University by Individuals */}
-              <section className="rounded border border-(--border-subtle) bg-(--bg-surface) p-4 sm:p-6">
-                <div className="mb-4 text-sm font-semibold text-white">Top Universities (by Individual Count)</div>
-                <div className="h-[350px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={compStats.universities.byUsers.slice(0, 10)} layout="vertical" margin={{ left: 40, right: 20 }}>
-                      <CartesianGrid stroke="rgba(255,255,255,0.06)" strokeDasharray="3 3" horizontal={true} vertical={false} />
-                      <XAxis type="number" tick={{ fill: 'var(--text-muted)', fontSize: 11 }} />
-                      <YAxis dataKey="name" type="category" tick={{ fill: 'var(--text-muted)', fontSize: 10 }} width={120} />
-                      <Tooltip
-                        contentStyle={{
-                          background: 'var(--bg-base)',
-                          border: '1px solid var(--border-subtle)',
-                          color: 'var(--text-primary)',
-                        }}
-                      />
-                      <Bar dataKey="count" fill="var(--accent-amber)" radius={[0, 4, 4, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
+              <section className="rounded border border-(--border-subtle) bg-(--bg-surface) p-5 sm:p-6">
+                <div className="mb-1 text-sm font-semibold text-white">Top Institutions — by Individual Count</div>
+                <div className="mb-4 text-[11px] text-(--text-muted)">Total unique competitors (members + leaders) per institution</div>
+                {compStats.universities.byUsers.length === 0 ? (
+                  <div className="flex h-[280px] items-center justify-center text-sm text-(--text-muted)">No data available</div>
+                ) : (
+                  <div style={{ height: Math.max(220, compStats.universities.byUsers.slice(0, 15).length * 36) }}>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart
+                        data={compStats.universities.byUsers.slice(0, 15)}
+                        layout="vertical"
+                        margin={{ top: 4, right: 32, left: 8, bottom: 4 }}
+                      >
+                        <CartesianGrid stroke="rgba(255,255,255,0.05)" strokeDasharray="3 3" horizontal={false} vertical={true} />
+                        <XAxis type="number" tick={{ fill: 'var(--text-muted)', fontSize: 11 }} axisLine={false} tickLine={false} allowDecimals={false} />
+                        <YAxis
+                          dataKey="name"
+                          type="category"
+                          tick={{ fill: 'var(--text-secondary)', fontSize: 11 }}
+                          width={200}
+                          axisLine={false}
+                          tickLine={false}
+                        />
+                        <Tooltip
+                          cursor={{ fill: 'rgba(255,255,255,0.04)' }}
+                          contentStyle={{ background: 'var(--bg-base)', border: '1px solid var(--border-subtle)', color: 'var(--text-primary)', fontSize: 12 }}
+                          formatter={(v: number) => [`${v} people`, 'Count']}
+                        />
+                        <Bar dataKey="count" fill="var(--accent-amber)" radius={[0, 4, 4, 0]} maxBarSize={22} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
               </section>
+            </div>
 
+            {/* 2-column charts */}
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
               {/* Year of Study */}
-              <section className="rounded border border-(--border-subtle) bg-(--bg-surface) p-4 sm:p-6">
-                <div className="mb-4 text-sm font-semibold text-white">Participants by Year of Study</div>
-                <div className="h-[350px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={compStats.yearOfStudy}>
-                      <CartesianGrid stroke="rgba(255,255,255,0.06)" strokeDasharray="3 3" />
-                      <XAxis dataKey="year" label={{ value: 'Year', position: 'insideBottom', offset: -5, fill: 'var(--text-muted)', fontSize: 11 }} tick={{ fill: 'var(--text-muted)', fontSize: 11 }} />
-                      <YAxis tick={{ fill: 'var(--text-muted)', fontSize: 11 }} allowDecimals={false} />
-                      <Tooltip
-                        contentStyle={{
-                          background: 'var(--bg-base)',
-                          border: '1px solid var(--border-subtle)',
-                          color: 'var(--text-primary)',
-                        }}
-                      />
-                      <Bar dataKey="count" fill="var(--accent-green)" radius={[4, 4, 0, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
+              <section className="rounded border border-(--border-subtle) bg-(--bg-surface) p-5 sm:p-6">
+                <div className="mb-1 text-sm font-semibold text-white">Year of Study</div>
+                <div className="mb-4 text-[11px] text-(--text-muted)">Competitor count per academic year (verified role only)</div>
+                {compStats.yearOfStudy.length === 0 ? (
+                  <div className="flex h-[240px] items-center justify-center text-sm text-(--text-muted)">No data available</div>
+                ) : (
+                  <div className="h-[240px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={compStats.yearOfStudy} margin={{ top: 4, right: 16, left: 0, bottom: 4 }}>
+                        <CartesianGrid stroke="rgba(255,255,255,0.05)" strokeDasharray="3 3" vertical={false} />
+                        <XAxis dataKey="year" tick={{ fill: 'var(--text-muted)', fontSize: 11 }} axisLine={false} tickLine={false} label={{ value: 'Year', position: 'insideBottom', offset: -2, fill: 'var(--text-muted)', fontSize: 11 }} />
+                        <YAxis tick={{ fill: 'var(--text-muted)', fontSize: 11 }} allowDecimals={false} axisLine={false} tickLine={false} />
+                        <Tooltip
+                          cursor={{ fill: 'rgba(255,255,255,0.04)' }}
+                          contentStyle={{ background: 'var(--bg-base)', border: '1px solid var(--border-subtle)', color: 'var(--text-primary)', fontSize: 12 }}
+                          formatter={(v: number) => [`${v} people`, 'Competitors']}
+                        />
+                        <Bar dataKey="count" fill="var(--accent-green)" radius={[4, 4, 0, 0]} maxBarSize={48} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
               </section>
 
               {/* Track Distribution */}
-              <section className="rounded border border-(--border-subtle) bg-(--bg-surface) p-4 sm:p-6">
-                <div className="mb-4 text-sm font-semibold text-white">Track Distribution (Teams)</div>
-                <div className="h-[300px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={compStats.tracks}>
-                      <CartesianGrid stroke="rgba(255,255,255,0.06)" strokeDasharray="3 3" />
-                      <XAxis dataKey="name" tick={{ fill: 'var(--text-muted)', fontSize: 10 }} />
-                      <YAxis tick={{ fill: 'var(--text-muted)', fontSize: 11 }} allowDecimals={false} />
-                      <Tooltip
-                        contentStyle={{
-                          background: 'var(--bg-base)',
-                          border: '1px solid var(--border-subtle)',
-                          color: 'var(--text-primary)',
-                        }}
-                      />
-                      <Bar dataKey="count" fill="var(--accent-amber)" radius={[4, 4, 0, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
+              <section className="rounded border border-(--border-subtle) bg-(--bg-surface) p-5 sm:p-6">
+                <div className="mb-1 text-sm font-semibold text-white">Track Distribution</div>
+                <div className="mb-4 text-[11px] text-(--text-muted)">Number of teams registered per competition track</div>
+                {compStats.tracks.length === 0 ? (
+                  <div className="flex h-[240px] items-center justify-center text-sm text-(--text-muted)">No data available</div>
+                ) : (
+                  <div className="h-[240px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={compStats.tracks} margin={{ top: 4, right: 16, left: 0, bottom: 16 }}>
+                        <CartesianGrid stroke="rgba(255,255,255,0.05)" strokeDasharray="3 3" vertical={false} />
+                        <XAxis dataKey="name" tick={{ fill: 'var(--text-muted)', fontSize: 10 }} axisLine={false} tickLine={false} />
+                        <YAxis tick={{ fill: 'var(--text-muted)', fontSize: 11 }} allowDecimals={false} axisLine={false} tickLine={false} />
+                        <Tooltip
+                          cursor={{ fill: 'rgba(255,255,255,0.04)' }}
+                          contentStyle={{ background: 'var(--bg-base)', border: '1px solid var(--border-subtle)', color: 'var(--text-primary)', fontSize: 12 }}
+                          formatter={(v: number) => [`${v} teams`, 'Count']}
+                        />
+                        <Bar dataKey="count" fill="rgba(139,92,246,0.8)" radius={[4, 4, 0, 0]} maxBarSize={64} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
               </section>
 
-              {/* Team Status Breakdown */}
-              <section className="rounded border border-(--border-subtle) bg-(--bg-surface) p-4 sm:p-6">
-                <div className="mb-4 text-sm font-semibold text-white">Team Status Breakdown</div>
-                <div className="h-[300px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={compStats.teamStatus}>
-                      <CartesianGrid stroke="rgba(255,255,255,0.06)" strokeDasharray="3 3" />
-                      <XAxis dataKey="status" tick={{ fill: 'var(--text-muted)', fontSize: 9 }} />
-                      <YAxis tick={{ fill: 'var(--text-muted)', fontSize: 11 }} allowDecimals={false} />
-                      <Tooltip
-                        contentStyle={{
-                          background: 'var(--bg-base)',
-                          border: '1px solid var(--border-subtle)',
-                          color: 'var(--text-primary)',
-                        }}
-                      />
-                      <Bar dataKey="count" fill="rgba(255,255,255,0.4)" radius={[4, 4, 0, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
+              {/* Team Status */}
+              <section className="rounded border border-(--border-subtle) bg-(--bg-surface) p-5 sm:p-6">
+                <div className="mb-1 text-sm font-semibold text-white">Team Status Breakdown</div>
+                <div className="mb-4 text-[11px] text-(--text-muted)">Current workflow stage of all registered teams</div>
+                {compStats.teamStatus.length === 0 ? (
+                  <div className="flex h-[240px] items-center justify-center text-sm text-(--text-muted)">No data available</div>
+                ) : (
+                  <div className="h-[240px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={compStats.teamStatus} margin={{ top: 4, right: 16, left: 0, bottom: 16 }}>
+                        <CartesianGrid stroke="rgba(255,255,255,0.05)" strokeDasharray="3 3" vertical={false} />
+                        <XAxis dataKey="status" tick={{ fill: 'var(--text-muted)', fontSize: 10 }} axisLine={false} tickLine={false} />
+                        <YAxis tick={{ fill: 'var(--text-muted)', fontSize: 11 }} allowDecimals={false} axisLine={false} tickLine={false} />
+                        <Tooltip
+                          cursor={{ fill: 'rgba(255,255,255,0.04)' }}
+                          contentStyle={{ background: 'var(--bg-base)', border: '1px solid var(--border-subtle)', color: 'var(--text-primary)', fontSize: 12 }}
+                          formatter={(v: number) => [`${v} teams`, 'Count']}
+                        />
+                        <Bar dataKey="count" fill="rgba(255,255,255,0.25)" radius={[4, 4, 0, 0]} maxBarSize={64} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
+              </section>
+
+              {/* Competitor Status */}
+              <section className="rounded border border-(--border-subtle) bg-(--bg-surface) p-5 sm:p-6">
+                <div className="mb-1 text-sm font-semibold text-white">Competitor Verification Status</div>
+                <div className="mb-4 text-[11px] text-(--text-muted)">Verification progress of competitors with the COMPETITOR role</div>
+                {compStats.competitorStatus.length === 0 ? (
+                  <div className="flex h-[240px] items-center justify-center text-sm text-(--text-muted)">No data available</div>
+                ) : (
+                  <div className="h-[240px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={compStats.competitorStatus} margin={{ top: 4, right: 16, left: 0, bottom: 16 }}>
+                        <CartesianGrid stroke="rgba(255,255,255,0.05)" strokeDasharray="3 3" vertical={false} />
+                        <XAxis dataKey="status" tick={{ fill: 'var(--text-muted)', fontSize: 10 }} axisLine={false} tickLine={false} />
+                        <YAxis tick={{ fill: 'var(--text-muted)', fontSize: 11 }} allowDecimals={false} axisLine={false} tickLine={false} />
+                        <Tooltip
+                          cursor={{ fill: 'rgba(255,255,255,0.04)' }}
+                          contentStyle={{ background: 'var(--bg-base)', border: '1px solid var(--border-subtle)', color: 'var(--text-primary)', fontSize: 12 }}
+                          formatter={(v: number) => [`${v} people`, 'Count']}
+                        />
+                        <Bar dataKey="count" fill="rgba(0,230,118,0.7)" radius={[4, 4, 0, 0]} maxBarSize={64} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
               </section>
             </div>
           </div>

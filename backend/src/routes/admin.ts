@@ -137,62 +137,102 @@ export async function adminRoutes(app: FastifyInstance) {
 
   // GET /api/v1/admin/stats/competitors
   app.get('/stats/competitors', { preHandler: [requireRole('ADMIN', 'MODERATOR')] }, async () => {
+    const TRACK_LABELS: Record<string, string> = {
+      SMART_AGRICULTURE: 'Smart Agriculture',
+      DISASTER_FLOOD_RESPONSE: 'Disaster & Flood Response',
+    }
+    const TEAM_STATUS_LABELS: Record<string, string> = {
+      DRAFT: 'Draft',
+      SUBMITTED: 'Submitted',
+      PRE_SCREEN_PASSED: 'Pre-screen Passed',
+      JUDGED: 'Judged',
+      FINALIST: 'Finalist',
+      REJECTED: 'Rejected',
+    }
+    const COMPETITOR_STATUS_LABELS: Record<string, string> = {
+      PENDING: 'Pending',
+      VERIFIED_COMPETITOR: 'Verified',
+      INCORRECT_COMPETITOR: 'Incorrect',
+      DISQUALIFIED: 'Disqualified',
+      QUALIFIED: 'Qualified',
+    }
+
     const [
-      universityStats,
+      universityByTeamStats,
       yearOfStudyStats,
       trackStats,
       teamStatusStats,
-      competitorStatusStats
+      competitorStatusStats,
     ] = await Promise.all([
-      // Count of teams per institution
+      // Count of teams per institution (reliable — set when team is created)
       prisma.team.groupBy({
         by: ['institution'],
         _count: { id: true },
-        orderBy: { _count: { id: 'desc' } }
+        orderBy: { _count: { id: 'desc' } },
       }),
-      // Count of users per year of study
+      // Count of competitors per year of study — only those with a filled profile & valid yearOfStudy
       prisma.user.groupBy({
         by: ['yearOfStudy'],
+        where: {
+          yearOfStudy: { not: null },
+          userRoles: { some: { role: { name: 'COMPETITOR' } } },
+        },
         _count: { id: true },
-        orderBy: { yearOfStudy: 'asc' }
+        orderBy: { yearOfStudy: 'asc' },
       }),
       // Count of teams per track
       prisma.team.groupBy({
         by: ['track'],
-        _count: { id: true }
+        _count: { id: true },
       }),
       // Count of teams per status
       prisma.team.groupBy({
         by: ['currentStatus'],
-        _count: { id: true }
+        _count: { id: true },
       }),
-      // Count of users per competitor status
+      // Count of verified competitors (those in a team) per status
       prisma.user.groupBy({
         by: ['competitorStatus'],
-        _count: { id: true }
-      })
+        where: { userRoles: { some: { role: { name: 'COMPETITOR' } } } },
+        _count: { id: true },
+      }),
     ])
 
-    // Get top universities by user count, filtering out nulls/empty strings
-    const universityUserStats = await prisma.user.groupBy({
-      by: ['university'],
-      where: {
-        university: { not: null, notIn: ['', ' '] }
-      },
-      _count: { id: true },
-      orderBy: { _count: { id: 'desc' } },
-      take: 50 // Increase take to ensure major unis aren't missed
-    })
+    // University by individual: count team members (including leader) per institution
+    // This uses team.institution which is authoritative, grouped via team members.
+    const universityByIndividualRaw = await prisma.$queryRaw<{ institution: string; count: bigint }[]>`
+      SELECT t.institution, COUNT(DISTINCT tm."userId")::bigint AS count
+      FROM teams t
+      JOIN team_members tm ON tm."teamId" = t.id
+      GROUP BY t.institution
+      UNION ALL
+      SELECT t.institution, COUNT(DISTINCT t."leaderId")::bigint AS count
+      FROM teams t
+      GROUP BY t.institution
+    `
+    // Merge the two UNION rows per institution
+    const institutionMap = new Map<string, number>()
+    for (const row of universityByIndividualRaw) {
+      if (!row.institution) continue
+      institutionMap.set(row.institution, (institutionMap.get(row.institution) ?? 0) + Number(row.count))
+    }
+    const universityByIndividual = Array.from(institutionMap.entries())
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count)
 
     return {
       universities: {
-        byTeams: universityStats.filter(s => s.institution).map(s => ({ name: s.institution, count: s._count.id })),
-        byUsers: universityUserStats.map(s => ({ name: s.university as string, count: s._count.id }))
+        byTeams: universityByTeamStats
+          .filter(s => s.institution?.trim())
+          .map(s => ({ name: s.institution, count: s._count.id })),
+        byUsers: universityByIndividual,
       },
-      yearOfStudy: yearOfStudyStats.map(s => ({ year: s.yearOfStudy, count: s._count.id })),
-      tracks: trackStats.map(s => ({ name: s.track, count: s._count.id })),
-      teamStatus: teamStatusStats.map(s => ({ status: s.currentStatus, count: s._count.id })),
-      competitorStatus: competitorStatusStats.map(s => ({ status: s.competitorStatus, count: s._count.id }))
+      yearOfStudy: yearOfStudyStats
+        .filter(s => s.yearOfStudy !== null)
+        .map(s => ({ year: s.yearOfStudy as number, count: s._count.id })),
+      tracks: trackStats.map(s => ({ name: TRACK_LABELS[s.track] ?? s.track, count: s._count.id })),
+      teamStatus: teamStatusStats.map(s => ({ status: TEAM_STATUS_LABELS[s.currentStatus] ?? s.currentStatus, count: s._count.id })),
+      competitorStatus: competitorStatusStats.map(s => ({ status: COMPETITOR_STATUS_LABELS[s.competitorStatus] ?? s.competitorStatus, count: s._count.id }))
     }
   })
 
