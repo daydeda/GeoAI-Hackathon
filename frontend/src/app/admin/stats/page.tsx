@@ -382,6 +382,28 @@ function StatsContent() {
                 </div>
               </section>
 
+              {/* University by Individuals */}
+              <section className="rounded border border-(--border-subtle) bg-(--bg-surface) p-4 sm:p-6">
+                <div className="mb-4 text-sm font-semibold text-white">Top Universities (by Individual Count)</div>
+                <div className="h-[350px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={compStats.universities.byUsers.slice(0, 10)} layout="vertical" margin={{ left: 40, right: 20 }}>
+                      <CartesianGrid stroke="rgba(255,255,255,0.06)" strokeDasharray="3 3" horizontal={true} vertical={false} />
+                      <XAxis type="number" tick={{ fill: 'var(--text-muted)', fontSize: 11 }} />
+                      <YAxis dataKey="name" type="category" tick={{ fill: 'var(--text-muted)', fontSize: 10 }} width={120} />
+                      <Tooltip
+                        contentStyle={{
+                          background: 'var(--bg-base)',
+                          border: '1px solid var(--border-subtle)',
+                          color: 'var(--text-primary)',
+                        }}
+                      />
+                      <Bar dataKey="count" fill="var(--accent-amber)" radius={[0, 4, 4, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </section>
+
               {/* Year of Study */}
               <section className="rounded border border-(--border-subtle) bg-(--bg-surface) p-4 sm:p-6">
                 <div className="mb-4 text-sm font-semibold text-white">Participants by Year of Study</div>
