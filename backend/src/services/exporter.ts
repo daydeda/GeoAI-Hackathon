@@ -34,6 +34,12 @@ export async function exportData(type: ExportType): Promise<{ fileKey: string; f
         { header: 'ID', key: 'id', width: 36 },
         { header: 'Email', key: 'email', width: 30 },
         { header: 'Full Name', key: 'fullName', width: 25 },
+        { header: 'University', key: 'university', width: 30 },
+        { header: 'Year of Study', key: 'yearOfStudy', width: 15 },
+        { header: 'Phone Number', key: 'phoneNumber', width: 20 },
+        { header: 'Address', key: 'address', width: 40 },
+        { header: 'Experience', key: 'experience', width: 40 },
+        { header: 'Competitor Status', key: 'competitorStatus', width: 20 },
         { header: 'Roles', key: 'roles', width: 30 },
         { header: 'Registration Date', key: 'registrationDate', width: 16 },
         { header: 'Registration Time', key: 'registrationTime', width: 14 },
@@ -42,6 +48,12 @@ export async function exportData(type: ExportType): Promise<{ fileKey: string; f
       const users = await prisma.user.findMany({ include: { userRoles: { include: { role: true } } } })
       users.forEach(u => sheet.addRow({
         id: u.id, email: u.email, fullName: u.fullName,
+        university: u.university,
+        yearOfStudy: u.yearOfStudy,
+        phoneNumber: u.phoneNumber,
+        address: u.address,
+        experience: u.experience,
+        competitorStatus: (u as any).competitorStatus,
         roles: u.userRoles.map(ur => ur.role.name).join(', '),
         registrationDate: formatDatePart(u.createdAt),
         registrationTime: formatTimePart(u.createdAt),
@@ -56,19 +68,33 @@ export async function exportData(type: ExportType): Promise<{ fileKey: string; f
         { header: 'Institution', key: 'institution', width: 30 },
         { header: 'Track', key: 'track', width: 25 },
         { header: 'Status', key: 'status', width: 20 },
-        { header: 'Members', key: 'members', width: 10 },
+        { header: 'Leader Name', key: 'leaderName', width: 25 },
+        { header: 'Leader Email', key: 'leaderEmail', width: 30 },
+        { header: 'Members Count', key: 'membersCount', width: 15 },
+        { header: 'Members Details', key: 'membersDetails', width: 50 },
         { header: 'Modified Date + Time', key: 'modifiedDateTime', width: 24 },
       ]
-      const teams = await prisma.team.findMany({ include: { members: true } })
-      teams.forEach(t => sheet.addRow({
-        id: t.id,
-        name: t.name,
-        institution: t.institution,
-        track: t.track,
-        status: t.currentStatus,
-        members: t.members.length,
-        modifiedDateTime: formatDateTime(t.updatedAt),
-      }))
+      const teams = await prisma.team.findMany({
+        include: {
+          leader: true,
+          members: { include: { user: true } }
+        }
+      })
+      teams.forEach(t => {
+        const memberDetails = t.members.map(m => `${m.user.fullName} (${m.user.email})`).join(', ')
+        sheet.addRow({
+          id: t.id,
+          name: t.name,
+          institution: t.institution,
+          track: t.track,
+          status: t.currentStatus,
+          leaderName: t.leader.fullName,
+          leaderEmail: t.leader.email,
+          membersCount: t.members.length + 1, // +1 for leader
+          membersDetails: memberDetails,
+          modifiedDateTime: formatDateTime(t.updatedAt),
+        })
+      })
       break
     }
     case 'SUBMISSIONS': {

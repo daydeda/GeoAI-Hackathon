@@ -47,10 +47,22 @@ function formatShortDate(date: string) {
   return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
 }
 
+type CompetitorStats = {
+  universities: {
+    byTeams: { name: string; count: number }[]
+    byUsers: { name: string; count: number }[]
+  }
+  yearOfStudy: { year: number; count: number }[]
+  tracks: { name: string; count: number }[]
+  teamStatus: { status: string; count: number }[]
+  competitorStatus: { status: string; count: number }[]
+}
+
 function StatsContent() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [stats, setStats] = useState<StatsResponse | null>(null)
+  const [compStats, setCompStats] = useState<CompetitorStats | null>(null)
   const [filterMode, setFilterMode] = useState<FilterMode>('OVERVIEW')
   const [selectedMonth, setSelectedMonth] = useState('')
   const [selectedDay, setSelectedDay] = useState('')
@@ -62,20 +74,25 @@ function StatsContent() {
       setLoading(true)
       setError('')
       try {
-        const res = await fetch(`${API}/api/v1/admin/stats/overview?days=365`, {
-          credentials: 'include',
-        })
+        const opts = { credentials: 'include' } as const
+        const [overviewRes, compRes] = await Promise.all([
+          fetch(`${API}/api/v1/admin/stats/overview?days=365`, opts),
+          fetch(`${API}/api/v1/admin/stats/competitors`, opts),
+        ])
 
-        if (!res.ok) {
-          const payload = await res.json().catch(() => ({}))
-          throw new Error(payload.error || 'Failed to load stats overview')
+        if (!overviewRes.ok) throw new Error('Failed to load overview stats')
+        if (!compRes.ok) throw new Error('Failed to load competitor stats')
+
+        const overviewData = await overviewRes.json()
+        const compData = await compRes.json()
+
+        if (active) {
+          setStats(overviewData)
+          setCompStats(compData)
         }
-
-        const payload = (await res.json()) as StatsResponse
-        if (active) setStats(payload)
       } catch (err) {
         if (active) {
-          setError(err instanceof Error ? err.message : 'Failed to load stats overview')
+          setError(err instanceof Error ? err.message : 'Failed to load stats')
         }
       } finally {
         if (active) setLoading(false)
@@ -331,6 +348,108 @@ function StatsContent() {
             </div>
           </section>
         </div>
+
+        {/* Competitor Distribution Section */}
+        {compStats && (
+          <div className="mt-12 space-y-8">
+            <div className="flex flex-col gap-2">
+              <h2 className="font-display text-2xl text-white">Competitor Distribution</h2>
+              <p className="text-xs text-(--text-muted) sm:text-sm">
+                Detailed breakdown of participants by university, academic year, and track.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+              {/* University by Teams */}
+              <section className="rounded border border-(--border-subtle) bg-(--bg-surface) p-4 sm:p-6">
+                <div className="mb-4 text-sm font-semibold text-white">Top Universities (by Team Count)</div>
+                <div className="h-[350px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={compStats.universities.byTeams.slice(0, 10)} layout="vertical" margin={{ left: 40, right: 20 }}>
+                      <CartesianGrid stroke="rgba(255,255,255,0.06)" strokeDasharray="3 3" horizontal={true} vertical={false} />
+                      <XAxis type="number" tick={{ fill: 'var(--text-muted)', fontSize: 11 }} />
+                      <YAxis dataKey="name" type="category" tick={{ fill: 'var(--text-muted)', fontSize: 10 }} width={120} />
+                      <Tooltip
+                        contentStyle={{
+                          background: 'var(--bg-base)',
+                          border: '1px solid var(--border-subtle)',
+                          color: 'var(--text-primary)',
+                        }}
+                      />
+                      <Bar dataKey="count" fill="var(--accent-cyan)" radius={[0, 4, 4, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </section>
+
+              {/* Year of Study */}
+              <section className="rounded border border-(--border-subtle) bg-(--bg-surface) p-4 sm:p-6">
+                <div className="mb-4 text-sm font-semibold text-white">Participants by Year of Study</div>
+                <div className="h-[350px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={compStats.yearOfStudy}>
+                      <CartesianGrid stroke="rgba(255,255,255,0.06)" strokeDasharray="3 3" />
+                      <XAxis dataKey="year" label={{ value: 'Year', position: 'insideBottom', offset: -5, fill: 'var(--text-muted)', fontSize: 11 }} tick={{ fill: 'var(--text-muted)', fontSize: 11 }} />
+                      <YAxis tick={{ fill: 'var(--text-muted)', fontSize: 11 }} allowDecimals={false} />
+                      <Tooltip
+                        contentStyle={{
+                          background: 'var(--bg-base)',
+                          border: '1px solid var(--border-subtle)',
+                          color: 'var(--text-primary)',
+                        }}
+                      />
+                      <Bar dataKey="count" fill="var(--accent-green)" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </section>
+
+              {/* Track Distribution */}
+              <section className="rounded border border-(--border-subtle) bg-(--bg-surface) p-4 sm:p-6">
+                <div className="mb-4 text-sm font-semibold text-white">Track Distribution (Teams)</div>
+                <div className="h-[300px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={compStats.tracks}>
+                      <CartesianGrid stroke="rgba(255,255,255,0.06)" strokeDasharray="3 3" />
+                      <XAxis dataKey="name" tick={{ fill: 'var(--text-muted)', fontSize: 10 }} />
+                      <YAxis tick={{ fill: 'var(--text-muted)', fontSize: 11 }} allowDecimals={false} />
+                      <Tooltip
+                        contentStyle={{
+                          background: 'var(--bg-base)',
+                          border: '1px solid var(--border-subtle)',
+                          color: 'var(--text-primary)',
+                        }}
+                      />
+                      <Bar dataKey="count" fill="var(--accent-amber)" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </section>
+
+              {/* Team Status Breakdown */}
+              <section className="rounded border border-(--border-subtle) bg-(--bg-surface) p-4 sm:p-6">
+                <div className="mb-4 text-sm font-semibold text-white">Team Status Breakdown</div>
+                <div className="h-[300px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={compStats.teamStatus}>
+                      <CartesianGrid stroke="rgba(255,255,255,0.06)" strokeDasharray="3 3" />
+                      <XAxis dataKey="status" tick={{ fill: 'var(--text-muted)', fontSize: 9 }} />
+                      <YAxis tick={{ fill: 'var(--text-muted)', fontSize: 11 }} allowDecimals={false} />
+                      <Tooltip
+                        contentStyle={{
+                          background: 'var(--bg-base)',
+                          border: '1px solid var(--border-subtle)',
+                          color: 'var(--text-primary)',
+                        }}
+                      />
+                      <Bar dataKey="count" fill="rgba(255,255,255,0.4)" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </section>
+            </div>
+          </div>
+        )}
 
         {loading && (
           <div className="mt-6 text-sm text-(--text-muted)">Loading charts...</div>

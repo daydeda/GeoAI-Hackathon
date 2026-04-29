@@ -135,6 +135,64 @@ export async function adminRoutes(app: FastifyInstance) {
     }
   })
 
+  // GET /api/v1/admin/stats/competitors
+  app.get('/stats/competitors', { preHandler: [requireRole('ADMIN', 'MODERATOR')] }, async () => {
+    const [
+      universityStats,
+      yearOfStudyStats,
+      trackStats,
+      teamStatusStats,
+      competitorStatusStats
+    ] = await Promise.all([
+      // Count of teams per institution
+      prisma.team.groupBy({
+        by: ['institution'],
+        _count: { id: true },
+        orderBy: { _count: { id: 'desc' } }
+      }),
+      // Count of users per year of study
+      prisma.user.groupBy({
+        by: ['yearOfStudy'],
+        _count: { id: true },
+        orderBy: { yearOfStudy: 'asc' }
+      }),
+      // Count of teams per track
+      prisma.team.groupBy({
+        by: ['track'],
+        _count: { id: true }
+      }),
+      // Count of teams per status
+      prisma.team.groupBy({
+        by: ['currentStatus'],
+        _count: { id: true }
+      }),
+      // Count of users per competitor status
+      prisma.user.groupBy({
+        by: ['competitorStatus'],
+        _count: { id: true }
+      })
+    ])
+
+    // Get top universities by user count as well
+    const universityUserStats = await prisma.user.groupBy({
+      by: ['university'],
+      _count: { id: true },
+      orderBy: { _count: { id: 'desc' } },
+      take: 20
+    })
+
+    return {
+      universities: {
+        byTeams: universityStats.map(s => ({ name: s.institution, count: s._count.id })),
+        byUsers: universityUserStats.map(s => ({ name: s.university, count: s._count.id }))
+      },
+      yearOfStudy: yearOfStudyStats.map(s => ({ year: s.yearOfStudy, count: s._count.id })),
+      tracks: trackStats.map(s => ({ name: s.track, count: s._count.id })),
+      teamStatus: teamStatusStats.map(s => ({ status: s.currentStatus, count: s._count.id })),
+      competitorStatus: competitorStatusStats.map(s => ({ status: s.competitorStatus, count: s._count.id }))
+    }
+  })
+
   // GET /api/v1/admin/tools-access
   // Used by Nginx auth_request to protect Prisma Studio / MinIO routes.
   app.get('/tools-access', { preHandler: [requireRole('ADMIN', 'MODERATOR')] }, async (_request, reply) => {
