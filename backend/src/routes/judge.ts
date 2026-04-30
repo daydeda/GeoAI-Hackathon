@@ -152,8 +152,11 @@ export async function judgeRoutes(app: FastifyInstance) {
       create: { submissionId, teamId: submission.teamId, totalWeighted, judgeCount },
     })
 
-    // Update team status to JUDGED
-    await prisma.team.update({ where: { id: submission.teamId }, data: { currentStatus: 'JUDGED' } })
+    // Update team status to JUDGED only if it's not already in a final state (FINALIST/REJECTED)
+    const currentTeam = await prisma.team.findUnique({ where: { id: submission.teamId }, select: { currentStatus: true } })
+    if (currentTeam && currentTeam.currentStatus !== 'FINALIST' && currentTeam.currentStatus !== 'REJECTED') {
+      await prisma.team.update({ where: { id: submission.teamId }, data: { currentStatus: 'JUDGED' } })
+    }
 
     await writeAuditLog({
       actorId: actor.userId,

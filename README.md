@@ -1,145 +1,45 @@
 # GeoAI Hackathon Portal
 
-GeoAI Hackathon Portal is a full-stack competition platform for team registration, proposal submission, moderation, judge scoring, finalist operations, and admin governance.
+GeoAI Hackathon Portal is a professional, full-stack competition management platform for team registration, proposal submission, moderator screening, judge evaluation, and official finalist operations.
 
 ## Version Matrix
 
-| Scope | Current Version | Notes |
+| Scope | Current Version | Status |
 |---|---:|---|
-| Project (Monorepo) | 2.0.0 | Moderator Review Portal + Email Dispatcher + SMTP Overhaul |
-| Frontend (Next.js) | 2.0.0 | New Verify Portal, Bulk Mailer UI, Inclusive Filtering improvements |
-| Backend (Fastify + Prisma) | 2.0.0 | Bulk Email API, Expanded Status Queries, Secure App Password SMTP |
+| **Project (Monorepo)** | **3.14.0** | **Stable (Latest)** |
+| Frontend (Next.js) | 3.14.0 | Production |
+| Backend (Fastify + Prisma) | 3.14.0 | Production |
 
-## Project Evolution
+---
 
-### v1.0.0 - Initial Competition Platform
-- OAuth authentication and role-based access (Competitor, Moderator, Judge, Admin).
-- Team lifecycle: create/join team, invite code, member roster.
-- Proposal pipeline: PDF upload with version history.
-- Core dashboards and themed hackathon UI.
+## v3.14.0 Highlights (Current Stable)
 
-### v1.1.0 - Review and Governance Baseline
-- Moderator pre-screening and team status transitions.
-- Judge rubric scoring with weighted aggregation.
-- Admin command center for users, teams, and exports.
-- Audit logging for critical actions.
+This version represents the finalized competition logic and security hardening for the AGRI-DISASTER AI HACKATHON.
 
-### v1.2.0 - Operations Hardening
-- Submission lock after judging.
-- Finalist permission-letter generation workflow.
-- Expanded user/team profile data and upload controls.
-- Stability and UX improvements across dashboards.
+### ⚖️ Evaluation & Decision Engine
+- **Point-Based Rubric**: Fully implemented the 50-point scoring system (5/5/30/10).
+- **Judge Decision Workflow**: Enabled explicit "Mark as Finalist" and "Mark as Disqualified" actions within the Judge portal.
+- **Decision Safeguard**: Critical integrity logic implemented to lock final team status during subsequent score modifications.
+- **Internal Consensus**: Enabled inter-judge visibility for scores and comments to support informed final decisions.
 
-### v1.3.0 - Competition Portal Enhancements (Current)
-- Judge Module:
-  - Embedded PDF proposal viewer in Judge dashboard.
-  - Full-screen modal PDF viewer to avoid file download workflow.
-- Competitor Module:
-  - Announcement-phase view now emphasizes Judge Notes/Feedback.
-  - Raw score/judge count hidden in announcement feedback card.
-  - Student ID is now optional in onboarding/profile completion.
-  - Proposal upload now validates all team members for Student ID presence.
-  - Upload is blocked with explicit member names if profiles are incomplete.
-- Admin Module:
-  - New global Phase Deadline Management page.
-  - Admin updates now sync current phase and countdown targets across UI.
-  - Landing-page protocol timeline now follows the same global phase data.
-- UI/UX:
-  - Dashboard countdown refactored to strict format: DD : HH : MM : SS.
-- Branding:
-  - Legacy institution references updated to KMUTT.
-  - Institutional/partner logo slots updated and wired in landing page.
+### 🔒 Privacy & Data Protection
+- **Competitor Privacy**: Strict API filtering to ensure internal Moderator Status, Internal Notes, and Judge Feedback remain hidden from competitors until official announcement.
+- **Audit Logging**: Comprehensive tracking for all status transitions and scoring activities.
 
-### v2.0.0 - Admin & Moderator Tools Overhaul (Current)
+### 📋 Official Documentation
+- **TOR/SRS v3.14.0**: Fully aligned with the codebase, detailing all functional requirements and business rules (Ref: `TOR_SRS_Thai.md`).
 
-- **Moderator Module:**
-  - **Moderator Review Portal**: Dedicated interface for verifying competitor ID cards and profiles.
-  - **Status Logic**: Standardized verification flow (Verify/Reject/Pending) with mandatory rejection notes.
-  - **Inclusive Filtering**: Advanced dropdowns that map "Qualified" and "Disqualified" to active re-screening states.
-- **Communication & Email:**
-  - **Email Dispatch Dashboard**: Integrated bulk mailer for targeted competitor announcements.
-  - **Personalization**: Supports `{{name}}` and `{{email}}` placeholders with real-time HTML preview.
-  - **Recipient Counter**: Live calculation of targeted audiences based on status segments.
-- **System & Security:**
-  - **SMTP Overhaul**: Integrated project-official KMITL credentials for production email reliability.
-  - **Bug Fixes**: Resolved major filtering discrepancies and TypeScript property errors in administrative tools.
+---
 
+## Deployment (Production)
 
-## Sub-Project Changelogs
+To deploy the production environment using the latest stable build:
 
-## Frontend (Next.js) Timeline
+```bash
+sudo docker compose --env-file .env.production -f docker-compose.prod.yml up -d --build
+```
 
-### frontend v1.0.0
-- Landing page, login flow, and primary competitor pages.
-- Team and submission UX foundation.
+*Note: Persistent data is stored in the `postgres_data_prod` named volume. Configuration for deadlines and phases is managed via the Admin Dashboard.*
 
-### frontend v1.1.0
-- Moderator/Judge/Admin interfaces with role-aware navigation.
-- Rubric scoring forms and status cards.
-
-### frontend v1.2.0
-- Submission version history and improved dashboard structure.
-- Enhanced audit log and admin data tables.
-
-### frontend v1.3.0 (Current)
-- Added phase sync hook to consume backend global deadlines.
-- Judge PDF embedded iframe and full-screen modal viewer.
-- Competitor announcement feedback section and raw score hiding.
-- New admin deadlines page and sidebar integration.
-- Countdown formatting update to DD : HH : MM : SS.
-- KMUTT branding and logo asset integration.
-
-## Backend (Fastify + Prisma) Timeline
-
-### backend v1.0.0
-- OAuth auth routes and role assignment bootstrap.
-- Team and submission APIs.
-
-### backend v1.1.0
-- Moderator and judge endpoints with score aggregation.
-- Admin management routes and audit logs.
-
-### backend v1.2.0
-- Submission lock checks tied to scoring state.
-- Export/document workflows and permission-letter generation.
-
-### backend v1.3.0 (Current)
-- Added phase configuration service persisted in data/phase-config.json.
-- Added GET /api/v1/phases for platform-wide phase reads.
-- Added PUT /api/v1/admin/phases for global deadline updates.
-- Submission deadline checks now use configurable proposal phase date.
-- Student ID onboarding requirement removed from first-time profile completion.
-- Submission upload now enforces Student ID completeness for all team members.
-
-## API Additions in v1.3.0
-
-- GET /api/v1/phases
-  - Returns current global phase timeline and deadlines.
-- PUT /api/v1/admin/phases
-  - Admin/Moderator endpoint to update one or more phase deadlines.
-
-## Phase Configuration Storage
-
-- File: backend/data/phase-config.json
-- Behavior:
-  - Auto-created from defaults on first backend run.
-  - Updated by admin API.
-  - Used by frontend phase sync and submission deadline guard.
-
-## Notes for Branding Assets
-
-Landing page now uses these logo paths in frontend/public/logos:
-- kmutt.svg
-- kmitl.svg
-- esri.svg
-- gistda.svg
-- etda.svg
-
-## Recent Work (2026-04-05)
-
-- Implemented live auto-refresh for the Submissions and Team views using polling and refetch-on-focus/visibility to keep UI state up to date.
-- Made `useAlert` safe when an `AlertProvider` is not present to reduce runtime errors during server prerender.
-- Added an explicit `global-error` page and split some admin pages into a server wrapper plus a client component to avoid client-hook usage during prerender.
-- Adjusted `next.config.js` and the frontend build script to use Webpack while diagnosing prerender/build issues.
-- Note: there remains a prerender-time crash related to Next internals for `/_global-error` observed during local builds; further environment/toolchain alignment (Node/Next/React) may be required to fully resolve that.
-
+---
+© 2026 GeoAI Hackathon Team. All rights reserved.

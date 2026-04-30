@@ -175,14 +175,10 @@ export async function submissionRoutes(app: FastifyInstance) {
       return {
         ...rest,
         // Moderator notes hidden AFTER announcement for privacy
-        moderatorReview: moderatorReview ? {
-          ...moderatorReview,
-          note: isAfterAnnouncement ? null : moderatorReview.note
-        } : null,
-        // Judge individual comments ONLY visible AFTER announcement
-        judgeEvaluations: isAfterAnnouncement && judgeScores ? judgeScores.map((score: any) => ({
-          comment: score.comments,
-        })) : [],
+        // Moderator review status and notes are hidden from competitors as per TOR v3.13.0
+        moderatorReview: null,
+        // Judge individual comments are INTERNAL ONLY as per TOR v3.13.0
+        judgeEvaluations: [],
       }
     })
 
