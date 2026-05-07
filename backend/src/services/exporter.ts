@@ -138,15 +138,63 @@ export async function exportData(type: ExportType): Promise<{ fileKey: string; f
       break
     }
     case 'SCORES': {
+      const submissions = await prisma.submission.findMany({
+        where: {
+          isActive: true,
+          moderatorReview: { is: { status: 'PASS' } },
+        },
+        include: {
+          team: true,
+          judgeScores: { include: { judge: { select: { fullName: true } } } },
+          scoreAggregate: true,
+        },
+        orderBy: { submittedAt: 'asc' },
+      })
+
+      const judgeMap = new Map<string, string>()
+      submissions.forEach((sub) => {
+        sub.judgeScores.forEach((js) => {
+          const name = js.judge?.fullName || `Judge ${js.judgeUserId.substring(0, 5)}`
+          judgeMap.set(js.judgeUserId, name)
+        })
+      })
+
+      const allJudgeIds = Array.from(judgeMap.keys())
+      const allJudgeNames = allJudgeIds.map((id) => judgeMap.get(id)!)
+
       sheet.columns = [
-        { header: 'Submission ID', key: 'submissionId', width: 36 },
-        { header: 'Team', key: 'team', width: 30 },
-        { header: 'Judge Count', key: 'judgeCount', width: 12 },
-        { header: 'Weighted Score', key: 'score', width: 15 },
-        { header: 'Calculated At', key: 'calculatedAt', width: 20 },
+        { header: 'Team Name', key: 'teamName', width: 30 },
+        { header: 'Track', key: 'track', width: 25 },
+        ...allJudgeIds.map((id, i) => ({
+          header: allJudgeNames[i],
+          key: `judge_${id}`,
+          width: 18,
+        })),
+        { header: 'Average Score', key: 'avgScore', width: 15 },
       ]
-      const aggs = await prisma.scoreAggregate.findMany({ include: { team: true } })
-      aggs.forEach(a => sheet.addRow({ submissionId: a.submissionId, team: a.team.name, judgeCount: a.judgeCount, score: a.totalWeighted.toFixed(2), calculatedAt: a.calculatedAt.toISOString() }))
+
+      submissions.forEach((sub) => {
+        const row: any = {
+          teamName: sub.team.name,
+          track: sub.team.track,
+          avgScore: sub.scoreAggregate?.totalWeighted?.toFixed(2) || '0.00',
+        }
+
+        allJudgeIds.forEach((id) => {
+          const js = sub.judgeScores.find((s) => s.judgeUserId === id)
+          if (js) {
+            row[`judge_${id}`] =
+              (js.problemDefinitionScore || 0) +
+              (js.dataSpatialArchitectureScore || 0) +
+              (js.methodologicalFrameworkScore || 0) +
+              (js.outputDecisionUseScore || 0)
+          } else {
+            row[`judge_${id}`] = ''
+          }
+        })
+
+        sheet.addRow(row)
+      })
       break
     }
   }

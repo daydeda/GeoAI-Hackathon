@@ -119,6 +119,7 @@ function JudgeContent() {
   const [saving, setSaving] = useState(false)
   const [updatingFinalStatus, setUpdatingFinalStatus] = useState(false)
   const [downloadingZip, setDownloadingZip] = useState(false)
+  const [exportingScores, setExportingScores] = useState(false)
   const [sortMode, setSortMode] = useState<'mean_desc' | 'mean_asc' | 'submitted_desc' | 'submitted_asc'>('mean_desc')
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('ALL')
   const [tagFilter, setTagFilter] = useState<string[]>([])
@@ -353,6 +354,34 @@ function JudgeContent() {
     }
   }
 
+  const downloadScores = async () => {
+    setExportingScores(true)
+    try {
+      const res = await fetch(`${API}/api/v1/judge/export/scores`, {
+        credentials: 'include',
+      })
+      if (!res.ok) {
+        showAlert('Failed to generate scores export.', 'warning')
+        return
+      }
+      const blob = await res.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      const timestamp = new Date().getTime()
+      a.download = `GeoAI_Scores_${timestamp}.xlsx`
+      document.body.appendChild(a)
+      a.click()
+      window.URL.revokeObjectURL(url)
+      document.body.removeChild(a)
+      showAlert('Scores export downloaded successfully.', 'info')
+    } catch {
+      showAlert('Unexpected error during scores export.', 'error')
+    } finally {
+      setExportingScores(false)
+    }
+  }
+
   const statusCard = [
     { label: 'Pending Reviews', value: unscoredQueue.length, icon: ClipboardList },
     { label: 'Completed Reviews', value: scoredQueue.length, icon: CheckCircle2 },
@@ -371,6 +400,15 @@ function JudgeContent() {
               </p>
             </div>
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+              <button
+                type="button"
+                onClick={downloadScores}
+                disabled={exportingScores || queue.length === 0}
+                className="inline-flex items-center gap-2 rounded bg-(--bg-base) border border-(--accent-green) px-4 py-2.5 text-xs font-semibold text-(--accent-green) hover:bg-[rgba(0,230,118,0.1)] transition disabled:opacity-50"
+              >
+                <FileText size={14} />
+                {exportingScores ? 'Exporting...' : 'Export Scores (XLSX)'}
+              </button>
               <button
                 type="button"
                 onClick={downloadAllPdfs}

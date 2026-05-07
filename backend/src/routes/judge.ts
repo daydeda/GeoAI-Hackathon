@@ -1,16 +1,19 @@
 import { FastifyInstance } from 'fastify'
 import { z } from 'zod'
 import { prisma } from '../plugins/prisma.js'
+import { ExportType } from '@prisma/client'
 import { requireRole, JwtPayload } from '../middleware/auth.js'
 import { writeAuditLog } from '../services/auditLog.js'
 import { minioClient, BUCKET } from '../services/storage.js'
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib'
 import JSZip from 'jszip'
 import { Readable } from 'stream'
-import fs from 'fs/promises'
+import fs, { createReadStream } from 'fs'
+import fsPromises from 'fs/promises'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import { dirname } from 'path'
+import { exportData } from '../services/exporter.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
@@ -383,7 +386,7 @@ export async function judgeRoutes(app: FastifyInstance) {
           let fontBuffer = null
           for (const p of fontPaths) {
             try {
-              fontBuffer = await fs.readFile(p)
+              fontBuffer = await fsPromises.readFile(p)
               if (fontBuffer) break
             } catch { continue }
           }
@@ -460,5 +463,32 @@ export async function judgeRoutes(app: FastifyInstance) {
       .header('Content-Type', 'application/zip')
       .header('Content-Disposition', `attachment; filename="GeoAI_Proposals_Export_${now.getTime()}.zip"`)
       .send(zipBuffer)
+  })
+
+  // GET /api/v1/judge/export/scores
+  app.get('/export/scores', { preHandler: [requireRole('JUDGE', 'ADMIN', 'MODERATOR')] }, async (request, reply) => {
+    const actor = request.user as JwtPayload
+    const { fileKey, filePath, mimeType } = await exportData('SCORES')
+
+    await writeAuditLog({
+      actorId: actor.userId,
+      action: 'JUDGE_SCORES_EXPORT',
+      entityType: 'submission',
+      entityId: 'multiple',
+    })
+
+    const stream = createReadStream(filePath)
+    
+    // Cleanup temp file after response
+    stream.on('close', () => {
+      fsPromises.unlink(filePath).catch((err) => {
+        console.error(`Failed to delete temp export file: ${filePath}`, err)
+      })
+    })
+
+    return reply
+      .header('Content-Disposition', `attachment; filename="${fileKey}"`)
+      .header('Content-Type', mimeType)
+      .send(stream)
   })
 }
