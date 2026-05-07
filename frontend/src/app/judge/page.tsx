@@ -155,13 +155,13 @@ function JudgeContent() {
   }, [fetchQueue])
 
   const unscoredQueue = useMemo(
-    () => queue.filter((item) => !item.judgeScores || item.judgeScores.length === 0),
-    [queue],
+    () => queue.filter((item) => !item.judgeScores?.some((s) => s.judgeUserId === user?.id)),
+    [queue, user?.id],
   )
 
   const scoredQueue = useMemo(
-    () => queue.filter((item) => item.judgeScores && item.judgeScores.length > 0),
-    [queue],
+    () => queue.filter((item) => item.judgeScores?.some((s) => s.judgeUserId === user?.id)),
+    [queue, user?.id],
   )
 
   const baseTabQueue = activeTab === 'QUEUE' ? unscoredQueue : scoredQueue
