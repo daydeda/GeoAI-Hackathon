@@ -897,10 +897,16 @@ export async function adminRoutes(app: FastifyInstance) {
       ...(statusWhere.length > 0 ? { OR: statusWhere } : {}),
       ...(teamId
         ? {
-            OR: [
-              { teamMembers: { some: { teamId } } },
-              { ledTeams: { some: { id: teamId } } },
-            ],
+            ...(teamId === 'all-teams'
+              ? {
+                  OR: [{ teamMembers: { some: {} } }, { ledTeams: { some: {} } }],
+                }
+              : {
+                  OR: [
+                    { teamMembers: { some: { teamId } } },
+                    { ledTeams: { some: { id: teamId } } },
+                  ],
+                }),
           }
         : {}),
     }

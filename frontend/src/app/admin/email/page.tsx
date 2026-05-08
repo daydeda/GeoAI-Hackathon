@@ -324,9 +324,10 @@ function BulkEmailContent() {
               <CustomDropdown
                 value={selectedTeamId}
                 onChange={setSelectedTeamId}
-                placeholder="— All teams —"
+                placeholder="Filter by team..."
                 options={[
-                  { value: '', label: '— All teams —' },
+                  { value: '', label: '— No team filter —' },
+                  { value: 'all-teams', label: '— All teams (everyone in a team) —' },
                   ...teams.map(t => ({ value: t.id, label: t.name }))
                 ]}
               />
