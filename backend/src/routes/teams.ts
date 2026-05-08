@@ -107,25 +107,44 @@ export async function teamRoutes(app: FastifyInstance) {
     const team = membership.team
     const activeInvite = team.invites[0] ?? null
 
+    const announcementPhase = await getPhaseByKey('announcement')
+    const announcementDate = announcementPhase?.date || '2026-05-09T00:00:00+07:00'
+    const isAfterAnnouncement = Date.now() >= new Date(announcementDate).getTime()
+
+    let displayedStatus = team.currentStatus as string
+    if (!isAfterAnnouncement) {
+      if (displayedStatus === 'FINALIST' || displayedStatus === 'REJECTED' || displayedStatus === 'JUDGED') {
+        displayedStatus = 'SUBMITTED' // Mask final results as just 'SUBMITTED' or 'VERIFIED'
+      }
+    }
+
     return {
       id: team.id,
       name: team.name,
       institution: team.institution,
       track: team.track,
-      status: team.currentStatus,
+      status: displayedStatus,
       isLeader: team.leaderId === actor.userId,
       memberCount: team.members.length,
       maxMembers: MAX_TEAM_SIZE,
-      members: team.members.map(m => ({
-        userId: m.user.id,
-        email: m.user.email,
-        fullName: m.user.fullName,
-        avatarUrl: m.user.avatarUrl,
-        competitorStatus: m.user.competitorStatus,
-        moderatorNote: m.user.moderatorNote,
-        isLeader: m.userId === team.leaderId,
-        joinedAt: m.joinedAt,
-      })),
+      members: team.members.map(m => {
+        let memberStatus = m.user.competitorStatus as string
+        if (!isAfterAnnouncement) {
+          if (memberStatus === 'QUALIFIED' || memberStatus === 'DISQUALIFIED') {
+            memberStatus = 'VERIFIED_COMPETITOR'
+          }
+        }
+        return {
+          userId: m.user.id,
+          email: m.user.email,
+          fullName: m.user.fullName,
+          avatarUrl: m.user.avatarUrl,
+          competitorStatus: memberStatus,
+          moderatorNote: m.user.moderatorNote,
+          isLeader: m.userId === team.leaderId,
+          joinedAt: m.joinedAt,
+        }
+      }),
       inviteCode: activeInvite?.code ?? null,
       activeSubmission: team.submissions[0] ?? null,
     }

@@ -526,6 +526,24 @@ export async function authRoutes(app: FastifyInstance) {
 
     const profileCompleted = Boolean(u.profileCompleted || hasRequiredProfileFields(u))
 
+    const announcementPhase = await getPhaseByKey('announcement')
+    const announcementDate = announcementPhase?.date || '2026-05-09T00:00:00+07:00'
+    const isAfterAnnouncement = Date.now() >= new Date(announcementDate).getTime()
+
+    let displayedCompetitorStatus = u.competitorStatus as string
+    if (!isAfterAnnouncement) {
+      if (displayedCompetitorStatus === 'QUALIFIED' || displayedCompetitorStatus === 'DISQUALIFIED') {
+        displayedCompetitorStatus = 'VERIFIED_COMPETITOR'
+      }
+    }
+
+    let displayedTeamStatus = teamMembership?.team.currentStatus as string
+    if (teamMembership && !isAfterAnnouncement) {
+      if (displayedTeamStatus === 'FINALIST' || displayedTeamStatus === 'REJECTED' || displayedTeamStatus === 'JUDGED') {
+        displayedTeamStatus = 'SUBMITTED'
+      }
+    }
+
     return {
       id: u.id,
       email: u.email,
@@ -533,7 +551,7 @@ export async function authRoutes(app: FastifyInstance) {
       avatarUrl: u.avatarUrl,
       roles: u.userRoles.map((ur: any) => ur.role.name),
       profileCompleted,
-      competitorStatus: u.competitorStatus,
+      competitorStatus: displayedCompetitorStatus,
       moderatorNote: u.moderatorNote ?? null,
       profile: {
         firstName: u.firstName,
@@ -549,7 +567,7 @@ export async function authRoutes(app: FastifyInstance) {
         id: teamMembership.team.id,
         name: teamMembership.team.name,
         track: teamMembership.team.track,
-        status: teamMembership.team.currentStatus,
+        status: displayedTeamStatus,
         isLeader: teamMembership.team.leaderId === u.id,
       } : null,
     }

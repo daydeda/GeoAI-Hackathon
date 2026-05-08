@@ -171,9 +171,17 @@ export async function submissionRoutes(app: FastifyInstance) {
       // Use any cast to handle complex Prisma includes in the map
       const s = submission as any
       const { judgeScores, moderatorReview, ...rest } = s
-      
+
+      let displayedTeamStatus = s.team.currentStatus as string
+      if (!isAfterAnnouncement) {
+        if (displayedTeamStatus === 'FINALIST' || displayedTeamStatus === 'REJECTED' || displayedTeamStatus === 'JUDGED') {
+          displayedTeamStatus = 'SUBMITTED'
+        }
+      }
+
       return {
         ...rest,
+        team: { ...s.team, currentStatus: displayedTeamStatus },
         // Moderator notes hidden AFTER announcement for privacy
         // Moderator review status and notes are hidden from competitors as per TOR v3.13.0
         moderatorReview: null,
