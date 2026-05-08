@@ -894,21 +894,21 @@ export async function adminRoutes(app: FastifyInstance) {
     })
 
     const where: Prisma.UserWhereInput = {
-      ...(statusWhere.length > 0 ? { OR: statusWhere } : {}),
-      ...(teamId
-        ? {
-            ...(teamId === 'all-teams'
-              ? {
-                  OR: [{ teamMembers: { some: {} } }, { ledTeams: { some: {} } }],
-                }
-              : {
-                  OR: [
-                    { teamMembers: { some: { teamId } } },
-                    { ledTeams: { some: { id: teamId } } },
-                  ],
-                }),
-          }
-        : {}),
+      AND: [
+        ...(statusWhere.length > 0 ? [{ OR: statusWhere }] : []),
+        ...(teamId
+          ? [
+              teamId === 'all-teams'
+                ? { OR: [{ teamMembers: { some: {} } }, { ledTeams: { some: {} } }] }
+                : {
+                    OR: [
+                      { teamMembers: { some: { teamId } } },
+                      { ledTeams: { some: { id: teamId } } },
+                    ],
+                  },
+            ]
+          : []),
+      ],
     }
 
     const recipients = await (prisma.user as any).findMany({
@@ -949,15 +949,21 @@ export async function adminRoutes(app: FastifyInstance) {
     })
 
     const where: Prisma.UserWhereInput = {
-      ...(statusWhere.length > 0 ? { OR: statusWhere } : {}),
-      ...(teamId
-        ? {
-            OR: [
-              { teamMembers: { some: { teamId } } },
-              { ledTeams: { some: { id: teamId } } },
-            ],
-          }
-        : {}),
+      AND: [
+        ...(statusWhere.length > 0 ? [{ OR: statusWhere }] : []),
+        ...(teamId
+          ? [
+              teamId === 'all-teams'
+                ? { OR: [{ teamMembers: { some: {} } }, { ledTeams: { some: {} } }] }
+                : {
+                    OR: [
+                      { teamMembers: { some: { teamId } } },
+                      { ledTeams: { some: { id: teamId } } },
+                    ],
+                  },
+            ]
+          : []),
+      ],
     }
 
     // Require at least one filter to avoid accidental blast to everyone
