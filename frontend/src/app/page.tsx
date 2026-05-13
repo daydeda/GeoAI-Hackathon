@@ -248,7 +248,7 @@ export default function LandingPage() {
               className="inline-flex items-center justify-center gap-2 px-6 sm:px-8 py-3 sm:py-3.5 rounded font-semibold text-sm sm:text-base border border-(--accent-cyan) text-(--accent-cyan) hover:bg-(--accent-cyan)/10 transition-colors w-full sm:w-auto"
             >
               <Trophy size={18} />
-              View Leaderboard
+              ประกาศรายชื่อทีมที่เข้ารอบ
             </Link>
           </div>
         </div>
