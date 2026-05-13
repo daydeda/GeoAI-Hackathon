@@ -87,7 +87,7 @@ export async function documentRoutes(app: FastifyInstance) {
     const stream = await minioClient.getObject(BUCKET, doc.fileKey)
     
     reply.header('Content-Type', 'application/pdf')
-    reply.header('Content-Disposition', `inline; filename="Confirmation-GEOAI.pdf"`)
+    reply.header('Content-Disposition', `inline; filename="permission-letter-${team.name}.pdf"`)
     
     return reply.send(stream)
   })
