@@ -69,7 +69,7 @@ export default function FinalistConfirmation({ teamId, hasUploaded, onSuccess }:
         
         <div className="mb-4 flex items-center gap-2.5 rounded border border-(--accent-red)/30 bg-(--accent-red)/5 p-3">
           <AlertCircle size={18} className="text-(--accent-red) shrink-0" />
-          <span className="text-[14px] font-black tracking-tight text-(--accent-red) uppercase">
+          <span className="text-sm sm:text-base font-black tracking-tight text-(--accent-red) uppercase">
             กำหนดการยืนยัน: 15 พ.ค. 2569 เวลา 16:00 น.
           </span>
         </div>
