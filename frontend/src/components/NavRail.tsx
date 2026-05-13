@@ -12,6 +12,7 @@ const NAV_SECTIONS = [
     items: [
       { href: '/dashboard', label: 'Overview', icon: '⊞' },
       { href: '/team', label: 'My Team', icon: '⊙' },
+      { href: '/leaderboard', label: 'Leaderboard', icon: '🏆' },
       { href: '/submissions', label: 'Submissions', icon: '⊡' },
       { href: '/settings', label: 'Settings', icon: '⊗' },
       { href: '/resources', label: 'Resources', icon: '⊟' },

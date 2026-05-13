@@ -15,6 +15,7 @@ import { judgeRoutes } from './routes/judge.js'
 import { adminRoutes } from './routes/admin.js'
 import { documentRoutes } from './routes/documents.js'
 import { phaseRoutes } from './routes/phases.js'
+import { leaderboardRoutes } from './routes/leaderboard.js'
 import { ensureBucket } from './services/storage.js'
 import { globalErrorHandler } from './middleware/error.js'
 import fastifyStatic from '@fastify/static'
@@ -126,6 +127,7 @@ export async function buildServer() {
   await app.register(adminRoutes, { prefix: '/api/v1/admin' })
   await app.register(documentRoutes, { prefix: '/api/v1' })
   await app.register(phaseRoutes, { prefix: '/api/v1' })
+  await app.register(leaderboardRoutes, { prefix: '/api/v1/leaderboard' })
 
   return app
 }

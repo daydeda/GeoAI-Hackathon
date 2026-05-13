@@ -91,6 +91,7 @@ export async function teamRoutes(app: FastifyInstance) {
             members: { include: { user: { select: { id: true, email: true, fullName: true, avatarUrl: true, competitorStatus: true, moderatorNote: true } } } },
             leader: { select: { id: true, email: true, fullName: true } },
             invites: { where: { revoked: false } },
+            documents: { where: { type: 'CONFIRMATION_JOIN' }, orderBy: { version: 'desc' }, take: 1 },
             submissions: {
               where: { isActive: true },
               orderBy: { version: 'desc' },
@@ -147,6 +148,7 @@ export async function teamRoutes(app: FastifyInstance) {
       }),
       inviteCode: activeInvite?.code ?? null,
       activeSubmission: team.submissions[0] ?? null,
+      confirmationDocument: team.documents[0] ?? null,
     }
   })
 

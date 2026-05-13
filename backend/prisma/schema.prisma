@@ -299,6 +299,7 @@ enum ReviewStatus {
 
 enum DocumentType {
   PERMISSION_LETTER
+  CONFIRMATION_JOIN
 }
 
 enum ExportType {

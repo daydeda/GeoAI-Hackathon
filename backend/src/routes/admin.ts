@@ -642,6 +642,7 @@ export async function adminRoutes(app: FastifyInstance) {
         leader: { select: { id: true, email: true, fullName: true, avatarUrl: true, idCardFileKey: true } },
         members: { include: { user: { select: { id: true, email: true, fullName: true, avatarUrl: true, idCardFileKey: true } } } },
         submissions: { where: { isActive: true }, include: { scoreAggregate: true, moderatorReview: true } },
+        documents: { where: { type: 'CONFIRMATION_JOIN' }, orderBy: { version: 'desc' }, take: 1 },
       },
       orderBy: { createdAt: 'desc' },
       skip: (currentPage - 1) * take,
@@ -737,6 +738,22 @@ export async function adminRoutes(app: FastifyInstance) {
     }
 
     return reply.status(400).send({ error: 'Unsupported upload type' })
+  })
+
+  // GET /api/v1/admin/teams/:teamId/documents/confirmation/view
+  app.get('/teams/:teamId/documents/confirmation/view', { preHandler: [requireRole('ADMIN', 'MODERATOR')] }, async (request, reply) => {
+    const { teamId } = request.params as { teamId: string }
+    const doc = await prisma.document.findFirst({
+      where: { teamId, type: 'CONFIRMATION_JOIN' },
+      orderBy: { version: 'desc' },
+    })
+
+    if (!doc) return reply.status(404).send({ error: 'Confirmation document not found' })
+
+    const stream = await minioClient.getObject(BUCKET, doc.fileKey)
+    reply.header('Content-Type', 'application/pdf')
+    reply.header('Content-Disposition', 'inline; filename="confirmation.pdf"')
+    return reply.send(stream)
   })
 
   // PATCH /api/v1/admin/teams/:teamId/status

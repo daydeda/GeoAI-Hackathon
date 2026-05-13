@@ -7,12 +7,13 @@ import AppShell from '@/components/AppShell'
 import { useAuth, TeamInfo } from '@/contexts/AuthContext'
 import CustomDropdown from '@/components/CustomDropdown'
 import { AlertTriangle, Trash2, ChevronDown, ShieldAlert } from 'lucide-react'
+import FinalistConfirmation from '@/components/FinalistConfirmation'
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
 const LIVE_REFRESH_MS = 8000
 
 interface Member { fullName: string; email: string; isLeader: boolean; userId: string; competitorStatus?: string; moderatorNote?: string }
-interface TeamData extends TeamInfo { institution: string; memberCount: number; members: Member[]; inviteCode: string; activeSubmission?: { id: string } | null }
+interface TeamData extends TeamInfo { institution: string; memberCount: number; members: Member[]; inviteCode: string; activeSubmission?: { id: string } | null; confirmationDocument?: { id: string } | null }
 
 function TeamContent() {
   const { user, loading: authLoading, refetch: refetchUser } = useAuth()
@@ -517,6 +518,13 @@ function TeamContent() {
           {/* Right: Invite Code + Danger Zone */}
           {team.isLeader && (
             <div className="flex flex-col gap-4 sm:gap-6 h-fit">
+              {team.status === 'FINALIST' && (
+                <FinalistConfirmation 
+                  teamId={team.id} 
+                  hasUploaded={!!team.confirmationDocument}
+                  onSuccess={fetchTeam}
+                />
+              )}
               <div className="card p-4 sm:p-6 rounded-lg border border-(--border-subtle) bg-(--bg-surface)">
                 <h3 className="font-display text-lg sm:text-xl mb-3 sm:mb-4">Recruitment Link</h3>
                 <p className="text-xs sm:text-sm text-(--text-secondary) mb-4 sm:mb-6">

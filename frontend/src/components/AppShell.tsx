@@ -68,7 +68,7 @@ type NavItem = {
 
 const topLinks = [
   { href: '/team', label: 'Challenges' },
-  { href: '/team', label: 'Leaderboard' },
+  { href: '/leaderboard', label: 'Leaderboard' },
   { href: '/docs', label: 'Docs' },
   { href: '/support', label: 'Contact Us' },
 ]
@@ -76,6 +76,7 @@ const topLinks = [
 const baseMenu: NavItem[] = [
   { href: '/dashboard', label: 'Overview', icon: LayoutGrid },
   { href: '/team', label: 'My Team', icon: Users },
+  { href: '/leaderboard', label: 'Leaderboard', icon: Trophy },
   { href: '/submissions', label: 'Submissions', icon: FileText },
   { href: '/settings', label: 'Settings', icon: Cog },
   { href: '/resources', label: 'Resources', icon: BookOpen, activeColor: 'var(--accent-green)' },

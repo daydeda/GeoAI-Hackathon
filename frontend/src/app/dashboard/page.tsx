@@ -9,7 +9,6 @@ import {
   Circle,
   ClipboardCopy,
   Copy,
-  Download,
   FileText,
   Leaf,
   Play,
@@ -21,6 +20,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { useAlert } from '@/contexts/AlertContext'
 import { formatPhaseDeadline } from '@/lib/phaseDeadline'
 import { useCompetitionPhases } from '@/hooks/useCompetitionPhases'
+import FinalistConfirmation from '@/components/FinalistConfirmation'
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
 
@@ -75,23 +75,6 @@ function DashboardContent() {
     }
   }
 
-  const downloadPermissionLetter = async () => {
-    if (!teamData?.id) return
-    const res = await fetch(`${API}/api/v1/teams/${teamData.id}/documents/permission-letter`, { credentials: 'include' })
-    if (res.ok) {
-      const blob = await res.blob()
-      const url = window.URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = `PermissionLetter_${teamData.name || 'Team'}.pdf`
-      document.body.appendChild(a)
-      a.click()
-      window.URL.revokeObjectURL(url)
-    } else {
-      const d = await res.json().catch(() => ({ error: 'Permission letter not yet available or failed to generate.' }))
-      showAlert(d.error || 'Permission letter service currently unavailable.', 'warning')
-    }
-  }
 
   if (loading) return (
     <div className="flex min-h-screen items-center justify-center px-6">
@@ -99,7 +82,7 @@ function DashboardContent() {
     </div>
   )
 
-  const team = teamData as { id?: string; name?: string; institution?: string; track?: string; members?: unknown[]; inviteCode?: string; memberCount?: number; maxMembers?: number; status?: string } | null
+  const team = teamData as { id?: string; name?: string; institution?: string; track?: string; members?: unknown[]; inviteCode?: string; memberCount?: number; maxMembers?: number; status?: string; confirmationDocument?: { id: string } | null } | null
   const members = (team?.members as Array<{ fullName?: string; isLeader?: boolean; email?: string }>) ?? []
   const submissionStatus = (teamData as { activeSubmission?: unknown } | null)?.activeSubmission
   const hasTeam = !!team
@@ -214,20 +197,11 @@ function DashboardContent() {
                 </div>
 
                 {team?.status === 'FINALIST' && (
-                  <div className="mb-4 rounded-lg border border-(--accent-green) bg-[rgba(0,230,118,0.05)] p-4">
-                    <div className="font-mono mb-2 text-[10px] tracking-[0.05em] text-(--accent-green)">ONSITE ROUND QUALIFIED</div>
-                    <p className="mb-3 text-xs leading-relaxed text-(--text-secondary)">
-                      Congratulations! Your team has advanced to the Finalist round. Please download the auto-generated Permission/Leave letter below.
-                    </p>
-                    <button 
-                      onClick={downloadPermissionLetter}
-                      className="btn w-full justify-center"
-                      style={{ background: 'var(--accent-green)', color: 'black', fontSize: 12 }}
-                    >
-                      <Download size={16} aria-hidden="true" />
-                      <span>DOWNLOAD THE PERMISSION LETTER</span>
-                    </button>
-                  </div>
+                  <FinalistConfirmation 
+                    teamId={team.id!} 
+                    hasUploaded={!!team.confirmationDocument}
+                    onSuccess={fetchTeam}
+                  />
                 )}
               </>
             ) : (

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { Menu, X, Zap } from 'lucide-react'
+import { Menu, X, Zap, Trophy } from 'lucide-react'
 import { useCompetitionPhases } from '@/hooks/useCompetitionPhases'
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
@@ -80,7 +80,7 @@ const sponsoredBy = [
 const navLinks = [
   { label: 'Challenges', href: '#timeline' },
   { label: 'Quick Guide', href: '#quick-guide' },
-  { label: 'Leaderboard', href: '/login' },
+  { label: 'Leaderboard', href: '/leaderboard' },
   { label: 'Docs', href: '/docs' },
   { label: 'Contact Us', href: '/support' },
 ]
@@ -242,6 +242,13 @@ export default function LandingPage() {
               className="inline-flex items-center justify-center gap-2 px-6 sm:px-8 py-3 sm:py-3.5 rounded font-semibold text-sm sm:text-base bg-[#FFA500] text-black hover:opacity-90 transition-colors w-full sm:w-auto"
             >
               รายละเอียดการแข่งขัน
+            </Link>
+            <Link
+              href="/leaderboard"
+              className="inline-flex items-center justify-center gap-2 px-6 sm:px-8 py-3 sm:py-3.5 rounded font-semibold text-sm sm:text-base border border-(--accent-cyan) text-(--accent-cyan) hover:bg-(--accent-cyan)/10 transition-colors w-full sm:w-auto"
+            >
+              <Trophy size={18} />
+              View Leaderboard
             </Link>
           </div>
         </div>

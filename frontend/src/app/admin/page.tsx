@@ -77,6 +77,7 @@ interface TeamRow {
   members: TeamMemberRow[]
   score?: number
   submissions?: unknown[]
+  documents?: Array<{ id: string }>
 }
 interface LogRow {
   id: string
@@ -140,6 +141,7 @@ function AdminContent() {
   const [sendingAnnouncement, setSendingAnnouncement] = useState(false)
   const [announcementStatus, setAnnouncementStatus] =
     useState<AnnouncementEmailStatus | null>(null)
+  const [teamStatusFilter, setTeamStatusFilter] = useState('ALL')
   const [totalSubmissions, setTotalSubmissions] = useState(0)
   const [confirmAction, setConfirmAction] = useState<{
     type: 'PROMOTE' | 'DISQUALIFY' | 'REVOKE' | 'RESTORE'
@@ -202,6 +204,7 @@ function AdminContent() {
         limit: String(teamLimit),
       })
       if (teamTrackFilter !== 'ALL') teamParams.set('track', teamTrackFilter)
+      if (teamStatusFilter !== 'ALL') teamParams.set('status', teamStatusFilter)
       const trimmedTeamSearch = teamSearch.trim()
       if (trimmedTeamSearch) teamParams.set('search', trimmedTeamSearch)
 
@@ -263,6 +266,7 @@ function AdminContent() {
     teamSearch,
     teamLimit,
     teamPage,
+    teamStatusFilter,
   ])
 
   useEffect(() => {
@@ -1040,6 +1044,21 @@ function AdminContent() {
                     ]}
                   />
                 </div>
+                <div className="w-full sm:w-[180px]">
+                  <CustomDropdown
+                    value={teamStatusFilter}
+                    onChange={(nextStatus) => {
+                      setTeamStatusFilter(nextStatus)
+                      setTeamPage(1)
+                    }}
+                    options={[
+                      { value: 'ALL', label: 'ALL STATUS' },
+                      { value: 'FINALIST', label: 'QUALIFIED' },
+                      { value: 'REJECTED', label: 'DISQUALIFIED' },
+                      { value: 'SUBMITTED', label: 'SUBMITTED' },
+                    ]}
+                  />
+                </div>
                 <div className="relative w-full md:w-auto">
                   <Search
                     size={14}
@@ -1122,7 +1141,20 @@ function AdminContent() {
                         </div>
                       </td>
                       <td className="py-5 text-sm text-white">
-                        {t.score?.toFixed(4) || 'N/A'}
+                        <div className="flex flex-col gap-2">
+                          <div>{t.score?.toFixed(4) || 'N/A'}</div>
+                          {t.documents && t.documents.length > 0 && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                window.open(`${API}/api/v1/admin/teams/${t.id}/documents/confirmation/view`, '_blank', 'noopener,noreferrer')
+                              }}
+                              className="rounded border border-(--accent-green) px-2 py-1 text-[10px] text-(--accent-green) hover:bg-(--accent-green)/10 transition-colors w-fit"
+                            >
+                              View Confirmation
+                            </button>
+                          )}
+                        </div>
                       </td>
                       <td className="py-5 text-right">
                         {t.currentStatus === 'FINALIST' ? (
