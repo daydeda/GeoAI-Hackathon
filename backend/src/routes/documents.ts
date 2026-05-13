@@ -6,6 +6,7 @@ import { minioClient, BUCKET } from '../services/storage.js'
 
 export async function documentRoutes(app: FastifyInstance) {
   // POST /api/v1/teams/:teamId/documents/confirmation — upload signed confirmation
+  app.post('/teams/:teamId/documents/confirmation', { preHandler: [authenticate] }, async (request, reply) => {
     const actor = request.user as JwtPayload
     const { teamId } = request.params as { teamId: string }
 
