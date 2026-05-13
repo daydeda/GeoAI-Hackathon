@@ -47,7 +47,17 @@ export async function leaderboardRoutes(app: FastifyInstance) {
       .map(([name, count]) => ({ name, count }))
       .sort((a, b) => b.count - a.count)
 
+    const [
+      totalUsers,
+      totalSubmissions,
+    ] = await Promise.all([
+      prisma.user.count(),
+      prisma.submission.count(),
+    ])
+
     return {
+      totalUsers,
+      totalSubmissions,
       universities: {
         byTeams: universityByTeamStats
           .filter(s => s.institution?.trim())

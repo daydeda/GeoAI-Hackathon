@@ -21,6 +21,8 @@ import {
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
 
 type LeaderboardStats = {
+  totalUsers: number
+  totalSubmissions: number
   universities: {
     byTeams: { name: string; count: number }[]
     byUsers: { name: string; count: number }[]
@@ -110,15 +112,20 @@ function LeaderboardContent() {
           </p>
           
           <div className="mt-6 lg:absolute lg:top-0 lg:right-0 w-full lg:w-auto">
-            <div className="flex items-center justify-between lg:justify-start gap-4 lg:gap-6 rounded-xl border border-(--border-subtle) bg-(--bg-surface) p-4 lg:p-6 shadow-2xl">
+            <div className="flex flex-wrap items-center justify-between lg:justify-end gap-4 lg:gap-8 rounded-xl border border-(--border-subtle) bg-(--bg-surface) p-4 lg:p-6 shadow-2xl">
               <div className="flex flex-col">
-                <span className="text-[9px] lg:text-[10px] font-bold tracking-widest text-(--text-muted) uppercase">Status</span>
-                <span className="font-display text-lg lg:text-2xl text-(--accent-green)">LIVE_FEED</span>
+                <span className="text-[9px] lg:text-[10px] font-bold tracking-widest text-(--text-muted) uppercase">Total Registered</span>
+                <span className="font-display text-lg lg:text-2xl text-white">{stats?.totalUsers || 0}</span>
               </div>
-              <div className="h-10 w-px bg-(--border-subtle)" />
+              <div className="h-10 w-px bg-(--border-subtle) hidden sm:block" />
+              <div className="flex flex-col">
+                <span className="text-[9px] lg:text-[10px] font-bold tracking-widest text-(--text-muted) uppercase">Proposals Sent</span>
+                <span className="font-display text-lg lg:text-2xl text-white">{stats?.totalSubmissions || 0}</span>
+              </div>
+              <div className="h-10 w-px bg-(--border-subtle) hidden sm:block" />
               <div className="flex flex-col text-right lg:text-left">
                 <span className="text-[9px] lg:text-[10px] font-bold tracking-widest text-(--text-muted) uppercase">Qualified Teams</span>
-                <span className="font-display text-lg lg:text-2xl text-white">{totalQualifiedTeams}</span>
+                <span className="font-display text-lg lg:text-2xl text-(--accent-cyan)">{totalQualifiedTeams}</span>
               </div>
             </div>
           </div>
