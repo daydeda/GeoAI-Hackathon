@@ -115,43 +115,6 @@ function LeaderboardContent() {
           </div>
         </div>
 
-        {/* Announcements Section */}
-        <div className="mb-12 max-w-3xl mx-auto space-y-8 rounded-2xl border border-(--border-subtle) bg-(--bg-surface)/50 p-8 backdrop-blur-sm shadow-xl">
-          <div className="space-y-4">
-            <p className="text-sm leading-relaxed text-(--text-secondary) sm:text-base">
-              โอกาสในการเรียนรู้สำหรับผู้สมัครทุกท่าน แม้การแข่งขันจะมีข้อจำกัดด้านจำนวนทีมที่ผ่านเข้ารอบ แต่คณะผู้จัดงานเล็งเห็นว่าไอเดียและความตั้งใจของทุกทีมมีคุณค่าอย่างยิ่ง เราจึงขอเชิญชวนผู้สมัครทุกคนเข้าร่วมกิจกรรมอบรมเชิงปฏิบัติการ <strong className="text-(--accent-cyan)">(Workshop) ออนไลน์พิเศษ</strong> เพื่อเติมเต็มทักษะด้าน AI ยุคใหม่ ซึ่งท่านสามารถนำไปปรับใช้กับการเรียน การทำงาน หรือการแข่งขันในเวทีอื่นๆ ได้อย่างดีเยี่ยม:
-            </p>
-            <ul className="space-y-3 pl-2">
-              <li className="flex gap-3 text-sm text-(--text-primary)">
-                <span className="text-(--accent-cyan)">•</span>
-                <span><strong className="text-white">หัวข้อการอบรม:</strong> การสร้างซอฟต์แวร์ด้วยการ Prompt (Vibe-coding), การพัฒนาระบบอัตโนมัติอัจฉริยะ (Agentic AI), การใช้งานระบบจัดการข้อมูลเชิงพื้นที่ Sphere และเทคนิคการนำเสนอผลงาน</span>
-              </li>
-              <li className="flex gap-3 text-sm text-(--text-primary)">
-                <span className="text-(--accent-cyan)">•</span>
-                <span><strong className="text-white">วันเวลา:</strong> วันจันทร์ที่ 18 พฤษภาคม 2569 เวลา 10:00 – 15:00 น.</span>
-              </li>
-              <li className="flex gap-3 text-sm text-(--text-primary)">
-                <span className="text-(--accent-cyan)">•</span>
-                <span><strong className="text-white">รูปแบบ:</strong> เปิดให้เข้าชมแบบออนไลน์ผ่านช่องทางที่ประกาศในเว็บไซต์ <a href="https://cegs.kmitl.ac.th/geoai-2026" className="text-(--accent-cyan) hover:underline" target="_blank" rel="noreferrer">https://cegs.kmitl.ac.th/geoai-2026</a></span>
-              </li>
-            </ul>
-          </div>
-
-          <div className="pt-6 border-t border-(--border-subtle) space-y-4">
-            <h4 className="font-display text-lg text-white">สำหรับทีมที่ผ่านเข้ารอบ 10 ทีมสุดท้าย:</h4>
-            <ul className="space-y-3 pl-2">
-              <li className="flex gap-3 text-sm text-(--text-primary)">
-                <span className="text-(--accent-cyan)">•</span>
-                <span>ให้ทีมที่ได้รับคัดเลือกส่งเอกสารยืนยันสิทธิ์อีกครั้ง <strong className="text-(--accent-cyan)">ภายในวันที่ 15 พฤษภาคม 2569 เวลา 16.00 น.</strong> ผ่านช่องทางในเว็บไซต์</span>
-              </li>
-            </ul>
-          </div>
-
-          <p className="pt-4 text-xs italic text-(--text-muted) border-t border-(--border-subtle)/30">
-            โปรดเตรียมตัวสำหรับการรายงานตัวและการพัฒนาผลงานต้นแบบตามรายชื่อสมาชิกที่ระบุไว้ในแบบเสนอโครงการ (Proposal) เท่านั้น
-          </p>
-        </div>
-
         {/* Top Grid: Track Distribution & Summary */}
         <div className="mb-12">
           <div className="mb-12 flex justify-center px-4">
@@ -162,6 +125,43 @@ function LeaderboardContent() {
                 className="w-full h-auto block"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-(--bg-base)/20 to-transparent pointer-events-none" />
+            </div>
+          </div>
+
+          {/* Announcements Section */}
+          <div className="mb-12 max-w-3xl mx-auto space-y-8 rounded-2xl border border-(--border-subtle) bg-(--bg-surface)/50 p-8 backdrop-blur-sm shadow-xl">
+            <div className="space-y-4">
+              <p className="text-sm leading-relaxed text-(--text-secondary) sm:text-base">
+                โอกาสในการเรียนรู้สำหรับผู้สมัครทุกท่าน แม้การแข่งขันจะมีข้อจำกัดด้านจำนวนทีมที่ผ่านเข้ารอบ แต่คณะผู้จัดงานเล็งเห็นว่าไอเดียและความตั้งใจของทุกทีมมีคุณค่าอย่างยิ่ง เราจึงขอเชิญชวนผู้สมัครทุกคนเข้าร่วมกิจกรรมอบรมเชิงปฏิบัติการ <strong className="text-(--accent-cyan)">(Workshop) ออนไลน์พิเศษ</strong> เพื่อเติมเต็มทักษะด้าน AI ยุคใหม่ ซึ่งท่านสามารถนำไปปรับใช้กับการเรียน การทำงาน หรือการแข่งขันในเวทีอื่นๆ ได้อย่างดีเยี่ยม:
+              </p>
+              <ul className="space-y-3 pl-2">
+                <li className="flex gap-3 text-sm text-(--text-primary)">
+                  <span className="text-(--accent-cyan)">•</span>
+                  <span><strong className="text-white">หัวข้อการอบรม:</strong> การสร้างซอฟต์แวร์ด้วยการ Prompt (Vibe-coding), การพัฒนาระบบอัตโนมัติอัจฉริยะ (Agentic AI), การใช้งานระบบจัดการข้อมูลเชิงพื้นที่ Sphere และเทคนิคการนำเสนอผลงาน</span>
+                </li>
+                <li className="flex gap-3 text-sm text-(--text-primary)">
+                  <span className="text-(--accent-cyan)">•</span>
+                  <span><strong className="text-white">วันเวลา:</strong> วันจันทร์ที่ 18 พฤษภาคม 2569 เวลา 10:00 – 15:00 น.</span>
+                </li>
+                <li className="flex gap-3 text-sm text-(--text-primary)">
+                  <span className="text-(--accent-cyan)">•</span>
+                  <span><strong className="text-white">รูปแบบ:</strong> เปิดให้เข้าชมแบบออนไลน์ผ่านช่องทางที่ประกาศในเว็บไซต์ <a href="https://cegs.kmitl.ac.th/geoai-2026" className="text-(--accent-cyan) hover:underline" target="_blank" rel="noreferrer">https://cegs.kmitl.ac.th/geoai-2026</a></span>
+                </li>
+              </ul>
+            </div>
+
+            <div className="pt-6 border-t border-(--border-subtle) space-y-4">
+              <h4 className="font-display text-lg text-white">สำหรับทีมที่ผ่านเข้ารอบ 10 ทีมสุดท้าย:</h4>
+              <ul className="space-y-3 pl-2">
+                <li className="flex gap-3 text-sm text-(--text-primary)">
+                  <span className="text-(--accent-cyan)">•</span>
+                  <span>ให้ทีมที่ได้รับคัดเลือกส่งเอกสารยืนยันสิทธิ์อีกครั้ง <strong className="text-(--accent-cyan)">ภายในวันที่ 15 พฤษภาคม 2569 เวลา 16.00 น.</strong> ผ่านช่องทางในเว็บไซต์</span>
+                </li>
+                <li className="flex gap-3 text-sm text-(--text-primary)">
+                  <span className="text-(--accent-cyan)">•</span>
+                  <span>โปรดเตรียมตัวสำหรับการรายงานตัวและการพัฒนาผลงานต้นแบบตามรายชื่อสมาชิกที่ระบุไว้ในแบบเสนอโครงการ (Proposal) เท่านั้น</span>
+                </li>
+              </ul>
             </div>
           </div>
 
