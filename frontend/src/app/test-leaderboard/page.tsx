@@ -17,6 +17,7 @@ import {
   YAxis,
   Legend,
 } from 'recharts'
+import Image from 'next/image'
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
 
@@ -127,11 +128,13 @@ function LeaderboardContent() {
         {/* Top Grid: Track Distribution & Summary */}
         <div className="mb-12">
           <div className="mb-12 flex justify-center px-4">
-            <div className="w-full max-w-2xl relative overflow-hidden rounded-2xl border border-(--accent-cyan)/20 shadow-[0_0_60px_rgba(0,229,255,0.12)]">
-              <img 
-                src="Finalist-Announcement.png" 
+            <div className="w-full max-w-2xl relative overflow-hidden rounded-2xl border border-(--accent-cyan)/20 shadow-[0_0_60px_rgba(0,229,255,0.12)] aspect-[1200/630]">
+              <Image 
+                src="/Finalist-Announcement.png" 
                 alt="Finalist Announcement" 
-                className="w-full h-auto block"
+                fill
+                className="object-cover"
+                priority
               />
               <div className="absolute inset-0 bg-gradient-to-t from-(--bg-base)/20 to-transparent pointer-events-none" />
             </div>

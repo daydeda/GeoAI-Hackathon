@@ -14,6 +14,7 @@ import {
   Mail,
   Search,
   Trash2,
+  Users,
   X,
 } from 'lucide-react'
 import { formatPhaseDeadline } from '@/lib/phaseDeadline'
@@ -1307,11 +1308,12 @@ function AdminContent() {
                 </div>
               ))}
             </div>
+          </div>
 
             <div className="mt-4 flex flex-col gap-3 border-t border-white/5 pt-4 text-xs text-(--text-muted) sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                Showing teams {teamFrom}–{teamTo} of {totalTeams}
-              </div>
+            <div>
+              Showing teams {teamFrom}–{teamTo} of {totalTeams}
+            </div>
               <div className="flex items-center gap-2">
                 <button
                   type="button"
