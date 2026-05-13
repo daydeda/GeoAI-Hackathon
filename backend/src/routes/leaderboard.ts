@@ -19,14 +19,17 @@ export async function leaderboardRoutes(app: FastifyInstance) {
     const [
       totalUsers,
       totalSubmissions,
+      totalQualified,
     ] = await Promise.all([
       prisma.user.count(),
       prisma.submission.count({ where: { isActive: true } }),
+      prisma.team.count({ where: { currentStatus: 'FINALIST' } }),
     ])
 
     return {
       totalUsers,
       totalSubmissions,
+      totalQualified,
       tracks: trackStats.map(s => ({ 
         name: TRACK_LABELS[s.track] ?? s.track, 
         count: s._count.id 

@@ -18,6 +18,7 @@ const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
 type LeaderboardStats = {
   totalUsers: number
   totalSubmissions: number
+  totalQualified: number
   tracks: { name: string; count: number }[]
 }
 
@@ -79,7 +80,7 @@ function LeaderboardContent() {
   }
 
   const trackData = stats?.tracks || []
-  const totalQualifiedTeams = trackData.reduce((acc, curr) => acc + curr.count, 0)
+  const totalQualifiedTeams = stats?.totalQualified || 0
 
   return (
     <div className="min-h-screen px-4 py-8 sm:px-6 lg:px-12 animate-fade-in">
