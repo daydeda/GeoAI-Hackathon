@@ -210,7 +210,7 @@ function LeaderboardContent() {
                     dataKey="name"
                     type="category"
                     tick={{ fill: 'var(--text-secondary)', fontSize: 12, fontWeight: 500 }}
-                    width={140}
+                    width={110}
                     axisLine={false}
                     tickLine={false}
                   />
@@ -263,7 +263,7 @@ function LeaderboardContent() {
                     dataKey="name"
                     type="category"
                     tick={{ fill: 'var(--text-secondary)', fontSize: 12, fontWeight: 500 }}
-                    width={140}
+                    width={110}
                     axisLine={false}
                     tickLine={false}
                   />
