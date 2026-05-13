@@ -112,20 +112,15 @@ function LeaderboardContent() {
           </p>
           
           <div className="mt-6 lg:absolute lg:top-0 lg:right-0 w-full lg:w-auto">
-            <div className="flex flex-wrap items-center justify-between lg:justify-end gap-4 lg:gap-8 rounded-xl border border-(--border-subtle) bg-(--bg-surface) p-4 lg:p-6 shadow-2xl">
+            <div className="flex items-center justify-between lg:justify-start gap-4 lg:gap-6 rounded-xl border border-(--border-subtle) bg-(--bg-surface) p-4 lg:p-6 shadow-2xl">
               <div className="flex flex-col">
-                <span className="text-[9px] lg:text-[10px] font-bold tracking-widest text-(--text-muted) uppercase">Total Registered</span>
-                <span className="font-display text-lg lg:text-2xl text-white">{stats?.totalUsers || 0}</span>
+                <span className="text-[9px] lg:text-[10px] font-bold tracking-widest text-(--text-muted) uppercase">Status</span>
+                <span className="font-display text-lg lg:text-2xl text-(--accent-green)">LIVE_FEED</span>
               </div>
-              <div className="h-10 w-px bg-(--border-subtle) hidden sm:block" />
-              <div className="flex flex-col">
-                <span className="text-[9px] lg:text-[10px] font-bold tracking-widest text-(--text-muted) uppercase">Proposals Sent</span>
-                <span className="font-display text-lg lg:text-2xl text-white">{stats?.totalSubmissions || 0}</span>
-              </div>
-              <div className="h-10 w-px bg-(--border-subtle) hidden sm:block" />
+              <div className="h-10 w-px bg-(--border-subtle)" />
               <div className="flex flex-col text-right lg:text-left">
                 <span className="text-[9px] lg:text-[10px] font-bold tracking-widest text-(--text-muted) uppercase">Qualified Teams</span>
-                <span className="font-display text-lg lg:text-2xl text-(--accent-cyan)">{totalQualifiedTeams}</span>
+                <span className="font-display text-lg lg:text-2xl text-white">{totalQualifiedTeams}</span>
               </div>
             </div>
           </div>
@@ -297,6 +292,24 @@ function LeaderboardContent() {
               </ResponsiveContainer>
             </div>
           </section>
+        </div>
+
+        {/* Global Stats Summary */}
+        <div className="mt-12">
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
+            <div className="rounded-2xl border border-(--border-subtle) bg-(--bg-surface) p-6 text-center shadow-xl transition-all hover:border-(--accent-cyan)/50">
+              <span className="mb-2 block text-[10px] font-bold tracking-[0.2em] text-(--text-muted) uppercase">Total Registered</span>
+              <span className="font-display text-3xl text-white sm:text-4xl">{stats?.totalUsers || 0}</span>
+            </div>
+            <div className="rounded-2xl border border-(--border-subtle) bg-(--bg-surface) p-6 text-center shadow-xl transition-all hover:border-(--accent-cyan)/50">
+              <span className="mb-2 block text-[10px] font-bold tracking-[0.2em] text-(--text-muted) uppercase">Proposals Sent</span>
+              <span className="font-display text-3xl text-white sm:text-4xl">{stats?.totalSubmissions || 0}</span>
+            </div>
+            <div className="rounded-2xl border border-(--border-subtle) bg-(--bg-surface) p-6 text-center shadow-xl transition-all hover:border-(--accent-cyan)/50">
+              <span className="mb-2 block text-[10px] font-bold tracking-[0.2em] text-(--text-muted) uppercase">Qualified Teams</span>
+              <span className="font-display text-3xl text-(--accent-cyan) sm:text-4xl">{totalQualifiedTeams}</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>

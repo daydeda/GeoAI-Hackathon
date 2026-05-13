@@ -64,10 +64,7 @@ export async function leaderboardRoutes(app: FastifyInstance) {
           .map(s => ({ name: s.institution, count: s._count.id })),
         byUsers: universityByIndividual,
       },
-      tracks: [
-        { name: 'Smart Agriculture', count: 5 },
-        { name: 'Disaster & Flood Response', count: 5 },
-      ],
+      tracks: trackStats.map(s => ({ name: TRACK_LABELS[s.track] ?? s.track, count: s._count.id })),
     }
   })
 }
