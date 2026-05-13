@@ -3,18 +3,13 @@
 import { useEffect, useState } from 'react'
 import { AuthProvider } from '@/contexts/AuthContext'
 import AppShell from '@/components/AppShell'
-import { Trophy, Users, BarChart3, PieChart as PieChartIcon } from 'lucide-react'
+import { Trophy, PieChart as PieChartIcon } from 'lucide-react'
 import {
-  Bar,
-  BarChart,
-  CartesianGrid,
   Cell,
   Pie,
   PieChart,
   ResponsiveContainer,
   Tooltip,
-  XAxis,
-  YAxis,
   Legend,
 } from 'recharts'
 
