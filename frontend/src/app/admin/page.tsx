@@ -1142,7 +1142,7 @@ function AdminContent() {
                       </td>
                       <td className="py-5 text-sm text-white">
                         <div className="flex flex-col gap-2">
-                          <div>{t.score?.toFixed(4) || 'N/A'}</div>
+                          <div className="font-mono text-(--accent-amber) font-bold">{t.score !== undefined ? t.score.toFixed(2) : '—'}</div>
                           {t.documents && t.documents.length > 0 && (
                             <button
                               type="button"
@@ -1170,7 +1170,7 @@ function AdminContent() {
                                   teamName: t.name,
                                 })
                               }
-                              className="border-none bg-transparent text-[10px] text-(--text-muted) underline"
+                              className="border-none bg-transparent text-[10px] text-(--text-muted) underline hover:text-(--accent-red) transition-colors"
                             >
                               REVOKE
                             </button>
@@ -1188,23 +1188,32 @@ function AdminContent() {
                                   teamName: t.name,
                                 })
                               }
-                              className="rounded border border-(--accent-cyan) bg-transparent px-3 py-1.5 text-[10px] text-(--accent-cyan)"
+                              className="rounded border border-(--accent-cyan) bg-transparent px-3 py-1.5 text-[10px] font-bold text-(--accent-cyan) hover:bg-(--accent-cyan)/10 transition-all"
                             >
                               RESTORE TO FINALIST
                             </button>
                           </div>
                         ) : (
                           <div className="inline-flex items-center gap-3">
-                            <span className="inline-flex items-center rounded border border-(--border-subtle) bg-(--bg-base) px-3 py-1.5 text-[11px] font-semibold tracking-[0.05em] text-(--text-muted)">
-                              NOT FINALIZED
-                            </span>
+                            <button
+                              onClick={() =>
+                                setConfirmAction({
+                                  type: 'PROMOTE',
+                                  teamId: t.id,
+                                  teamName: t.name,
+                                })
+                              }
+                              className="rounded border border-(--accent-cyan) bg-(--accent-cyan)/10 px-4 py-2 text-[10px] font-bold tracking-[0.05em] text-(--accent-cyan) hover:bg-(--accent-cyan) hover:text-black transition-all"
+                            >
+                              PROMOTE TO FINALIST
+                            </button>
                             <button
                               type="button"
                               onClick={() => deleteTeam(t.id, t.name)}
-                              className="inline-flex items-center gap-1 border border-[rgba(255,23,68,0.4)] bg-transparent px-4 py-2 text-[10px] font-semibold tracking-[0.05em] text-(--accent-red)"
+                              className="inline-flex items-center gap-1 border border-transparent bg-transparent p-2 text-[10px] text-(--text-muted) hover:text-(--accent-red) transition-colors"
+                              title="Delete Team"
                             >
-                              <Trash2 size={10} />
-                              DELETE
+                              <Trash2 size={14} />
                             </button>
                           </div>
                         )}

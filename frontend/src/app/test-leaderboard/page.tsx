@@ -102,23 +102,23 @@ function LeaderboardContent() {
               Qualified Field Registry
             </span>
           </div>
-          <h1 className="font-display text-4xl text-white sm:text-5xl md:text-6xl tracking-tight">
+          <h1 className="font-display text-4xl text-white sm:text-5xl md:text-6xl tracking-tight pr-0 lg:pr-48">
             Leaderboard <span className="text-(--accent-cyan)">Statistics</span>
           </h1>
           <p className="max-w-2xl text-sm text-(--text-secondary) sm:text-base">
             Detailed analytics for the top teams who have officially qualified for the next phase of the GeoAI Hackathon.
           </p>
           
-          <div className="absolute top-0 right-0 hidden lg:block">
-            <div className="flex items-center gap-6 rounded-xl border border-(--border-subtle) bg-(--bg-surface) p-6 shadow-2xl">
+          <div className="mt-6 lg:absolute lg:top-0 lg:right-0 w-full lg:w-auto">
+            <div className="flex items-center justify-between lg:justify-start gap-4 lg:gap-6 rounded-xl border border-(--border-subtle) bg-(--bg-surface) p-4 lg:p-6 shadow-2xl">
               <div className="flex flex-col">
-                <span className="text-[10px] font-bold tracking-widest text-(--text-muted) uppercase">Status</span>
-                <span className="font-display text-2xl text-(--accent-green)">LIVE_FEED</span>
+                <span className="text-[9px] lg:text-[10px] font-bold tracking-widest text-(--text-muted) uppercase">Status</span>
+                <span className="font-display text-lg lg:text-2xl text-(--accent-green)">LIVE_FEED</span>
               </div>
               <div className="h-10 w-px bg-(--border-subtle)" />
-              <div className="flex flex-col">
-                <span className="text-[10px] font-bold tracking-widest text-(--text-muted) uppercase">Qualified Teams</span>
-                <span className="font-display text-2xl text-white">{totalQualifiedTeams}</span>
+              <div className="flex flex-col text-right lg:text-left">
+                <span className="text-[9px] lg:text-[10px] font-bold tracking-widest text-(--text-muted) uppercase">Qualified Teams</span>
+                <span className="font-display text-lg lg:text-2xl text-white">{totalQualifiedTeams}</span>
               </div>
             </div>
           </div>
@@ -129,7 +129,7 @@ function LeaderboardContent() {
           <div className="mb-12 flex justify-center px-4">
             <div className="w-full max-w-2xl relative overflow-hidden rounded-2xl border border-(--accent-cyan)/20 shadow-[0_0_60px_rgba(0,229,255,0.12)]">
               <img 
-                src="/Finalist-Announcement.png" 
+                src="Finalist-Announcement.png" 
                 alt="Finalist Announcement" 
                 className="w-full h-auto block"
               />

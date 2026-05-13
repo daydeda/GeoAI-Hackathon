@@ -27,18 +27,15 @@ export async function leaderboardRoutes(app: FastifyInstance) {
       }),
     ])
 
-    // University by individual: count team members (including leader) per institution for QUALIFIED teams
+    // University by individual: count team members per institution for QUALIFIED teams
+    // Everyone (including leader) is in the team_members table.
     const universityByIndividualRaw = await prisma.$queryRaw<{ institution: string; count: bigint }[]>`
       SELECT t.institution, COUNT(DISTINCT tm."userId")::bigint AS count
       FROM teams t
       JOIN team_members tm ON tm."teamId" = t.id
       WHERE t."currentStatus" = 'FINALIST'
       GROUP BY t.institution
-      UNION ALL
-      SELECT t.institution, COUNT(DISTINCT t."leaderId")::bigint AS count
-      FROM teams t
-      WHERE t."currentStatus" = 'FINALIST'
-      GROUP BY t.institution
+      ORDER BY count DESC
     `
     
     const institutionMap = new Map<string, number>()

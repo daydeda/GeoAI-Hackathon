@@ -118,8 +118,8 @@ export default function FinalistConfirmation({ teamId, hasUploaded, onSuccess }:
               <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-(--accent-green)/10 text-(--accent-green)">
                 <TrophyIcon size={32} />
               </div>
-              <h3 className="font-display mb-3 text-3xl text-white tracking-wide">ยืนยันการเข้าร่วมรอบชิงชนะเลิศ</h3>
-              <p className="text-base text-(--text-secondary) leading-relaxed max-w-sm mx-auto">
+              <h3 className="font-display mb-3 text-2xl sm:text-3xl text-white tracking-wide">ยืนยันการเข้าร่วมรอบชิงชนะเลิศ</h3>
+              <p className="text-sm sm:text-base text-(--text-secondary) leading-relaxed max-w-sm mx-auto">
                 เพื่อรักษาสิทธิ์ในการแข่งขันรอบ Onsite โปรดดาวน์โหลด ลงนาม และอัปโหลดเอกสารยืนยันกลับเข้าสู่ระบบ
               </p>
             </div>
