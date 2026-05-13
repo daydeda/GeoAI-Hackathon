@@ -7,7 +7,6 @@ import { prisma } from '../plugins/prisma.js'
 import { requireRole, JwtPayload } from '../middleware/auth.js'
 import { writeAuditLog } from '../services/auditLog.js'
 import { exportData } from '../services/exporter.js'
-import { generatePermissionLetter } from '../services/pdfGenerator.js'
 import { minioClient, BUCKET } from '../services/storage.js'
 import { Prisma, TeamStatus, ExportType } from '@prisma/client'
 import { getPhaseByKey } from '../services/phaseConfig.js'
@@ -800,21 +799,7 @@ export async function adminRoutes(app: FastifyInstance) {
     }
 
     if (body.data.status === 'FINALIST' && oldStatus !== 'FINALIST') {
-      try {
-        const fullTeam = await prisma.team.findUnique({
-          where: { id: teamId },
-          include: { members: { include: { user: true } }, leader: true },
-        })
-        if (fullTeam) {
-          const pdfBytes = await generatePermissionLetter({ team: fullTeam })
-          const version = await prisma.document.count({ where: { teamId, type: 'PERMISSION_LETTER' } }) + 1
-          const fileKey = `documents/${teamId}/permission-letter-v${version}.pdf`
-          await minioClient.putObject(BUCKET, fileKey, Buffer.from(pdfBytes), pdfBytes.length, { 'Content-Type': 'application/pdf' })
-          await prisma.document.create({ data: { teamId, type: 'PERMISSION_LETTER', fileKey, version } })
-        }
-      } catch (err) {
-        console.error('Failed to auto-generate permission letter:', err)
-      }
+      // Logic for promotion to finalist
     }
 
     await writeAuditLog({
