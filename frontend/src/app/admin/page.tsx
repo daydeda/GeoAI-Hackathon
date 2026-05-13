@@ -15,7 +15,6 @@ import {
   Search,
   Trash2,
   Users,
-  X,
 } from 'lucide-react'
 import { formatPhaseDeadline } from '@/lib/phaseDeadline'
 import { formatAuditLogTimestamp } from '@/lib/auditLogTime'

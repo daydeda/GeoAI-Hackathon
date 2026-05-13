@@ -17,7 +17,6 @@ import {
   YAxis,
   Legend,
 } from 'recharts'
-import Image from 'next/image'
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
 
