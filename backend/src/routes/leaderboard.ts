@@ -11,7 +11,7 @@ export async function leaderboardRoutes(app: FastifyInstance) {
     const trackStats = await prisma.team.groupBy({
       by: ['track'],
       where: {
-        submissions: { some: {} },
+        submissions: { some: { isActive: true } },
       },
       _count: { id: true },
     })
@@ -21,7 +21,7 @@ export async function leaderboardRoutes(app: FastifyInstance) {
       totalSubmissions,
     ] = await Promise.all([
       prisma.user.count(),
-      prisma.submission.count(),
+      prisma.submission.count({ where: { isActive: true } }),
     ])
 
     return {
