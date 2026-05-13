@@ -1077,61 +1077,58 @@ function AdminContent() {
               </div>
             </div>
             <div className="overflow-x-auto">
-              <table className="min-w-[760px] w-full border-collapse">
+            {/* Desktop View Table - Hidden on small screens */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full border-collapse">
                 <thead>
                   <tr className="border-b border-white/5">
-                    <th className="py-4 text-left text-[11px] font-semibold tracking-[0.1em] text-(--text-muted)">
+                    <th className="py-4 text-left text-[11px] font-semibold tracking-[0.1em] text-(--text-muted) w-[25%]">
                       TEAM NAME
                     </th>
-                    <th className="py-4 text-left text-[11px] font-semibold tracking-[0.1em] text-(--text-muted)">
+                    <th className="py-4 text-left text-[11px] font-semibold tracking-[0.1em] text-(--text-muted) w-[35%]">
                       MEMBERS
                     </th>
-                    <th className="py-4 text-left text-[11px] font-semibold tracking-[0.1em] text-(--text-muted)">
-                      SCORE (M)
+                    <th className="py-4 text-center text-[11px] font-semibold tracking-[0.1em] text-(--text-muted) w-[15%]">
+                      SCORE
                     </th>
-                    <th className="py-4 text-right text-[11px] font-semibold tracking-[0.1em] text-(--text-muted)">
-                      STATE PROMOTION
+                    <th className="py-4 text-right text-[11px] font-semibold tracking-[0.1em] text-(--text-muted) w-[25%]">
+                      ACTION
                     </th>
                   </tr>
                 </thead>
                 <tbody>
                   {teams.map((t, i) => (
-                    <tr key={i} className="border-b border-white/[0.02]">
+                    <tr key={i} className="border-b border-white/[0.02] group hover:bg-white/[0.01] transition-colors">
                       <td className="py-5">
                         <div className="text-[15px] font-semibold text-(--accent-cyan)">
                           {t.name}
                         </div>
+                        <div className="text-[10px] text-(--text-muted) mt-1 uppercase tracking-wider">{t.track.replace(/_/g, ' ')}</div>
                       </td>
                       <td className="py-5 text-sm text-(--text-secondary)">
-                        <div>{(t.members || []).length} Members</div>
-                        <div className="mt-2 flex flex-wrap gap-2">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Users size={14} className="text-(--text-muted)" />
+                          <span className="text-xs font-medium">{(t.members || []).length} Members</span>
+                        </div>
+                        <div className="flex flex-wrap gap-1.5">
                           {t.members?.map((member) => (
-                            <div
-                              key={member.id}
-                              className="flex items-center gap-1"
-                            >
-                              {member.user.avatarUrl ? (
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    openUserUpload(member.user.id, 'avatar')
-                                  }
-                                  className="rounded border border-(--accent-cyan) px-2 py-1 text-[10px] text-(--accent-cyan)"
-                                >
-                                  {member.user.fullName.split(' ')[0]} avatar
-                                </button>
-                              ) : (
-                                <span className="rounded border border-white/10 px-2 py-1 text-[10px] text-(--text-muted)">
-                                  {member.user.fullName.split(' ')[0]}
-                                </span>
-                              )}
+                            <div key={member.id} className="flex items-center gap-1">
+                              <button
+                                type="button"
+                                onClick={() => openUserUpload(member.user.id, 'avatar')}
+                                className={`rounded px-1.5 py-0.5 text-[9px] font-medium transition-all ${
+                                  member.user.avatarUrl 
+                                    ? 'border border-(--accent-cyan) text-(--accent-cyan) hover:bg-(--accent-cyan)/10' 
+                                    : 'border border-white/10 text-(--text-muted) cursor-default'
+                                }`}
+                              >
+                                {member.user.fullName.split(' ')[0]}
+                              </button>
                               {member.user.idCardUploaded && (
                                 <button
                                   type="button"
-                                  onClick={() =>
-                                    openUserUpload(member.user.id, 'id-card')
-                                  }
-                                  className="rounded border border-(--accent-green) px-2 py-1 text-[10px] text-(--accent-green)"
+                                  onClick={() => openUserUpload(member.user.id, 'id-card')}
+                                  className="rounded border border-(--accent-green) px-1 py-0.5 text-[8px] font-bold text-(--accent-green) hover:bg-(--accent-green)/10 transition-all"
                                 >
                                   ID
                                 </button>
@@ -1140,88 +1137,175 @@ function AdminContent() {
                           ))}
                         </div>
                       </td>
-                      <td className="py-5 text-sm text-white">
-                        <div className="flex flex-col gap-2">
-                          <div className="font-mono text-(--accent-amber) font-bold">{t.score !== undefined ? t.score.toFixed(2) : '—'}</div>
-                          {t.documents && t.documents.length > 0 && (
-                            <button
-                              type="button"
-                              onClick={() => {
-                                window.open(`${API}/api/v1/admin/teams/${t.id}/documents/confirmation/view`, '_blank', 'noopener,noreferrer')
-                              }}
-                              className="rounded border border-(--accent-green) px-2 py-1 text-[10px] text-(--accent-green) hover:bg-(--accent-green)/10 transition-colors w-fit"
-                            >
-                              View Confirmation
-                            </button>
-                          )}
+                      <td className="py-5 text-center">
+                        <div className="font-mono text-base font-bold text-(--accent-amber)">
+                          {t.score !== undefined ? t.score.toFixed(2) : '—'}
                         </div>
                       </td>
                       <td className="py-5 text-right">
-                        {t.currentStatus === 'FINALIST' ? (
-                          <div className="inline-flex items-center gap-3">
-                            <span className="inline-flex items-center gap-1 rounded border border-(--accent-green) bg-[rgba(0,230,118,0.1)] px-3 py-1.5 text-[11px] font-bold tracking-[0.05em] text-(--accent-green)">
-                              <Check size={12} /> FINALIST
-                            </span>
+                        <div className="flex items-center justify-end gap-3">
+                          {t.currentStatus === 'FINALIST' ? (
+                            <div className="flex flex-col items-end gap-1">
+                              <span className="inline-flex items-center gap-1 rounded bg-(--accent-green)/10 px-2.5 py-1 text-[10px] font-bold text-(--accent-green) border border-(--accent-green)/20">
+                                <Check size={12} /> QUALIFIED
+                              </span>
+                              <button
+                                onClick={() => setConfirmAction({ type: 'REVOKE', teamId: t.id, teamName: t.name })}
+                                className="text-[9px] text-(--text-muted) hover:text-(--accent-red) transition-colors uppercase tracking-tighter"
+                              >
+                                Revoke Status
+                              </button>
+                            </div>
+                          ) : t.currentStatus === 'REJECTED' ? (
+                            <div className="flex items-center gap-2">
+                              <span className="rounded bg-(--accent-red)/10 px-2.5 py-1 text-[10px] font-bold text-(--accent-red) border border-(--accent-red)/20">
+                                DISQUALIFIED
+                              </span>
+                              <button
+                                onClick={() => setConfirmAction({ type: 'RESTORE', teamId: t.id, teamName: t.name })}
+                                className="rounded border border-(--accent-cyan) px-3 py-1.5 text-[10px] font-bold text-(--accent-cyan) hover:bg-(--accent-cyan) hover:text-black transition-all"
+                              >
+                                RESTORE
+                              </button>
+                            </div>
+                          ) : (
                             <button
-                              onClick={() =>
-                                setConfirmAction({
-                                  type: 'REVOKE',
-                                  teamId: t.id,
-                                  teamName: t.name,
-                                })
-                              }
-                              className="border-none bg-transparent text-[10px] text-(--text-muted) underline hover:text-(--accent-red) transition-colors"
-                            >
-                              REVOKE
-                            </button>
-                          </div>
-                        ) : t.currentStatus === 'REJECTED' ? (
-                          <div className="inline-flex items-center gap-3">
-                            <span className="inline-flex items-center gap-1 rounded border border-(--accent-red) bg-[rgba(255,23,68,0.1)] px-3 py-1.5 text-[11px] font-bold tracking-[0.05em] text-(--accent-red)">
-                              <X size={12} /> DISQUALIFIED
-                            </span>
-                            <button
-                              onClick={() =>
-                                setConfirmAction({
-                                  type: 'RESTORE',
-                                  teamId: t.id,
-                                  teamName: t.name,
-                                })
-                              }
-                              className="rounded border border-(--accent-cyan) bg-transparent px-3 py-1.5 text-[10px] font-bold text-(--accent-cyan) hover:bg-(--accent-cyan)/10 transition-all"
-                            >
-                              RESTORE TO FINALIST
-                            </button>
-                          </div>
-                        ) : (
-                          <div className="inline-flex items-center gap-3">
-                            <button
-                              onClick={() =>
-                                setConfirmAction({
-                                  type: 'PROMOTE',
-                                  teamId: t.id,
-                                  teamName: t.name,
-                                })
-                              }
-                              className="rounded border border-(--accent-cyan) bg-(--accent-cyan)/10 px-4 py-2 text-[10px] font-bold tracking-[0.05em] text-(--accent-cyan) hover:bg-(--accent-cyan) hover:text-black transition-all"
+                              onClick={() => setConfirmAction({ type: 'PROMOTE', teamId: t.id, teamName: t.name })}
+                              className="rounded bg-(--accent-cyan) px-4 py-2 text-[11px] font-bold text-black hover:opacity-90 shadow-[0_0_15px_rgba(0,229,255,0.2)] transition-all active:scale-95"
                             >
                               PROMOTE TO FINALIST
                             </button>
-                            <button
-                              type="button"
-                              onClick={() => deleteTeam(t.id, t.name)}
-                              className="inline-flex items-center gap-1 border border-transparent bg-transparent p-2 text-[10px] text-(--text-muted) hover:text-(--accent-red) transition-colors"
-                              title="Delete Team"
-                            >
-                              <Trash2 size={14} />
-                            </button>
-                          </div>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => deleteTeam(t.id, t.name)}
+                            className="p-2 text-(--text-muted) hover:text-(--accent-red) transition-colors"
+                            title="Delete Team"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                        {t.documents && t.documents.length > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              window.open(`${API}/api/v1/admin/teams/${t.id}/documents/confirmation/view`, '_blank', 'noopener,noreferrer')
+                            }}
+                            className="mt-2 ml-auto block rounded border border-(--accent-green)/40 px-2 py-1 text-[9px] font-bold text-(--accent-green) hover:bg-(--accent-green)/10 transition-colors"
+                          >
+                            VIEW CONFIRMATION
+                          </button>
                         )}
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
+            </div>
+
+            {/* Mobile View - Cards Layout */}
+            <div className="grid grid-cols-1 gap-4 md:hidden">
+              {teams.map((t, i) => (
+                <div key={i} className="rounded-lg border border-white/5 bg-white/[0.02] p-4 flex flex-col gap-4 shadow-sm">
+                  <div className="flex justify-between items-start border-b border-white/5 pb-3">
+                    <div className="min-w-0 pr-2">
+                      <div className="text-base font-bold text-(--accent-cyan) truncate">{t.name}</div>
+                      <div className="text-[10px] text-(--text-muted) uppercase tracking-wider mt-0.5">{t.track.replace(/_/g, ' ')}</div>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <div className="text-[9px] font-bold text-(--text-muted) uppercase tracking-widest mb-1">SCORE</div>
+                      <div className="font-mono text-lg font-bold text-(--accent-amber)">
+                        {t.score !== undefined ? t.score.toFixed(2) : '—'}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col gap-3">
+                    <div className="flex flex-col gap-2">
+                      <div className="flex items-center gap-2 text-xs font-bold text-(--text-muted)">
+                        <Users size={12} />
+                        {(t.members || []).length} MEMBERS
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {t.members?.map((member) => (
+                          <div key={member.id} className="flex items-center gap-1">
+                            <button
+                              onClick={() => openUserUpload(member.user.id, 'avatar')}
+                              className="rounded border border-white/10 px-2 py-1 text-[10px] text-(--text-secondary) bg-white/5"
+                            >
+                              {member.user.fullName.split(' ')[0]}
+                            </button>
+                            {member.user.idCardUploaded && (
+                              <button
+                                onClick={() => openUserUpload(member.user.id, 'id-card')}
+                                className="rounded border border-(--accent-green) px-1.5 py-1 text-[9px] font-bold text-(--accent-green)"
+                              >
+                                ID
+                              </button>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-white/5">
+                      <div className="flex flex-wrap items-center gap-3 w-full">
+                        {t.currentStatus === 'FINALIST' ? (
+                          <div className="flex items-center justify-between w-full">
+                            <span className="inline-flex items-center gap-1 rounded bg-(--accent-green)/10 px-3 py-2 text-[10px] font-bold text-(--accent-green) border border-(--accent-green)/20">
+                              <Check size={14} /> QUALIFIED
+                            </span>
+                            <button
+                              onClick={() => setConfirmAction({ type: 'REVOKE', teamId: t.id, teamName: t.name })}
+                              className="text-[11px] text-(--accent-red) font-semibold underline"
+                            >
+                              Revoke
+                            </button>
+                          </div>
+                        ) : t.currentStatus === 'REJECTED' ? (
+                          <div className="flex items-center justify-between w-full">
+                            <span className="rounded bg-(--accent-red)/10 px-3 py-2 text-[10px] font-bold text-(--accent-red) border border-(--accent-red)/20 uppercase">
+                              Disqualified
+                            </span>
+                            <button
+                              onClick={() => setConfirmAction({ type: 'RESTORE', teamId: t.id, teamName: t.name })}
+                              className="rounded border border-(--accent-cyan) px-4 py-2 text-[11px] font-bold text-(--accent-cyan)"
+                            >
+                              RESTORE
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => setConfirmAction({ type: 'PROMOTE', teamId: t.id, teamName: t.name })}
+                            className="flex-1 rounded bg-(--accent-cyan) px-4 py-3 text-sm font-bold text-black shadow-lg"
+                          >
+                            PROMOTE TO FINALIST
+                          </button>
+                        )}
+                        
+                        <div className="flex items-center justify-between w-full mt-1">
+                          {t.documents && t.documents.length > 0 ? (
+                            <button
+                              onClick={() => window.open(`${API}/api/v1/admin/teams/${t.id}/documents/confirmation/view`, '_blank')}
+                              className="text-[11px] font-bold text-(--accent-green) uppercase tracking-wider"
+                            >
+                              View Confirmation
+                            </button>
+                          ) : <div />}
+                          
+                          <button
+                            onClick={() => deleteTeam(t.id, t.name)}
+                            className="flex items-center gap-1.5 text-[11px] font-bold text-(--accent-red) uppercase opacity-70 hover:opacity-100"
+                          >
+                            <Trash2 size={14} />
+                            Delete Team
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
 
             <div className="mt-4 flex flex-col gap-3 border-t border-white/5 pt-4 text-xs text-(--text-muted) sm:flex-row sm:items-center sm:justify-between">
