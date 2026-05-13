@@ -30,6 +30,7 @@ const ALLOWED_COMPETITOR_STATUSES = new Set<string>([
 const BulkEmailRecipientsQuerySchema = z.object({
   statuses: z.string().optional(), // comma-separated CompetitorStatus values
   teamId: z.string().optional(),
+  hasProposal: z.string().optional(), // 'true' or 'false'
 })
 
 const BulkEmailSendSchema = z.object({
@@ -38,6 +39,7 @@ const BulkEmailSendSchema = z.object({
   filters: z.object({
     statuses: z.array(z.string()).optional(),
     teamId: z.string().optional(),
+    hasProposal: z.boolean().optional(),
     recipientIds: z.array(z.string()).optional(),
   }).optional(),
 })
@@ -874,7 +876,7 @@ export async function adminRoutes(app: FastifyInstance) {
     const query = BulkEmailRecipientsQuerySchema.safeParse(request.query)
     if (!query.success) return reply.status(400).send({ error: query.error.flatten() })
 
-    const { statuses, teamId } = query.data
+    const { statuses, teamId, hasProposal } = query.data
     const statusList = statuses
       ? statuses.split(',').map((s) => s.trim().toUpperCase()).filter((s) => ALLOWED_COMPETITOR_STATUSES.has(s)) as CompetitorStatus[]
       : []
@@ -895,9 +897,21 @@ export async function adminRoutes(app: FastifyInstance) {
       return { competitorStatus: s } as Prisma.UserWhereInput
     })
 
+    const proposalFilter: Prisma.UserWhereInput[] = hasProposal === 'true'
+      ? [
+          {
+            OR: [
+              { teamMembers: { some: { team: { submissions: { some: { isActive: true } } } } } },
+              { ledTeams: { some: { submissions: { some: { isActive: true } } } } },
+            ]
+          }
+        ]
+      : []
+
     const where: Prisma.UserWhereInput = {
       AND: [
         ...(statusWhere.length > 0 ? [{ OR: statusWhere }] : []),
+        ...proposalFilter,
         ...(teamId
           ? [
               teamId === 'all-teams'
@@ -933,6 +947,7 @@ export async function adminRoutes(app: FastifyInstance) {
       .map((s) => s.trim().toUpperCase())
       .filter((s) => ALLOWED_COMPETITOR_STATUSES.has(s)) as CompetitorStatus[]
     const teamId = filters?.teamId
+    const hasProposal = filters?.hasProposal
 
     const statusWhere: Prisma.UserWhereInput[] = statusList.map((s) => {
       if (s === 'QUALIFIED') return {
@@ -950,9 +965,22 @@ export async function adminRoutes(app: FastifyInstance) {
       return { competitorStatus: s } as Prisma.UserWhereInput
     })
 
+    const proposalFilter: Prisma.UserWhereInput[] = hasProposal
+      ? [
+          {
+            OR: [
+              { teamMembers: { some: { team: { submissions: { some: { isActive: true } } } } } },
+              { ledTeams: { some: { submissions: { some: { isActive: true } } } } },
+            ]
+          }
+        ]
+      : []
+
     const where: Prisma.UserWhereInput = {
       AND: [
+        ...(filters?.recipientIds ? [{ id: { in: filters.recipientIds } }] : []),
         ...(statusWhere.length > 0 ? [{ OR: statusWhere }] : []),
+        ...proposalFilter,
         ...(teamId
           ? [
               teamId === 'all-teams'
@@ -969,8 +997,8 @@ export async function adminRoutes(app: FastifyInstance) {
     }
 
     // Require at least one filter to avoid accidental blast to everyone
-    if (statusList.length === 0 && !teamId) {
-      return reply.status(400).send({ error: 'At least one status filter or a team must be specified.' })
+    if (statusList.length === 0 && !teamId && !hasProposal && !filters?.recipientIds) {
+      return reply.status(400).send({ error: 'At least one filter must be specified.' })
     }
 
     let userRows = await prisma.user.findMany({

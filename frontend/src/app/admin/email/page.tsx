@@ -68,6 +68,7 @@ function BulkEmailContent() {
   // Filters
   const [selectedStatuses, setSelectedStatuses] = useState<StatusFilter[]>([])
   const [selectedTeamId, setSelectedTeamId] = useState('')
+  const [hasProposalOnly, setHasProposalOnly] = useState(false)
   const [teams, setTeams] = useState<Array<{ id: string; name: string }>>([])
 
   // Recipients
@@ -106,7 +107,7 @@ function BulkEmailContent() {
   }, [])
 
   const fetchRecipients = useCallback(async () => {
-    if (selectedStatuses.length === 0 && !selectedTeamId) {
+    if (selectedStatuses.length === 0 && !selectedTeamId && !hasProposalOnly) {
       setRecipientCount(null)
       setRecipientPreview([])
       return
@@ -116,6 +117,7 @@ function BulkEmailContent() {
       const params = new URLSearchParams()
       if (selectedStatuses.length > 0) params.set('statuses', selectedStatuses.join(','))
       if (selectedTeamId) params.set('teamId', selectedTeamId)
+      if (hasProposalOnly) params.set('hasProposal', 'true')
       const res = await fetch(`${API}/api/v1/admin/bulk-email/recipients?${params.toString()}`, {
         credentials: 'include',
       })
@@ -129,7 +131,7 @@ function BulkEmailContent() {
     } finally {
       setLoadingRecipients(false)
     }
-  }, [selectedStatuses, selectedTeamId])
+  }, [selectedStatuses, selectedTeamId, hasProposalOnly])
 
   // Debounced recipient refresh on filter change
   useEffect(() => {
@@ -169,6 +171,7 @@ function BulkEmailContent() {
           filters: {
             statuses: selectedStatuses,
             teamId: selectedTeamId || undefined,
+            hasProposal: hasProposalOnly,
             recipientIds: Array.from(selectedIds),
           },
         }),
@@ -219,7 +222,7 @@ function BulkEmailContent() {
     }
   }
 
-  const canSend = subject.trim().length > 0 && htmlBody.trim().length > 0 && (selectedStatuses.length > 0 || selectedTeamId) && !sending
+  const canSend = subject.trim().length > 0 && htmlBody.trim().length > 0 && (selectedStatuses.length > 0 || selectedTeamId || hasProposalOnly) && !sending
 
   if (!canAccess) {
     return (
@@ -317,7 +320,44 @@ function BulkEmailContent() {
             </div>
 
             {/* Team selector */}
-            <div className="mt-4">
+            <div className="mt-4 pt-4 border-t border-white/5">
+              <div className="mb-3 flex items-center justify-between">
+                <div className="text-xs font-semibold tracking-[0.06em] text-(--text-muted)">
+                  PROPOSAL STATUS
+                </div>
+              </div>
+              <label className={`flex cursor-pointer items-center gap-3 rounded-md border px-4 py-3 transition ${
+                hasProposalOnly
+                  ? 'border-(--accent-cyan)/60 bg-(--accent-cyan)/5'
+                  : 'border-(--border-subtle) hover:border-white/10'
+              }`}>
+                <input
+                  type="checkbox"
+                  checked={hasProposalOnly}
+                  onChange={(e) => setHasProposalOnly(e.target.checked)}
+                  className="sr-only"
+                />
+                <span
+                  className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border text-[10px] font-bold transition-all`}
+                  style={{
+                    borderColor: hasProposalOnly ? 'var(--accent-cyan)' : 'var(--border-subtle)',
+                    background: hasProposalOnly ? 'var(--accent-cyan)' : 'transparent',
+                    color: hasProposalOnly ? '#000' : 'transparent',
+                  }}
+                >
+                  ✓
+                </span>
+                <div className="flex-1">
+                  <div className={`text-sm font-semibold ${hasProposalOnly ? 'text-(--accent-cyan)' : 'text-(--text-secondary)'}`}>
+                    Only Teams with Proposals
+                  </div>
+                  <div className="text-[11px] text-(--text-muted)">Target members of teams that sent a proposal</div>
+                </div>
+              </label>
+            </div>
+
+            {/* Team selector */}
+            <div className="mt-4 pt-4 border-t border-white/5">
               <div className="mb-1.5 text-xs font-semibold tracking-[0.06em] text-(--text-muted)">
                 TARGET TEAM (OPTIONAL)
               </div>
