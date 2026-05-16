@@ -309,7 +309,7 @@ export default function LandingPage() {
               className="inline-flex items-center gap-2 text-sm text-(--accent-cyan) hover:text-white transition-colors underline underline-offset-4"
             >
               <Zap size={14} />
-              คลิกเพื่อรับชมวิดีโอย้อนหลัง: Training & Technical Briefing
+              คลิกเพื่อรับชมคลิปถ่ายทอดสด: Training & Technical Briefing
             </a>
           </div>
         </div>
