@@ -285,13 +285,31 @@ export default function LandingPage() {
             />
           </div>
 
-          <div className="mx-auto mt-6 max-w-[315px] overflow-hidden rounded-xl border border-(--border-subtle) transition-all hover:shadow-[0_0_40px_rgba(0,229,255,0.2)]">
-            <a href="https://www.youtube.com/live/J7TPXFmkmGc" target="_blank" rel="noopener noreferrer">
+          <div className="mx-auto mt-12 max-w-2xl overflow-hidden rounded-2xl border border-(--border-subtle) transition-all hover:shadow-[0_0_60px_rgba(0,229,255,0.15)] group">
+            <a href="https://www.youtube.com/live/J7TPXFmkmGc" target="_blank" rel="noopener noreferrer" className="block relative">
               <img 
                 src={withBasePath('/train-session.png')} 
                 alt="Training Session" 
-                className="w-full h-auto block hover:scale-105 transition-transform duration-500" 
+                className="w-full h-auto block transition-transform duration-700 group-hover:scale-[1.02]" 
               />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-end justify-center p-6">
+                 <span className="text-white font-semibold flex items-center gap-2 bg-(--accent-cyan)/20 backdrop-blur-md px-4 py-2 rounded-full border border-(--accent-cyan)/30">
+                   <Zap size={16} className="text-(--accent-cyan)" />
+                   Watch Session Recording
+                 </span>
+              </div>
+            </a>
+          </div>
+
+          <div className="mt-4 text-center">
+            <a 
+              href="https://www.youtube.com/live/J7TPXFmkmGc" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 text-sm text-(--accent-cyan) hover:text-white transition-colors underline underline-offset-4"
+            >
+              <Zap size={14} />
+              คลิกเพื่อรับชมวิดีโอย้อนหลัง: Training & Technical Briefing
             </a>
           </div>
         </div>
