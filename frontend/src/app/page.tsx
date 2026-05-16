@@ -284,6 +284,16 @@ export default function LandingPage() {
               className="w-full h-full"
             />
           </div>
+
+          <div className="mx-auto mt-6 max-w-[315px] overflow-hidden rounded-xl border border-(--border-subtle) transition-all hover:shadow-[0_0_40px_rgba(0,229,255,0.2)]">
+            <a href="https://www.youtube.com/live/J7TPXFmkmGc" target="_blank" rel="noopener noreferrer">
+              <img 
+                src={withBasePath('/train-session.png')} 
+                alt="Training Session" 
+                className="w-full h-auto block hover:scale-105 transition-transform duration-500" 
+              />
+            </a>
+          </div>
         </div>
       </section>
 
