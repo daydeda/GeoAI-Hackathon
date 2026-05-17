@@ -543,7 +543,7 @@ export default function LandingPage() {
           onClick={() => setTrainingModalOpen(false)}
         >
           <div 
-            className="relative w-full max-w-3xl rounded-2xl border border-white/10 bg-(--bg-surface) p-5 sm:p-8 shadow-[0_0_80px_rgba(0,229,255,0.25)] overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+            className="relative w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-2xl border border-white/10 bg-(--bg-surface) p-5 sm:p-8 shadow-[0_0_80px_rgba(0,229,255,0.25)] animate-in fade-in zoom-in-95 duration-200"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Glow effect */}
@@ -574,17 +574,17 @@ export default function LandingPage() {
               </p>
 
               {/* Clickable Poster */}
-              <div className="relative overflow-hidden rounded-xl border border-white/10 shadow-2xl transition-all hover:shadow-[0_0_40px_rgba(0,229,255,0.2)] hover:border-(--accent-cyan)/30 group aspect-video max-w-2xl mx-auto bg-black/40">
+              <div className="relative overflow-hidden rounded-xl border border-white/10 shadow-2xl transition-all hover:shadow-[0_0_40px_rgba(0,229,255,0.2)] hover:border-(--accent-cyan)/30 group max-w-2xl mx-auto bg-black/40">
                 <a 
                   href="https://www.youtube.com/live/J7TPXFmkmGc" 
                   target="_blank" 
                   rel="noopener noreferrer"
-                  className="block w-full h-full relative"
+                  className="block w-full h-auto relative"
                 >
                   <img 
                     src={withBasePath('/train-session.png')} 
                     alt="Training Session Poster" 
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.03]" 
+                    className="w-full h-auto block transition-transform duration-700 group-hover:scale-[1.01]" 
                   />
                   {/* Hover Overlay */}
                   <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
