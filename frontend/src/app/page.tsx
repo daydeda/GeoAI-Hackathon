@@ -576,7 +576,7 @@ export default function LandingPage() {
               {/* Clickable Poster */}
               <div className="relative overflow-hidden rounded-xl border border-white/10 shadow-2xl transition-all hover:shadow-[0_0_40px_rgba(0,229,255,0.2)] hover:border-(--accent-cyan)/30 group max-w-2xl mx-auto bg-black/40">
                 <a 
-                  href="https://www.youtube.com/live/J7TPXFmkmGc" 
+                  href="https://www.youtube.com/watch?v=J7TPXFmkmGc" 
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="block w-full h-auto relative"
@@ -599,7 +599,7 @@ export default function LandingPage() {
               {/* Direct A-Href Link */}
               <div className="text-center pt-2">
                 <a 
-                  href="https://www.youtube.com/live/J7TPXFmkmGc" 
+                  href="https://www.youtube.com/watch?v=J7TPXFmkmGc" 
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 text-sm text-(--accent-cyan) hover:text-white transition-colors underline underline-offset-4 font-medium"
