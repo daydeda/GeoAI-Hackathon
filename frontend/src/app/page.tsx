@@ -543,7 +543,7 @@ export default function LandingPage() {
           onClick={() => setTrainingModalOpen(false)}
         >
           <div 
-            className="relative w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-2xl border border-white/10 bg-(--bg-surface) p-5 sm:p-8 shadow-[0_0_80px_rgba(0,229,255,0.25)] animate-in fade-in zoom-in-95 duration-200"
+            className="relative w-full max-w-3xl max-h-[90vh] overflow-y-auto overflow-x-hidden rounded-2xl border border-white/10 bg-(--bg-surface) p-5 sm:p-8 shadow-[0_0_80px_rgba(0,229,255,0.25)] animate-in fade-in zoom-in-95 duration-200"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Glow effect */}
