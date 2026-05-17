@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { Menu, X, Zap, Trophy } from 'lucide-react'
+import { Menu, X, Zap, Trophy, Video } from 'lucide-react'
 import { useCompetitionPhases } from '@/hooks/useCompetitionPhases'
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
@@ -254,7 +254,8 @@ export default function LandingPage() {
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
                 </span>
-                <span className="font-bold tracking-wide">คลิป Training Session 🎥</span>
+                <Video size={18} />
+                <span className="font-bold tracking-wide">Live Training Session</span>
               </span>
             </button>
             <Link
