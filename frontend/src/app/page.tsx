@@ -90,6 +90,7 @@ export default function LandingPage() {
   const { days, hours, mins, secs } = useCountdown(currentPhase.date)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [sessionUser, setSessionUser] = useState<SessionUser | null>(null)
+  const [trainingModalOpen, setTrainingModalOpen] = useState(false)
 
   useEffect(() => {
     let active = true
@@ -229,7 +230,7 @@ export default function LandingPage() {
             Harnessing hyperscaled AI data and orbital intelligence to build resilient agricultural ecosystems and rapid disaster response protocols for the next decade.
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+          <div className="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4">
             <Link
               href={sessionUser ? '/dashboard' : '/login'}
               className="inline-flex items-center justify-center gap-2 px-6 sm:px-8 py-3 sm:py-3.5 bg-(--accent-cyan) text-(--bg-base) rounded font-semibold text-sm sm:text-base hover:opacity-90 transition-all active:scale-95 w-full sm:w-auto"
@@ -243,6 +244,19 @@ export default function LandingPage() {
             >
               รายละเอียดการแข่งขัน
             </Link>
+            <button
+              onClick={() => setTrainingModalOpen(true)}
+              className="relative inline-flex items-center justify-center gap-2 px-6 sm:px-8 py-3 sm:py-3.5 rounded font-semibold text-sm sm:text-base bg-gradient-to-r from-[#e11d48] via-[#f43f5e] to-[#be123c] text-white hover:brightness-110 active:scale-95 transition-all shadow-[0_0_20px_rgba(244,63,94,0.5)] hover:shadow-[0_0_30px_rgba(244,63,94,0.85)] animate-pulse w-full sm:w-auto overflow-hidden group border border-[#f43f5e]/30"
+            >
+              <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-[#f43f5e] via-[#db2777] to-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+              <span className="relative flex items-center gap-2">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
+                </span>
+                <span className="font-bold tracking-wide">คลิป Training Session 🎥</span>
+              </span>
+            </button>
             <Link
               href="/leaderboard"
               className="inline-flex items-center justify-center gap-2 px-6 sm:px-8 py-3 sm:py-3.5 rounded font-semibold text-sm sm:text-base border border-(--accent-cyan) text-(--accent-cyan) hover:bg-(--accent-cyan)/10 transition-colors w-full sm:w-auto"
@@ -283,34 +297,6 @@ export default function LandingPage() {
               allowFullScreen
               className="w-full h-full"
             />
-          </div>
-
-          <div className="mx-auto mt-12 max-w-2xl overflow-hidden rounded-2xl border border-(--border-subtle) transition-all hover:shadow-[0_0_60px_rgba(0,229,255,0.15)] group">
-            <a href="https://www.youtube.com/live/J7TPXFmkmGc" target="_blank" rel="noopener noreferrer" className="block relative">
-              <img 
-                src={withBasePath('/train-session.png')} 
-                alt="Training Session" 
-                className="w-full h-auto block transition-transform duration-700 group-hover:scale-[1.02]" 
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-end justify-center p-6">
-                 <span className="text-white font-semibold flex items-center gap-2 bg-(--accent-cyan)/20 backdrop-blur-md px-4 py-2 rounded-full border border-(--accent-cyan)/30">
-                   <Zap size={16} className="text-(--accent-cyan)" />
-                   Watch Session Recording
-                 </span>
-              </div>
-            </a>
-          </div>
-
-          <div className="mt-4 text-center">
-            <a 
-              href="https://www.youtube.com/live/J7TPXFmkmGc" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 text-sm text-(--accent-cyan) hover:text-white transition-colors underline underline-offset-4"
-            >
-              <Zap size={14} />
-              คลิกเพื่อรับชมคลิปถ่ายทอดสด: Training & Technical Briefing
-            </a>
           </div>
         </div>
       </section>
@@ -549,6 +535,83 @@ export default function LandingPage() {
           </div>
         </div>
       </footer>
+
+      {/* Training Session Modal */}
+      {trainingModalOpen && (
+        <div 
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/85 p-4 backdrop-blur-md transition-all duration-300"
+          onClick={() => setTrainingModalOpen(false)}
+        >
+          <div 
+            className="relative w-full max-w-3xl rounded-2xl border border-white/10 bg-(--bg-surface) p-5 sm:p-8 shadow-[0_0_80px_rgba(0,229,255,0.25)] overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Glow effect */}
+            <div className="absolute -top-40 -left-40 w-80 h-80 bg-(--accent-cyan)/10 rounded-full blur-[100px] pointer-events-none" />
+            <div className="absolute -bottom-40 -right-40 w-80 h-80 bg-indigo-500/10 rounded-full blur-[100px] pointer-events-none" />
+
+            {/* Header / Close */}
+            <div className="flex items-center justify-between mb-4 relative z-10">
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-(--accent-cyan) animate-pulse" />
+                <span className="font-display text-base sm:text-lg font-bold text-white tracking-wide">
+                  Training & Technical Briefing
+                </span>
+              </div>
+              <button
+                onClick={() => setTrainingModalOpen(false)}
+                className="rounded-full bg-white/5 p-2 text-(--text-muted) hover:bg-white/10 hover:text-white transition-all active:scale-90"
+                aria-label="Close modal"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Content: Poster & Info */}
+            <div className="space-y-6 relative z-10">
+              <p className="text-xs sm:text-sm text-(--text-secondary) leading-relaxed">
+                คลิกที่รูปภาพโปสเตอร์หรือปุ่มด้านล่าง เพื่อเข้าสู่ลิงก์บันทึกวิดีโอการอบรมพิเศษและชี้แจงโจทย์ทางเทคนิค (Technical Briefing)
+              </p>
+
+              {/* Clickable Poster */}
+              <div className="relative overflow-hidden rounded-xl border border-white/10 shadow-2xl transition-all hover:shadow-[0_0_40px_rgba(0,229,255,0.2)] hover:border-(--accent-cyan)/30 group aspect-video max-w-2xl mx-auto bg-black/40">
+                <a 
+                  href="https://www.youtube.com/live/J7TPXFmkmGc" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="block w-full h-full relative"
+                >
+                  <img 
+                    src={withBasePath('/train-session.png')} 
+                    alt="Training Session Poster" 
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.03]" 
+                  />
+                  {/* Hover Overlay */}
+                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                    <div className="flex items-center gap-2 bg-(--accent-cyan) text-black font-bold px-5 py-2.5 rounded-full shadow-lg transform translate-y-4 group-hover:translate-y-0 transition-all duration-300">
+                      <Zap size={16} />
+                      คลิกเพื่อรับชมผ่าน YouTube
+                    </div>
+                  </div>
+                </a>
+              </div>
+
+              {/* Direct A-Href Link */}
+              <div className="text-center pt-2">
+                <a 
+                  href="https://www.youtube.com/live/J7TPXFmkmGc" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 text-sm text-(--accent-cyan) hover:text-white transition-colors underline underline-offset-4 font-medium"
+                >
+                  <Zap size={14} className="animate-bounce" />
+                  คลิกที่นี่เพื่อรับชม: Technical Briefing & Training Session (YouTube Live)
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
