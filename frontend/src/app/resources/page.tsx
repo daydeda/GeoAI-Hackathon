@@ -56,7 +56,7 @@ const sections: Section[] = [
           <img 
             src={withBasePath('/logos/gitlab-logo-200-rgb.svg')} 
             alt="GitLab Logo" 
-            className="w-8 h-8 sm:w-9 sm:h-9 object-contain block group-hover:scale-105 transition-transform duration-300" 
+            className="w-12 h-12 sm:w-14 sm:h-14 object-contain block group-hover:scale-105 transition-transform duration-300" 
           />
         ),
         tag1: 'CODE',
