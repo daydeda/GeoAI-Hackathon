@@ -44,6 +44,17 @@ const sections: Section[] = [
         linkUrl: 'https://sphere.gistda.or.th/',
         isExternal: true,
       },
+      {
+        title: 'GeoAI Hackathon 2026 GitLab',
+        desc: 'คลังเก็บซอร์สโค้ดตัวอย่าง โครงสร้างระบบเริ่มต้น และเทมเพลตเริ่มต้นการพัฒนาโปรเจกต์อย่างเป็นทางการสำหรับการแข่งขัน GeoAI Hackathon 2026',
+        icon: '🦊',
+        tag1: 'CODE',
+        tag2: 'TEMPLATE',
+        linkText: 'gitlab.gistda.or.th',
+        linkColor: 'var(--accent-green)',
+        linkUrl: 'https://gitlab.gistda.or.th/training/geoai-hackathon2026-kmitl',
+        isExternal: true,
+      },
     ],
   },
   {
