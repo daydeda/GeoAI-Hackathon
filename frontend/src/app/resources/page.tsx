@@ -10,7 +10,7 @@ import { Search, ExternalLink, ChevronDown, ChevronUp, X } from 'lucide-react'
 interface ResourceItem {
   title: string
   desc: string
-  icon: string
+  icon: React.ReactNode
   tag1?: string
   tag2?: string
   linkText: string
@@ -26,6 +26,15 @@ interface Section {
   color: string
   items: ResourceItem[]
 }
+
+const GitlabLogo = () => (
+  <svg viewBox="0 0 24 24" className="w-8 h-8 sm:w-9 sm:h-9" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path
+      d="M22.65 14.39L20.3 7.18a.86.86 0 0 0-.16-.31.83.83 0 0 0-.32-.22.84.84 0 0 0-.37-.06.86.86 0 0 0-.36.1l-2.27 1.7-3.86-11.83a.85.85 0 0 0-.3-.42.84.84 0 0 0-.5 0 .85.85 0 0 0-.3.42L8.34 8.39l-2.27-1.7a.86.86 0 0 0-.36-.1.84.84 0 0 0-.37.06.83.83 0 0 0-.32.22.86.86 0 0 0-.16.31L2.55 14.39a.86.86 0 0 0 .09.73.88.88 0 0 0 .52.37l9.04 2.82 9.04-2.82a.88.88 0 0 0 .52-.37.86.86 0 0 0 .09-.73z"
+      fill="#FC6D26"
+    />
+  </svg>
+)
 
 const sections: Section[] = [
   {
@@ -47,7 +56,7 @@ const sections: Section[] = [
       {
         title: 'GeoAI Hackathon 2026 GitLab',
         desc: 'คลังเก็บซอร์สโค้ดตัวอย่าง โครงสร้างระบบเริ่มต้น และเทมเพลตเริ่มต้นการพัฒนาโปรเจกต์อย่างเป็นทางการสำหรับการแข่งขัน GeoAI Hackathon 2026',
-        icon: '🦊',
+        icon: <GitlabLogo />,
         tag1: 'CODE',
         tag2: 'TEMPLATE',
         linkText: 'gitlab.gistda.or.th',
