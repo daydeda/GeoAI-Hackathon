@@ -431,7 +431,7 @@ export default function LandingPage() {
             {/* Left Control Arrow */}
             <button
               onClick={prevSlide}
-              className="absolute left-6 top-1/2 -translate-y-1/2 z-20 flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-full border border-(--border-subtle) bg-(--bg-surface)/90 text-(--text-secondary) opacity-0 group-hover:opacity-100 transition-all hover:border-(--accent-cyan) hover:text-(--accent-cyan) hover:shadow-[0_0_15px_rgba(0,229,255,0.3)] active:scale-90"
+              className="absolute left-2 sm:left-6 top-1/2 -translate-y-1/2 z-20 flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-full border border-(--border-subtle) bg-(--bg-surface)/90 text-(--text-secondary) opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-all hover:border-(--accent-cyan) hover:text-(--accent-cyan) hover:shadow-[0_0_15px_rgba(0,229,255,0.3)] active:scale-90"
               aria-label="Previous slide"
             >
               <ChevronLeft size={20} className="sm:w-6 sm:h-6" />
@@ -440,7 +440,7 @@ export default function LandingPage() {
             {/* Right Control Arrow */}
             <button
               onClick={nextSlide}
-              className="absolute right-6 top-1/2 -translate-y-1/2 z-20 flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-full border border-(--border-subtle) bg-(--bg-surface)/90 text-(--text-secondary) opacity-0 group-hover:opacity-100 transition-all hover:border-(--accent-cyan) hover:text-(--accent-cyan) hover:shadow-[0_0_15px_rgba(0,229,255,0.3)] active:scale-90"
+              className="absolute right-2 sm:right-6 top-1/2 -translate-y-1/2 z-20 flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-full border border-(--border-subtle) bg-(--bg-surface)/90 text-(--text-secondary) opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-all hover:border-(--accent-cyan) hover:text-(--accent-cyan) hover:shadow-[0_0_15px_rgba(0,229,255,0.3)] active:scale-90"
               aria-label="Next slide"
             >
               <ChevronRight size={20} className="sm:w-6 sm:h-6" />

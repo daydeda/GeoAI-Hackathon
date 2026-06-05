@@ -1,6 +1,7 @@
 'use client'
 
 import React, { createContext, useCallback, useContext, useMemo, useState, ReactNode } from 'react';
+import { AlertCircle, AlertTriangle, Info } from 'lucide-react';
 
 interface CustomAlertProps {
   isOpen: boolean;
@@ -13,9 +14,9 @@ function CustomAlert({ isOpen, message, type = 'error', onClose }: CustomAlertPr
   if (!isOpen) return null;
 
   const config = {
-    error: { icon: '✖', color: 'var(--accent-red)' },
-    warning: { icon: '⚠', color: 'var(--accent-amber)' },
-    info: { icon: 'ℹ', color: 'var(--accent-cyan)' }
+    error: { icon: <AlertCircle size={32} />, color: 'var(--accent-red)' },
+    warning: { icon: <AlertTriangle size={32} />, color: 'var(--accent-amber)' },
+    info: { icon: <Info size={32} />, color: 'var(--accent-cyan)' }
   }[type];
 
   return (
@@ -36,7 +37,7 @@ function CustomAlert({ isOpen, message, type = 'error', onClose }: CustomAlertPr
               100% { opacity: 1; transform: scale(1) translateY(0); }
             }
           `}</style>
-          <div style={{ width: 64, height: 64, borderRadius: '50%', background: 'rgba(0,0,0,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: `2px solid ${config.color}`, color: config.color, fontSize: 32 }}>
+          <div style={{ width: 64, height: 64, borderRadius: '50%', background: 'rgba(0,0,0,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: `2px solid ${config.color}`, color: config.color }}>
             {config.icon}
           </div>
           <div>
