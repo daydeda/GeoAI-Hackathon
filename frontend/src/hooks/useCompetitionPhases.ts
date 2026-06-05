@@ -49,18 +49,40 @@ function getTimeline(phases: CompetitionPhase[] = [], now = new Date()): Timelin
   const normalizedPhases = applyDateLabel(phases)
   if (normalizedPhases.length === 0) return []
   const currentIndex = normalizedPhases.findIndex((item) => now.getTime() < new Date(item.date).getTime())
-  const activeIndex = currentIndex === -1 ? normalizedPhases.length - 1 : currentIndex
 
-  return normalizedPhases.map((item, index) => ({
-    ...item,
-    status: index < activeIndex ? 'done' : index === activeIndex ? 'active' : 'upcoming',
-  }))
+  return normalizedPhases.map((item, index) => {
+    let status: TimelineStatus = 'upcoming'
+    if (currentIndex === -1) {
+      status = 'done'
+    } else if (index < currentIndex) {
+      status = 'done'
+    } else if (index === currentIndex) {
+      status = 'active'
+    } else {
+      status = 'upcoming'
+    }
+    return {
+      ...item,
+      status,
+    }
+  })
 }
 
 function getCurrentPhase(phases: CompetitionPhase[] = [], now = new Date()): TimelineItem {
   const timeline = getTimeline(phases, now)
   if (timeline.length === 0) return EMPTY_CURRENT_PHASE
-  return timeline.find((item) => item.status === 'active') || timeline[timeline.length - 1]
+  const active = timeline.find((item) => item.status === 'active')
+  if (active) return active
+
+  return {
+    key: 'concluded',
+    phase: 'CONCLUDED',
+    dateLabel: '',
+    title: 'COMPETITION CONCLUDED',
+    desc: 'The GeoAI Hackathon 2026 has concluded. Thank you to all participants!',
+    date: timeline[timeline.length - 1].date,
+    status: 'done',
+  }
 }
 
 type PhaseResponse = {

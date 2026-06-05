@@ -509,6 +509,8 @@ export default function LandingPage() {
                 ? 'SUBMISSION DEADLINE · PROTOCOL LOCK IN' 
                 : currentPhase.key === 'announcement'
                 ? 'ANNOUNCEMENT PHASE · PREPARING FINALISTS'
+                : currentPhase.key === 'concluded'
+                ? 'COMPETITION STATUS · ENDED'
                 : `${currentPhase.title} · PROTOCOL PHASE`}
             </div>
           </div>
@@ -521,6 +523,13 @@ export default function LandingPage() {
             <span className="text-2xl sm:text-3xl md:text-4xl text-(--accent-cyan) font-light">:</span>
             <TimeUnit value={secs} label="SECS" />
           </div>
+          {currentPhase.key === 'concluded' && (
+            <div className="text-center mt-6">
+              <span className="inline-block px-4 py-1.5 rounded bg-(--accent-cyan)/10 border border-(--accent-cyan)/30 text-(--accent-cyan) font-mono text-xs tracking-widest uppercase animate-pulse">
+                THE HACKATHON HAS CONCLUDED
+              </span>
+            </div>
+          )}
         </div>
       </section>
 
