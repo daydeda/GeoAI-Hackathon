@@ -377,15 +377,23 @@ export default function LandingPage() {
             onMouseLeave={() => setIsAutoPlaying(true)}
           >
             {/* Aspect Ratio Box with absolute contain to show full picture without cropping */}
-            <div className="relative w-full h-[280px] sm:h-[380px] md:h-[480px] lg:h-[540px] rounded-xl bg-black/60 overflow-hidden flex items-center justify-center">
-              {/* Image with object-contain to preserve original full dimensions */}
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                key={currentSlide}
-                src={sliderImages[currentSlide].src}
-                alt={sliderImages[currentSlide].title}
-                className="max-w-full max-h-full w-auto h-auto object-contain select-none animate-zoom-fade"
-              />
+            <div className="relative w-full h-[280px] sm:h-[380px] md:h-[480px] lg:h-[540px] rounded-xl bg-black/60 overflow-hidden">
+              {/* Sliding Track */}
+              <div 
+                className="flex w-full h-full transition-transform duration-500 ease-in-out"
+                style={{ transform: `translateX(-${currentSlide * 100}%)` }}
+              >
+                {sliderImages.map((img, idx) => (
+                  <div key={idx} className="w-full h-full flex-shrink-0 flex items-center justify-center relative">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={img.src}
+                      alt={img.title}
+                      className="max-w-full max-h-full w-auto h-auto object-contain select-none"
+                    />
+                  </div>
+                ))}
+              </div>
 
               {/* Gradient overlay on bottom */}
               <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/90 to-transparent pointer-events-none" />
