@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { Menu, X, Zap, Trophy, Video, ChevronLeft, ChevronRight, Play, Pause, Camera, ExternalLink } from 'lucide-react'
 import { useCompetitionPhases } from '@/hooks/useCompetitionPhases'
-import { useAlert } from '@/contexts/AlertContext'
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
 const RAW_BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH?.trim() || ''
@@ -149,12 +148,6 @@ export default function LandingPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [sessionUser, setSessionUser] = useState<SessionUser | null>(null)
   const [trainingModalOpen, setTrainingModalOpen] = useState(false)
-  const { showAlert } = useAlert()
-
-  const handleDriveClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
-    e.preventDefault()
-    showAlert('ระบบกำลังดำเนินการอัปโหลดไฟล์รูปภาพเพิ่มเติมไปยัง Google Drive กรุณากลับมาตรวจสอบใหม่อีกครั้งในภายหลัง', 'info')
-  }
 
   const [currentSlide, setCurrentSlide] = useState(0)
   const [isAutoPlaying, setIsAutoPlaying] = useState(true)
@@ -466,12 +459,13 @@ export default function LandingPage() {
           {/* External Google Drive Link Button */}
           <div className="flex justify-center mt-8">
             <a
-              href="#"
-              onClick={handleDriveClick}
-              className="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg border border-(--border-subtle) bg-(--bg-surface)/40 text-(--text-muted) hover:text-(--text-secondary) hover:border-(--border-subtle) hover:bg-(--bg-elevated)/50 transition-all text-sm font-semibold active:scale-95 cursor-not-allowed shadow-[inset_0_1px_1px_rgba(255,255,255,0.02)]"
+              href="https://drive.google.com/drive/folders/1Vo49zer0gmoK0m14Rxh52pC8Pz9jTtpt"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg border border-(--border-subtle) bg-(--bg-surface)/40 text-(--text-secondary) hover:text-white hover:border-(--border-active) hover:bg-(--bg-elevated)/50 transition-all text-sm font-semibold active:scale-95 shadow-[inset_0_1px_1px_rgba(255,255,255,0.02)]"
             >
               <span>คลิ๊กที่นี่เพื่อดูรูปทั้งหมด</span>
-              <ExternalLink size={14} className="opacity-40" />
+              <ExternalLink size={14} className="opacity-80 text-(--accent-cyan)" />
             </a>
           </div>
         </div>
