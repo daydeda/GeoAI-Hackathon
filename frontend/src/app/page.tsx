@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { Menu, X, Zap, Trophy, Video } from 'lucide-react'
+import { Menu, X, Zap, Trophy, Video, ChevronLeft, ChevronRight, Play, Pause, Camera, ExternalLink } from 'lucide-react'
 import { useCompetitionPhases } from '@/hooks/useCompetitionPhases'
+import { useAlert } from '@/contexts/AlertContext'
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
 const RAW_BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH?.trim() || ''
@@ -85,12 +86,94 @@ const navLinks = [
   { label: 'Contact Us', href: '/support' },
 ]
 
+const sliderImages = [
+  {
+    title: 'บรรยากาศการแข่งขัน GeoAI Hackathon',
+    subtitle: 'ภาพรวมบรรยากาศการระดมสมองและแลกเปลี่ยนความรู้ของผู้เข้าแข่งขัน',
+    src: withBasePath('/atmospic/1st_pic.JPG'),
+    tag: 'OVERVIEW',
+  },
+  {
+    title: 'กิจกรรมแนะแนวเทคนิคและการให้คำปรึกษา',
+    subtitle: 'ผู้เชี่ยวชาญร่วมแบ่งปันประสบการณ์และให้คำปรึกษาแก่ผู้เข้าแข่งขันแต่ละทีมอย่างเป็นกันเอง',
+    src: withBasePath('/atmospic/2nd_pic.JPG'),
+    tag: 'OVERVIEW',
+  },
+  {
+    title: 'การนำเสนอผลงานรอบสุดท้ายและการตัดสิน',
+    subtitle: 'ผู้เข้าแข่งขันนำเสนอสุดยอดโมเดลและไอเดียต่อหน้าคณะกรรมการผู้ทรงคุณวุฒิ',
+    src: withBasePath('/atmospic/3rd_pic.JPG'),
+    tag: 'OVERVIEW',
+  },
+  {
+    title: 'รางวัลชนะเลิศ (Champion)',
+    subtitle: 'สุดยอดผลงานผู้คว้ารางวัลชนะเลิศในเวที GeoAI Hackathon 2026',
+    src: withBasePath('/atmospic/01_runnerup.JPG'),
+    tag: 'CHAMPION',
+  },
+  {
+    title: 'รางวัลรองชนะเลิศอันดับ 1 (1st Runner-up)',
+    subtitle: 'ผลงานดีเด่นที่ได้รับรางวัลรองชนะเลิศอันดับ 1',
+    src: withBasePath('/atmospic/02_runnerup.JPG'),
+    tag: 'RUNNER-UP',
+  },
+  {
+    title: 'รางวัลรองชนะเลิศอันดับ 2 (2nd Runner-up)',
+    subtitle: 'ผลงานดีเด่นที่ได้รับรางวัลรองชนะเลิศอันดับ 2',
+    src: withBasePath('/atmospic/03_runnerup.JPG'),
+    tag: 'RUNNER-UP',
+  },
+  {
+    title: 'รางวัลการนำเสนอข้อมูลดีเด่น (Best Visualization)',
+    subtitle: 'รางวัลสำหรับทีมที่แสดงผลข้อมูลเชิงพื้นที่ได้อย่างยอดเยี่ยมและสร้างสรรค์',
+    src: withBasePath('/atmospic/04_BestVisualization.JPG'),
+    tag: 'SPECIAL AWARD',
+  },
+  {
+    title: 'รางวัลสุดยอดโมเดลปัญญาประดิษฐ์ (Best AI Model)',
+    subtitle: 'รางวัลสำหรับทีมที่ออกแบบการทำงานของระบบ AI และเทคนิคการเรียนรู้เชิงลึกได้ยอดเยี่ยมที่สุด',
+    src: withBasePath('/atmospic/05_BestAI.JPG'),
+    tag: 'SPECIAL AWARD',
+  },
+  {
+    title: 'ภาพประทับใจร่วมกันของทุกคน',
+    subtitle: 'ภาพถ่ายหมู่รวมผู้เข้าแข่งขัน คณะผู้จัดงาน และคณะกรรมการผู้ทรงคุณวุฒิทุกท่านในวันปิดงาน',
+    src: withBasePath('/atmospic/overall.JPG'),
+    tag: 'OVERALL',
+  },
+]
+
 export default function LandingPage() {
   const { currentPhase, timeline } = useCompetitionPhases()
   const { days, hours, mins, secs } = useCountdown(currentPhase.date)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [sessionUser, setSessionUser] = useState<SessionUser | null>(null)
   const [trainingModalOpen, setTrainingModalOpen] = useState(false)
+  const { showAlert } = useAlert()
+
+  const handleDriveClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault()
+    showAlert('ระบบกำลังดำเนินการอัปโหลดไฟล์รูปภาพเพิ่มเติมไปยัง Google Drive กรุณากลับมาตรวจสอบใหม่อีกครั้งในภายหลัง', 'info')
+  }
+
+  const [currentSlide, setCurrentSlide] = useState(0)
+  const [isAutoPlaying, setIsAutoPlaying] = useState(true)
+
+  useEffect(() => {
+    if (!isAutoPlaying) return
+    const interval = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % sliderImages.length)
+    }, 4500)
+    return () => clearInterval(interval)
+  }, [isAutoPlaying])
+
+  const nextSlide = () => {
+    setCurrentSlide((prev) => (prev + 1) % sliderImages.length)
+  }
+
+  const prevSlide = () => {
+    setCurrentSlide((prev) => (prev - 1 + sliderImages.length) % sliderImages.length)
+  }
 
   useEffect(() => {
     let active = true
@@ -265,6 +348,122 @@ export default function LandingPage() {
               <Trophy size={18} />
               ประกาศรายชื่อทีมที่เข้ารอบ
             </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Event Atmosphere Showcase (Auto-playing Slider) ── */}
+      <section className="border-t border-b border-(--border-subtle) bg-(--bg-surface) px-4 sm:px-6 lg:px-8 py-10 sm:py-16">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-8">
+            <div className="flex items-center justify-center gap-2 text-(--accent-cyan) mb-2">
+              <Camera size={14} className="animate-pulse" />
+              <span className="font-mono text-[10px] sm:text-xs tracking-[0.25em] uppercase">
+                COHORT MISSION RECAP & REGISTRY
+              </span>
+            </div>
+            <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold text-white">
+              GeoAI Hackathon 2026 Atmosphere
+            </h2>
+            <p className="text-sm text-(--text-secondary) max-w-2xl mx-auto mt-2">
+              ร่วมสัมผัสภาพบรรยากาศการแข่งขันจริงและพิธีมอบรางวัลของเหล่าผู้เข้าร่วมโครงการ GeoAI Hackathon ในหัวข้อ Smart Agriculture และ Disaster & Flood Response
+            </p>
+          </div>
+
+          {/* Slider Container */}
+          <div 
+            className="relative group overflow-hidden rounded-2xl border border-(--border-subtle) bg-(--bg-base) p-3 transition-all duration-300 hover:border-(--accent-cyan)/40 hover:shadow-[0_0_50px_rgba(0,229,255,0.1)]"
+            onMouseEnter={() => setIsAutoPlaying(false)}
+            onMouseLeave={() => setIsAutoPlaying(true)}
+          >
+            {/* Aspect Ratio Box with absolute contain to show full picture without cropping */}
+            <div className="relative w-full h-[280px] sm:h-[380px] md:h-[480px] lg:h-[540px] rounded-xl bg-black/60 overflow-hidden flex items-center justify-center">
+              {/* Image with object-contain to preserve original full dimensions */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={sliderImages[currentSlide].src}
+                alt={sliderImages[currentSlide].title}
+                className="max-w-full max-h-full w-auto h-auto object-contain select-none transition-opacity duration-500"
+              />
+
+              {/* Gradient overlay on bottom */}
+              <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/90 to-transparent pointer-events-none" />
+
+              {/* Telemetry frame decoration (Top Left) */}
+              <div className="absolute top-4 left-4 font-mono text-[9px] text-(--accent-cyan) tracking-wider bg-(--bg-base)/80 px-2.5 py-1 rounded border border-(--border-subtle) backdrop-blur-sm">
+                FRAME: {String(currentSlide + 1).padStart(2, '0')} / {String(sliderImages.length).padStart(2, '0')}
+              </div>
+
+              {/* Telemetry Badge (Top Right) */}
+              <div className="absolute top-4 right-4 font-mono text-[9px] text-white font-bold tracking-widest bg-(--accent-cyan) text-black px-2 py-0.5 rounded uppercase">
+                {sliderImages[currentSlide].tag}
+              </div>
+
+              {/* Slide Caption (Bottom Left) */}
+              <div className="absolute bottom-4 left-4 right-16 text-left z-10 pointer-events-none">
+                <p className="text-base sm:text-lg md:text-xl font-display font-bold text-white tracking-wide">
+                  {sliderImages[currentSlide].title}
+                </p>
+                <p className="text-xs sm:text-sm text-(--text-secondary) mt-0.5">
+                  {sliderImages[currentSlide].subtitle}
+                </p>
+              </div>
+
+              {/* AutoPlay Status Indicator (Bottom Right) */}
+              <button 
+                onClick={() => setIsAutoPlaying(!isAutoPlaying)}
+                className="absolute bottom-4 right-4 z-20 flex items-center justify-center p-2 rounded-full border border-(--border-subtle) bg-(--bg-surface)/80 text-(--text-secondary) hover:text-white hover:bg-(--bg-elevated) transition-all pointer-events-auto"
+                aria-label={isAutoPlaying ? "Pause autoplay" : "Start autoplay"}
+              >
+                {isAutoPlaying ? <Pause size={14} /> : <Play size={14} />}
+              </button>
+            </div>
+
+            {/* Left Control Arrow */}
+            <button
+              onClick={prevSlide}
+              className="absolute left-6 top-1/2 -translate-y-1/2 z-20 flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-full border border-(--border-subtle) bg-(--bg-surface)/90 text-(--text-secondary) opacity-0 group-hover:opacity-100 transition-all hover:border-(--accent-cyan) hover:text-(--accent-cyan) hover:shadow-[0_0_15px_rgba(0,229,255,0.3)] active:scale-90"
+              aria-label="Previous slide"
+            >
+              <ChevronLeft size={20} className="sm:w-6 sm:h-6" />
+            </button>
+
+            {/* Right Control Arrow */}
+            <button
+              onClick={nextSlide}
+              className="absolute right-6 top-1/2 -translate-y-1/2 z-20 flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-full border border-(--border-subtle) bg-(--bg-surface)/90 text-(--text-secondary) opacity-0 group-hover:opacity-100 transition-all hover:border-(--accent-cyan) hover:text-(--accent-cyan) hover:shadow-[0_0_15px_rgba(0,229,255,0.3)] active:scale-90"
+              aria-label="Next slide"
+            >
+              <ChevronRight size={20} className="sm:w-6 sm:h-6" />
+            </button>
+          </div>
+
+          {/* Navigation dots */}
+          <div className="flex justify-center gap-2 mt-4">
+            {sliderImages.map((_, idx) => (
+              <button
+                key={idx}
+                onClick={() => setCurrentSlide(idx)}
+                className={`h-1.5 rounded-full transition-all duration-300 ${
+                  currentSlide === idx 
+                    ? 'w-6 bg-(--accent-cyan)' 
+                    : 'w-1.5 bg-(--text-muted) hover:bg-(--text-secondary)'
+                }`}
+                aria-label={`Go to slide ${idx + 1}`}
+              />
+            ))}
+          </div>
+
+          {/* External Google Drive Link Button */}
+          <div className="flex justify-center mt-8">
+            <a
+              href="#"
+              onClick={handleDriveClick}
+              className="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg border border-(--border-subtle) bg-(--bg-surface)/40 text-(--text-muted) hover:text-(--text-secondary) hover:border-(--border-subtle) hover:bg-(--bg-elevated)/50 transition-all text-sm font-semibold active:scale-95 cursor-not-allowed shadow-[inset_0_1px_1px_rgba(255,255,255,0.02)]"
+            >
+              <span>คลิ๊กที่นี่เพื่อดูรูปทั้งหมด</span>
+              <ExternalLink size={14} className="opacity-40" />
+            </a>
           </div>
         </div>
       </section>
