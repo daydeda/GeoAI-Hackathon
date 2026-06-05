@@ -381,26 +381,27 @@ export default function LandingPage() {
               {/* Image with object-contain to preserve original full dimensions */}
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
+                key={currentSlide}
                 src={sliderImages[currentSlide].src}
                 alt={sliderImages[currentSlide].title}
-                className="max-w-full max-h-full w-auto h-auto object-contain select-none transition-opacity duration-500"
+                className="max-w-full max-h-full w-auto h-auto object-contain select-none animate-zoom-fade"
               />
 
               {/* Gradient overlay on bottom */}
               <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/90 to-transparent pointer-events-none" />
 
               {/* Telemetry frame decoration (Top Left) */}
-              <div className="absolute top-4 left-4 font-mono text-[9px] text-(--accent-cyan) tracking-wider bg-(--bg-base)/80 px-2.5 py-1 rounded border border-(--border-subtle) backdrop-blur-sm">
+              <div key={`frame-${currentSlide}`} className="absolute top-4 left-4 font-mono text-[9px] text-(--accent-cyan) tracking-wider bg-(--bg-base)/80 px-2.5 py-1 rounded border border-(--border-subtle) backdrop-blur-sm animate-fade-in">
                 FRAME: {String(currentSlide + 1).padStart(2, '0')} / {String(sliderImages.length).padStart(2, '0')}
               </div>
 
               {/* Telemetry Badge (Top Right) */}
-              <div className="absolute top-4 right-4 font-mono text-[9px] text-white font-bold tracking-widest bg-(--accent-cyan) text-black px-2 py-0.5 rounded uppercase">
+              <div key={`tag-${currentSlide}`} className="absolute top-4 right-4 font-mono text-[9px] text-white font-bold tracking-widest bg-(--accent-cyan) text-black px-2 py-0.5 rounded uppercase animate-fade-in">
                 {sliderImages[currentSlide].tag}
               </div>
 
               {/* Slide Caption (Bottom Left) */}
-              <div className="absolute bottom-4 left-4 right-16 text-left z-10 pointer-events-none">
+              <div key={`caption-${currentSlide}`} className="absolute bottom-4 left-4 right-16 text-left z-10 pointer-events-none animate-fade-in">
                 <p className="text-base sm:text-lg md:text-xl font-display font-bold text-white tracking-wide">
                   {sliderImages[currentSlide].title}
                 </p>

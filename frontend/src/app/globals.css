@@ -377,3 +377,12 @@ h1, h2, h3 { font-family: 'Rajdhani', sans-serif; font-weight: 700; letter-spaci
 /* ─── Dropdown / Select ──────────────────────────────────── */
 select.input { cursor: pointer; }
 select.input option { background: var(--bg-surface); }
+
+/* ─── Cinematic Zoom-Fade for Slider ─────────────────────── */
+@keyframes zoomFade {
+  from { opacity: 0; transform: scale(0.98); }
+  to   { opacity: 1; transform: scale(1); }
+}
+.animate-zoom-fade {
+  animation: zoomFade 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
